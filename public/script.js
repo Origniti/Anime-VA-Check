@@ -102,8 +102,8 @@ async function addAnime(anime){
 
   const characters = anime.characters.edges; // Data structure from AniList API
   
-  // 🟢 FIX APPLIED HERE: Using the correct, capitalized property name (CoverImage) from the console log
-  const coverImage = anime.CoverImage && anime.CoverImage.large ? anime.CoverImage.large : '';
+  // 🟢 FIX 1 (Image): Using the correct, capitalized property name (CoverImage) seen in the console
+  const coverImage = anime.CoverImage?.large || '';
 
   // --- DEBUGGING STEP 1: Check data before sending ---
   console.log("--- addAnime started ---");
@@ -210,8 +210,8 @@ function highlightSharedVAs(){
     html += `<div class="anime-info">`;
     html += `<b>${anime.anime_title}</b> - ${anime.rating.toFixed(2)}<br>${anime.description}<br><i>VAs:</i> `;
 
-    // FIX: Use '|' as the separator and filter out empty strings
-    const vaList = anime.voice_actors_parsed[vaLang].split('|').filter(Boolean);
+    // 🟢 FIX 2 (VA): Ensure the voice_actors string exists before splitting
+    const vaList = (anime.voice_actors_parsed[vaLang] || "").split('|').filter(Boolean);
     
     vaList.forEach(va=>{
         const parts = va.split(': ');
