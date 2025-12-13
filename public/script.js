@@ -102,8 +102,8 @@ async function addAnime(anime){
 
   const characters = anime.characters.edges; // Data structure from AniList API
   
-  // 🟢 ULTIMATE FINAL FIX (Image): Using the confirmed lowercase property name (coverImage)
-  const coverImage = anime.coverImage?.large || '';
+  // 🟢 ULTIMATE FINAL ROBUST FIX (Image): Check for both 'coverImage' (lowercase) AND 'CoverImage' (uppercase)
+  const coverImage = anime.coverImage?.large || anime.CoverImage?.large || '';
 
   // --- DEBUGGING STEP 1: Check data before sending ---
   console.log("--- addAnime started ---");
