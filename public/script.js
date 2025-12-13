@@ -89,19 +89,21 @@ async function actualSearchAnime() {
 // -------------------
 async function addAnime(anime){
   if (!userId) {
-        alert("You must be logged in to add anime.");
-        return;
-    }
-    
+        alert("You must be logged in to add anime.");
+        return;
+    }
+    
   const titleLang = document.getElementById('search-lang').value;
   const animeTitle = titleLang==='english' && anime.title.english ? anime.title.english : anime.title.romaji;
   const rating = anime.averageScore/10;
   
-  // Client-side cleanup for description
+  // Client-side cleanup for description (though server-side cleanup is now the main defense)
   let description = anime.description || '';
 
-  const characters = anime.characters.edges;
-  const coverImage = anime.coverImage?.large || '';
+  const characters = anime.characters.edges; // Data structure from AniList API
+  
+  // 🟢 FIX APPLIED HERE: Correctly access the nested 'large' property for the cover image URL
+  const coverImage = anime.coverImage && anime.coverImage.large ? anime.coverImage.large : '';
 
   // --- DEBUGGING STEP 1: Check data before sending ---
   console.log("--- addAnime started ---");
@@ -112,23 +114,24 @@ async function addAnime(anime){
     const res = await fetch('/add-anime',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
+      // Pass the raw characters array to the server
       body:JSON.stringify({userId, animeId:anime.id, animeTitle, rating, description, characters, coverImage})
     });
     const data = await res.json();
-    
-    // --- DEBUGGING STEP 2: Check server response ---
-    console.log("Server Response:", data);
-    
+    
+    // --- DEBUGGING STEP 2: Check server response ---
+    console.log("Server Response:", data);
+    
     if(data.success) {
-        loadWatched();
-        document.getElementById('search-results').innerHTML = '';
-        document.getElementById('anime-search').value = '';
-    }
+        loadWatched();
+        document.getElementById('search-results').innerHTML = ''; // Clear search results on success
+        document.getElementById('anime-search').value = '';
+    }
     else alert(`Failed to add anime: ${data.error}`);
   } catch(err){
     console.error("Add anime failed:", err);
   }
-    console.log("--- addAnime finished ---");
+    console.log("--- addAnime finished ---");
 }
 
 // -------------------
@@ -152,7 +155,7 @@ async function removeAnime(animeId){
 // Load watched anime
 // -------------------
 async function loadWatched(){
-  if (!userId) return;
+  if (!userId) return; // Prevent fetching if not logged in
   try {
     const res = await fetch(`/watched/${userId}`);
     const data = await res.json();
@@ -163,6 +166,7 @@ async function loadWatched(){
         try {
           a.voice_actors_parsed = JSON.parse(a.voice_actors);
         } catch(e){
+          // Fallback for old/malformed data
           a.voice_actors_parsed = { japanese: a.voice_actors || "", english: "" };
         }
         watched.push(a);
@@ -176,44 +180,27 @@ async function loadWatched(){
 }
 
 // -------------------
-// Highlight shared VAs (STRICT FIX: Counts VAs across DIFFERENT anime)
+// Highlight shared VAs
 // -------------------
 function highlightSharedVAs(){
   const vaLang = document.getElementById('va-lang').value;
-  
-  // 1. Build a map of {VA Name: Set of Anime IDs they appeared in}
-  const vaAnimeMap = {};
-  watched.forEach(anime => {
-    const animeId = anime.anime_id;
-    
-    // Extract unique VA names for the selected language
-    const vaNamesInAnime = new Set();
-    anime.voice_actors_parsed[vaLang].split('|').filter(Boolean).forEach(va=>{
-        // Extract VA Name only
-        const nameOnly = va.split(': ')[1]?.trim(); 
-        if(nameOnly) vaNamesInAnime.add(nameOnly);
-    });
-    
-    // Populate the map
-    vaNamesInAnime.forEach(vaName => {
-      vaAnimeMap[vaName] = vaAnimeMap[vaName] || new Set();
-      vaAnimeMap[vaName].add(animeId);
+  const vaCount = {};
+  watched.forEach(a=>{
+    // FIX: Use '|' as the separator and filter out empty strings
+    a.voice_actors_parsed[vaLang].split('|').filter(Boolean).forEach(va=>{
+      if(va){
+        // Correctly get the VA name only (after ': ') for counting
+        const nameOnly = va.split(': ')[1]?.trim() || va.trim(); 
+        vaCount[nameOnly] = (vaCount[nameOnly]||0)+1;
+      }
     });
   });
 
-  // 2. Determine which VAs are "shared" (i.e., appear in more than one anime)
-  const sharedVAs = new Set();
-  for (const [vaName, animeIdSet] of Object.entries(vaAnimeMap)) {
-    if (animeIdSet.size > 1) {
-      sharedVAs.add(vaName);
-    }
-  }
-
-
   const list = document.getElementById('watched-list');
-  list.innerHTML = '';
+  list.innerHTML = ''; // Clear list to rebuild with highlights
 
   watched.forEach(anime => {
+    // Rebuild the HTML structure for each anime
     const li = document.createElement('li');
     let html = '';
 
@@ -223,29 +210,24 @@ function highlightSharedVAs(){
     html += `<div class="anime-info">`;
     html += `<b>${anime.anime_title}</b> - ${anime.rating.toFixed(2)}<br>${anime.description}<br><i>VAs:</i> `;
 
+    // FIX: Use '|' as the separator and filter out empty strings
     const vaList = anime.voice_actors_parsed[vaLang].split('|').filter(Boolean);
-    const displayedCharacters = new Set();
     
     vaList.forEach(va=>{
         const parts = va.split(': ');
         const charName = parts[0]?.trim();
         const vaName = parts[1]?.trim() || '';
         
-        // 1. Only display the character once (fixes Bakugou/Midoriya duplication)
-        if (displayedCharacters.has(charName)) {
-            return;
-        }
-        displayedCharacters.add(charName);
-        
         if(vaName){
-            let vaHtml = `${charName}: ${vaName}`;
+          let vaHtml = `${charName}: ${vaName}`;
           
-            // 2. Check if the VA is shared across different anime (fixes Brina Palencia highlight leak)
-            if(sharedVAs.has(vaName)) {
-                vaHtml = `${charName}: <span class="highlight">${vaName}</span>`;
-            }
+          // Check if the VA name is shared
+          if(vaCount[vaName]>1) {
+            // Apply highlight class only to the VA Name
+            vaHtml = `${charName}: <span class="highlight">${vaName}</span>`;
+          }
           
-            html += `<span class="va">${vaHtml}</span> `;
+          html += `<span class="va">${vaHtml}</span> `;
         }
     });
 
