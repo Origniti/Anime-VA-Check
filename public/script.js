@@ -102,11 +102,9 @@ async function addAnime(anime){
 
   const characters = anime.characters.edges; // Data structure from AniList API
   
-  // 🟢 FIX 1 (Image Saving): Ultimate Robust Check for both lowercase and capitalized properties
-  // This ensures the URL is extracted and SENT to the server correctly.
+  // Image Saving: Robust Check for both lowercase and capitalized properties
   const coverImage = anime.coverImage?.large || anime.CoverImage?.large || '';
 
-  // --- DEBUGGING STEP 1: Check data before sending ---
   console.log("--- addAnime started ---");
   console.log("Sending data:", {userId, animeId:anime.id, animeTitle, rating, description, characters: characters ? characters.length : 'N/A', coverImage}); 
   console.log("Raw Anime Object:", anime);
@@ -115,12 +113,10 @@ async function addAnime(anime){
     const res = await fetch('/add-anime',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      // Pass the raw characters array to the server
       body:JSON.stringify({userId, animeId:anime.id, animeTitle, rating, description, characters, coverImage})
     });
     const data = await res.json();
     
-    // --- DEBUGGING STEP 2: Check server response ---
     console.log("Server Response:", data);
     
     if(data.success) {
@@ -164,11 +160,12 @@ async function loadWatched(){
     if(data.success){
       
       data.data.forEach(a=>{
+        // 🟢 FIX: Ensure JSON.parse handles null or undefined voice_actors gracefully
         try {
           a.voice_actors_parsed = JSON.parse(a.voice_actors);
         } catch(e){
-          // Fallback for old/malformed data
-          a.voice_actors_parsed = { japanese: a.voice_actors || "", english: "" };
+          // Fallback for old/malformed/empty data
+          a.voice_actors_parsed = { japanese: "", english: "" };
         }
         watched.push(a);
       });
@@ -187,12 +184,15 @@ function highlightSharedVAs(){
   const vaLang = document.getElementById('va-lang').value;
   const vaCount = {};
   watched.forEach(a=>{
-    // FIX: Use '|' as the separator and filter out empty strings
-    a.voice_actors_parsed[vaLang].split('|').filter(Boolean).forEach(va=>{
+    // Ensure the language property exists before trying to split it
+    const vaString = a.voice_actors_parsed[vaLang] || ""; 
+    vaString.split('|').filter(Boolean).forEach(va=>{
       if(va){
-        // Correctly get the VA name only (after ': ') for counting
-        const nameOnly = va.split(': ')[1]?.trim() || va.trim(); 
-        vaCount[nameOnly] = (vaCount[nameOnly]||0)+1;
+        // The string is "Char1, Char2: VA Name". Get the VA name only.
+        const vaName = va.split(': ')[1]?.trim(); 
+        if(vaName){
+          vaCount[vaName] = (vaCount[vaName]||0)+1;
+        }
       }
     });
   });
@@ -205,11 +205,10 @@ function highlightSharedVAs(){
     const li = document.createElement('li');
     let html = '';
 
-    // 🟢 FIX 2 (Image Display): Robust check for the image URL when reading from DB.
-    // Check for coverImage (camelCase), CoverImage (PascalCase), and coverimage (PostgreSQL default)
+    // Image Display: Robust check for the image URL when reading from DB.
     const imageUrl = anime.coverImage || anime.CoverImage || anime.coverimage;
 
-    // CRITICAL FIX: Ensure the string exists and has content before creating the tag (length > 10 for a valid URL)
+    // CRITICAL FIX: Ensure the string exists and has content before creating the tag
     if(imageUrl && imageUrl.length > 10) { 
       html += `<img src="${imageUrl}" alt="${anime.anime_title}" class="anime-cover">`;
     }
@@ -217,21 +216,26 @@ function highlightSharedVAs(){
     html += `<div class="anime-info">`;
     html += `<b>${anime.anime_title}</b> - ${anime.rating.toFixed(2)}<br>${anime.description}<br><i>VAs:</i> `;
 
-    // 🟢 FIX 3 (VA): Ensure the voice_actors string exists before splitting
-    const vaList = (anime.voice_actors_parsed[vaLang] || "").split('|').filter(Boolean);
+    // VA Display: Ensure the language property exists before trying to split
+    const vaString = anime.voice_actors_parsed[vaLang] || "";
+    const vaList = vaString.split('|').filter(Boolean);
     
     vaList.forEach(va=>{
+        // va is "Character1, Character2: VA Name"
         const parts = va.split(': ');
-        const charName = parts[0]?.trim();
+        
+        // parts[0] is the character list, parts[1] is the VA name
         const vaName = parts[1]?.trim() || '';
         
         if(vaName){
-          let vaHtml = `${charName}: ${vaName}`;
+          // The full string is used as the display HTML
+          let vaHtml = va;
           
           // Check if the VA name is shared
           if(vaCount[vaName]>1) {
-            // Apply highlight class only to the VA Name
-            vaHtml = `${charName}: <span class="highlight">${vaName}</span>`;
+            // Find the VA name within the full string and wrap it in a highlight span
+            // This ensures the aggregated list of characters stays outside the highlight.
+            vaHtml = va.replace(vaName, `<span class="highlight">${vaName}</span>`);
           }
           
           html += `<span class="va">${vaHtml}</span> `;
