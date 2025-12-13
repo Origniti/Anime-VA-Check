@@ -123,34 +123,39 @@ app.post('/add-anime', async (req, res) => {
             return res.json({ success: false, error: "Anime already added" });
         }
 
-        // --- START OF VOICE ACTOR FINAL FIX: Aggregation by Actor, Concatenating Characters ---
+        // --- START OF VOICE ACTOR FINAL FIX: Iterate over ALL VAs per character ---
         
-        // Maps to hold unique VA names. The value will be an array of characters they voice.
         const japaneseVAMap = new Map();
         const englishVAMap = new Map();
 
         if (characters && characters.length) {
             characters.forEach(edge => {
                 const char = edge.node;
-                // Get the primary voice actor for the character
-                const role = edge.voiceActors && edge.voiceActors.length > 0 ? edge.voiceActors[0] : null;
+                const charName = char.name?.full;
+                
+                // CRITICAL FIX: Iterate over the array of voiceActors for THIS character
+                const voiceActorsList = edge.voiceActors || [];
 
-                // Ensure all necessary names exist before processing
-                if (role && char.name && char.name.full && role.name && role.name.full) {
-                    const charName = char.name.full;
-                    const vaName = role.name.full;
-                    
-                    if (role.language === 'JAPANESE') {
-                        const currentCharacters = japaneseVAMap.get(vaName) || [];
-                        currentCharacters.push(charName);
-                        japaneseVAMap.set(vaName, currentCharacters); // Store array of characters
-                    }
-                    
-                    if (role.language === 'ENGLISH') {
-                        const currentCharacters = englishVAMap.get(vaName) || [];
-                        currentCharacters.push(charName);
-                        englishVAMap.set(vaName, currentCharacters); // Store array of characters
-                    }
+                if (charName) {
+                    voiceActorsList.forEach(role => {
+                        const vaName = role.name?.full;
+                        const vaLanguage = role.language;
+
+                        if (vaName && vaLanguage) {
+                            if (vaLanguage === 'JAPANESE') {
+                                const currentCharacters = japaneseVAMap.get(vaName) || [];
+                                currentCharacters.push(charName);
+                                japaneseVAMap.set(vaName, currentCharacters);
+                            }
+                            
+                            // Check for ENGLISH language explicitly
+                            if (vaLanguage === 'ENGLISH') {
+                                const currentCharacters = englishVAMap.get(vaName) || [];
+                                currentCharacters.push(charName);
+                                englishVAMap.set(vaName, currentCharacters);
+                            }
+                        }
+                    });
                 }
             });
         }
