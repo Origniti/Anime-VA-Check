@@ -48,6 +48,8 @@ async function setupDatabase() {
     try {
         await query('CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username TEXT UNIQUE, password TEXT)');
         
+        // The column name is specified as 'coverImage' here, 
+        // but PostgreSQL will store it as 'coverimage' (all lowercase) if not quoted.
         await query('CREATE TABLE IF NOT EXISTS watched_anime (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), anime_id INTEGER, anime_title TEXT, rating REAL, voice_actors TEXT, description TEXT, coverImage TEXT)');
         
         console.log('Database tables ensured successfully (PostgreSQL).');
@@ -123,22 +125,50 @@ app.post('/add-anime', async (req, res) => {
             return res.json({ success: false, error: "Anime already added" });
         }
 
-        // VA Parsing
+        // --- START OF VOICE ACTOR AGGREGATION FIX (The implementation of the new logic) ---
+        
+        // Aggregation maps to hold unique VA data for each language
+        const japaneseVAMap = new Map();
+        const englishVAMap = new Map();
+
+        if (characters && characters.length) {
+            characters.forEach(edge => {
+                const char = edge.node;
+                // Get the primary voice actor for the character
+                const role = edge.voiceActors && edge.voiceActors.length > 0 ? edge.voiceActors[0] : null;
+
+                if (role) {
+                    const charName = char.name.full;
+                    
+                    // Process Japanese VA
+                    if (role.language === 'JAPANESE' && role.name && role.name.full) {
+                        const vaName = role.name.full;
+                        const entry = `${charName}: ${vaName}`; 
+                        // Use VA name as key to ensure uniqueness
+                        japaneseVAMap.set(vaName, entry);
+                    }
+                    
+                    // Process English VA
+                    if (role.language === 'ENGLISH' && role.name && role.name.full) {
+                        const vaName = role.name.full;
+                        const entry = `${charName}: ${vaName}`;
+                        // Use VA name as key to ensure uniqueness
+                        englishVAMap.set(vaName, entry);
+                    }
+                }
+            });
+        }
+
+        // Convert Maps back to pipe-separated strings
         const vaData = {
-            japanese: characters.flatMap(charEdge =>
-                charEdge.voiceActors
-                    .filter(va => va.language && va.language.toLowerCase() === 'japanese')
-                    .map(va => `${charEdge.node.name.full}: ${va.name.full}`)
-            ).join('|'),
-            
-            english: characters.flatMap(charEdge =>
-                charEdge.voiceActors
-                    .filter(va => va.language && va.language.toLowerCase() === 'english')
-                    .map(va => `${charEdge.node.name.full}: ${va.name.full}`)
-            ).join('|')
+            japanese: Array.from(japaneseVAMap.values()).join('|'),
+            english: Array.from(englishVAMap.values()).join('|')
         };
-        // Store VA data as a JSON string
+        
         const voiceActors = JSON.stringify(vaData);
+        
+        // --- END OF VOICE ACTOR AGGREGATION FIX ---
+
 
         // Insert new record (Uses $1 through $7)
         const insertResult = await query(
