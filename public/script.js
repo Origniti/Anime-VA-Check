@@ -103,6 +103,7 @@ async function addAnime(anime){
   const characters = anime.characters.edges; // Data structure from AniList API
   
   // 🟢 FIX 1 (Image Saving): Ultimate Robust Check for both lowercase and capitalized properties
+  // This ensures the URL is extracted and SENT to the server correctly.
   const coverImage = anime.coverImage?.large || anime.CoverImage?.large || '';
 
   // --- DEBUGGING STEP 1: Check data before sending ---
@@ -204,10 +205,15 @@ function highlightSharedVAs(){
     const li = document.createElement('li');
     let html = '';
 
-    // 🟢 FIX 2 (Image Display): Check that the coverImage string actually contains a URL
-    if(anime.coverImage && anime.coverImage.length > 10) { 
-      html += `<img src="${anime.coverImage}" alt="${anime.anime_title}" class="anime-cover">`;
+    // 🟢 FIX 2 (Image Display): Robust check for the image URL when reading from DB.
+    // This ensures we find the image whether the DB returned 'coverImage' or 'CoverImage'.
+    const imageUrl = anime.coverImage || anime.CoverImage;
+
+    // CRITICAL FIX: Ensure the string exists and has content before creating the tag (length > 10 for a valid URL)
+    if(imageUrl && imageUrl.length > 10) { 
+      html += `<img src="${imageUrl}" alt="${anime.anime_title}" class="anime-cover">`;
     }
+    
     html += `<div class="anime-info">`;
     html += `<b>${anime.anime_title}</b> - ${anime.rating.toFixed(2)}<br>${anime.description}<br><i>VAs:</i> `;
 
