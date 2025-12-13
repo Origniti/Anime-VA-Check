@@ -48,8 +48,7 @@ async function setupDatabase() {
     try {
         await query('CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username TEXT UNIQUE, password TEXT)');
         
-        // The column name is specified as 'coverImage' here, 
-        // but PostgreSQL will store it as 'coverimage' (all lowercase) if not quoted.
+        // Note: PostgreSQL saves 'coverImage' as 'coverimage' (all lowercase) if not quoted.
         await query('CREATE TABLE IF NOT EXISTS watched_anime (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), anime_id INTEGER, anime_title TEXT, rating REAL, voice_actors TEXT, description TEXT, coverImage TEXT)');
         
         console.log('Database tables ensured successfully (PostgreSQL).');
@@ -109,7 +108,6 @@ app.post('/login', async (req, res) => {
 app.post('/add-anime', async (req, res) => {
     let { userId, animeId, animeTitle, rating, description, characters, coverImage } = req.body;
 
-    // 🟢 FIX 3 (Description): Set to 800 characters to prevent cutting off the text
     const MAX_DESC_LENGTH = 800;
     
     // Server-side sanitization and truncation
@@ -125,9 +123,9 @@ app.post('/add-anime', async (req, res) => {
             return res.json({ success: false, error: "Anime already added" });
         }
 
-        // --- START OF VOICE ACTOR AGGREGATION FIX (The implementation of the new logic) ---
+        // --- START OF VOICE ACTOR FINAL FIX: Aggregation by Actor, Concatenating Characters ---
         
-        // Aggregation maps to hold unique VA data for each language
+        // Maps to hold unique VA names. The value will be an array of characters they voice.
         const japaneseVAMap = new Map();
         const englishVAMap = new Map();
 
@@ -137,37 +135,44 @@ app.post('/add-anime', async (req, res) => {
                 // Get the primary voice actor for the character
                 const role = edge.voiceActors && edge.voiceActors.length > 0 ? edge.voiceActors[0] : null;
 
-                if (role) {
+                // Ensure all necessary names exist before processing
+                if (role && char.name && char.name.full && role.name && role.name.full) {
                     const charName = char.name.full;
+                    const vaName = role.name.full;
                     
-                    // Process Japanese VA
-                    if (role.language === 'JAPANESE' && role.name && role.name.full) {
-                        const vaName = role.name.full;
-                        const entry = `${charName}: ${vaName}`; 
-                        // Use VA name as key to ensure uniqueness
-                        japaneseVAMap.set(vaName, entry);
+                    if (role.language === 'JAPANESE') {
+                        const currentCharacters = japaneseVAMap.get(vaName) || [];
+                        currentCharacters.push(charName);
+                        japaneseVAMap.set(vaName, currentCharacters); // Store array of characters
                     }
                     
-                    // Process English VA
-                    if (role.language === 'ENGLISH' && role.name && role.name.full) {
-                        const vaName = role.name.full;
-                        const entry = `${charName}: ${vaName}`;
-                        // Use VA name as key to ensure uniqueness
-                        englishVAMap.set(vaName, entry);
+                    if (role.language === 'ENGLISH') {
+                        const currentCharacters = englishVAMap.get(vaName) || [];
+                        currentCharacters.push(charName);
+                        englishVAMap.set(vaName, currentCharacters); // Store array of characters
                     }
                 }
             });
         }
 
-        // Convert Maps back to pipe-separated strings
+        // Helper function to format the Map data into the final string format: "Character1, Character2: VA Name"
+        const createVAString = (map) => {
+            return Array.from(map.entries())
+                .map(([vaName, charNames]) => {
+                    const charList = charNames.join(', '); // Join multiple character names with a comma
+                    return `${charList}: ${vaName}`;
+                })
+                .join('|'); // Pipe-separate the final actor entries
+        };
+        
         const vaData = {
-            japanese: Array.from(japaneseVAMap.values()).join('|'),
-            english: Array.from(englishVAMap.values()).join('|')
+            japanese: createVAString(japaneseVAMap),
+            english: createVAString(englishVAMap)
         };
         
         const voiceActors = JSON.stringify(vaData);
         
-        // --- END OF VOICE ACTOR AGGREGATION FIX ---
+        // --- END OF VOICE ACTOR FINAL FIX ---
 
 
         // Insert new record (Uses $1 through $7)
