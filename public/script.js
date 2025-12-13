@@ -206,8 +206,8 @@ function highlightSharedVAs(){
     let html = '';
 
     // 🟢 FIX 2 (Image Display): Robust check for the image URL when reading from DB.
-    // This ensures we find the image whether the DB returned 'coverImage' or 'CoverImage'.
-    const imageUrl = anime.coverImage || anime.CoverImage;
+    // Check for coverImage (camelCase), CoverImage (PascalCase), and coverimage (PostgreSQL default)
+    const imageUrl = anime.coverImage || anime.CoverImage || anime.coverimage;
 
     // CRITICAL FIX: Ensure the string exists and has content before creating the tag (length > 10 for a valid URL)
     if(imageUrl && imageUrl.length > 10) { 
