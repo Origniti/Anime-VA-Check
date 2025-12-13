@@ -1,0 +1,279 @@
+/* ------------------- */
+/* 1. Color Palette & Globals */
+/* ------------------- */
+:root {
+    /* Base Colors */
+    --color-background-dark: #121212; /* Deep background */
+    --color-background-light: #1e1e1e; /* Card background */
+    --color-text-main: #e0e0e0; /* Light gray text */
+    --color-text-subtle: #a0a0a0; /* Subdued text */
+    --color-border: #333333;
+
+    /* Accent Colors */
+    --color-accent-primary: #ff4081; /* Pink/Magenta for titles/buttons/links */
+    --color-accent-highlight: #ffc107; /* Yellow/Amber for shared VAs */
+
+    /* Fonts */
+    --font-family-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--color-background-dark);
+    color: var(--color-text-main);
+    font-family: var(--font-family-main);
+    margin: 0;
+    padding: 0;
+    
+    /* Background Image Effect (Requires 'anime-bg.jpg' in the public directory) */
+    background-image: url('anime-bg.jpg');
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center top;
+}
+
+#app {
+    max-width: 900px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: rgba(30, 30, 30, 0.95); /* Semi-transparent dark card */
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Main Application Title (Appears when logged in) */
+.app-main-title {
+    color: var(--color-accent-primary);
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2.5em;
+    letter-spacing: 2px;
+}
+
+/* New Section Title Style (For Register, Login, Add Anime) */
+.section-title {
+    color: var(--color-accent-primary);
+    text-align: center;
+    margin-top: 30px;
+    margin-bottom: 20px;
+    font-size: 2.2em; /* Slightly smaller than main H1 */
+    letter-spacing: 1.5px;
+}
+
+h2 {
+    color: var(--color-text-main);
+    text-align: center;
+    margin: 20px 0;
+    font-size: 1.5em;
+}
+
+/* ------------------- */
+/* 2. Form and Controls */
+/* ------------------- */
+/* FIX: Explicitly target both types for consistent styling */
+input[type="text"], 
+input[type="password"], 
+select {
+    background-color: #2c2c2c;
+    color: var(--color-text-main);
+    border: 1px solid var(--color-border);
+    padding: 10px;
+    border-radius: 6px;
+    margin: 5px 0 15px 0; /* Increased margin-bottom for separation */
+    width: 100%;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: var(--color-accent-primary);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #d81b60; /* Darker pink on hover */
+}
+
+/* Auth Section */
+#auth {
+    padding: 20px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+#auth > div {
+    margin-bottom: 15px;
+}
+
+/* Search and VA Language Controls Layout */
+.controls-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap; 
+}
+
+.controls-container label {
+    color: var(--color-text-subtle);
+}
+
+.controls-container .control-group {
+    display: flex;
+    align-items: center;
+    margin: 5px 15px 5px 0;
+}
+
+.controls-container select {
+    width: auto;
+    min-width: 120px;
+    margin-left: 5px;
+    margin-bottom: 0; /* Override general input margin */
+}
+
+#anime-search {
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+/* Search Results Dropdown */
+#search-results {
+    list-style: none;
+    padding: 0;
+    background-color: #242424;
+    border: 1px solid var(--color-border);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    position: relative;
+    z-index: 10;
+}
+
+#search-results li {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    border-bottom: 1px solid #333;
+}
+
+#search-results li:hover {
+    background-color: #383838;
+}
+
+/* ------------------- */
+/* 3. Watched List (Card Layout) */
+/* ------------------- */
+#watched-list {
+    list-style: none;
+    padding: 0;
+}
+
+#watched-list li {
+    background-color: var(--color-background-light);
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    display: flex;
+    gap: 20px;
+    border-left: 5px solid var(--color-accent-primary); /* Accent line */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s;
+}
+
+#watched-list li:hover {
+    transform: translateY(-2px); /* Slight lift on hover */
+}
+
+.anime-cover {
+    width: 100px;
+    height: 150px; /* Fixed height for visual consistency */
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.anime-info {
+    flex-grow: 1;
+}
+
+.anime-info b {
+    color: var(--color-accent-primary);
+    font-size: 1.2em;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.anime-info i {
+    color: var(--color-text-subtle);
+    font-style: normal;
+    display: block;
+    margin-top: 10px;
+}
+
+/* VA Tags */
+.va {
+    display: inline-block;
+    background-color: #383838;
+    color: var(--color-text-main);
+    padding: 4px 8px;
+    margin: 5px 5px 5px 0;
+    border-radius: 4px;
+    font-size: 0.85em;
+}
+
+/* Shared VA Highlight */
+.highlight {
+    background-color: var(--color-accent-highlight);
+    color: #121212;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+.remove-btn {
+    background-color: #c62828; /* Red for remove */
+    padding: 5px 10px;
+    margin-top: 10px;
+    font-size: 0.9em;
+}
+.remove-btn:hover {
+    background-color: #b71c1c;
+}
+
+/* ------------------- */
+/* 4. Responsive Adjustments */
+/* ------------------- */
+@media (max-width: 600px) {
+    #app {
+        margin: 20px;
+        padding: 15px;
+    }
+    
+    #watched-list li {
+        flex-direction: column; /* Stack image and text vertically on small screens */
+        align-items: center;
+        text-align: center;
+    }
+    
+    .anime-cover {
+        width: 100%;
+        max-width: 150px;
+        height: auto;
+        margin-bottom: 10px;
+    }
+
+    .controls-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .controls-container .control-group {
+        margin-bottom: 10px;
+    }
+}
