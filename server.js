@@ -107,7 +107,7 @@ app.post('/login', async (req, res) => {
 app.post('/add-anime', async (req, res) => {
     let { userId, animeId, animeTitle, rating, description, characters, coverImage } = req.body;
 
-    // 🟢 FIX APPLIED HERE: Increase character limit for descriptions
+    // 🟢 FIX 3 (Description): Set to 800 characters to prevent cutting off the text
     const MAX_DESC_LENGTH = 800;
     
     // Server-side sanitization and truncation
@@ -203,7 +203,7 @@ app.get('/search-anime', async (req,res) => {
     ' title { romaji english }' +
     ' description' +
     ' averageScore' +
-    ' coverImage { large }' +
+    ' coverImage { large }' + // Note: This field may be cased differently in the response object
     ' characters(role: MAIN) {' +
     ' edges {' +
     ' node { name { full } }' +
