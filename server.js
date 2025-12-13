@@ -123,8 +123,9 @@ app.post('/add-anime', async (req, res) => {
             return res.json({ success: false, error: "Anime already added" });
         }
 
-        // --- START OF VOICE ACTOR FINAL FIX: Iterate over ALL VAs per character ---
+        // --- START OF VOICE ACTOR FINAL FIX: Iterating ALL VAs and Aggregating by Actor ---
         
+        // Maps to hold unique VA names. The value will be an array of characters they voice.
         const japaneseVAMap = new Map();
         const englishVAMap = new Map();
 
@@ -133,7 +134,7 @@ app.post('/add-anime', async (req, res) => {
                 const char = edge.node;
                 const charName = char.name?.full;
                 
-                // CRITICAL FIX: Iterate over the array of voiceActors for THIS character
+                // Get the array of all VAs for this character
                 const voiceActorsList = edge.voiceActors || [];
 
                 if (charName) {
@@ -142,17 +143,25 @@ app.post('/add-anime', async (req, res) => {
                         const vaLanguage = role.language;
 
                         if (vaName && vaLanguage) {
-                            if (vaLanguage === 'JAPANESE') {
+                            // Ensure the language is always treated as uppercase for comparison
+                            const langUpper = vaLanguage.toUpperCase(); 
+
+                            if (langUpper === 'JAPANESE') {
+                                // Aggregation: If VA already exists, append unique character name to the array
                                 const currentCharacters = japaneseVAMap.get(vaName) || [];
-                                currentCharacters.push(charName);
-                                japaneseVAMap.set(vaName, currentCharacters);
+                                if (!currentCharacters.includes(charName)) {
+                                    currentCharacters.push(charName);
+                                    japaneseVAMap.set(vaName, currentCharacters);
+                                }
                             }
                             
-                            // Check for ENGLISH language explicitly
-                            if (vaLanguage === 'ENGLISH') {
+                            if (langUpper === 'ENGLISH') {
+                                // Aggregation: If VA already exists, append unique character name to the array
                                 const currentCharacters = englishVAMap.get(vaName) || [];
-                                currentCharacters.push(charName);
-                                englishVAMap.set(vaName, currentCharacters);
+                                if (!currentCharacters.includes(charName)) {
+                                    currentCharacters.push(charName);
+                                    englishVAMap.set(vaName, currentCharacters);
+                                }
                             }
                         }
                     });
