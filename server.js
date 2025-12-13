@@ -1,6 +1,6 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import { Pool } from 'pg'; // NEW: Import PostgreSQL Pool
+import { Pool } from 'pg'; 
 import bcrypt from 'bcrypt';
 import fetch from 'node-fetch';
 import path from 'path';
@@ -10,7 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Use environment port for hosting
+const PORT = process.env.PORT || 3000; 
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -19,13 +19,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 // -------------------
 // 1. PostgreSQL Connection Setup
 // -------------------
-// IMPORTANT: Use environment variable for secure connection string
-// This configuration ensures it looks for the DATABASE_URL environment variable.
 const connectionString = process.env.DATABASE_URL; 
 
 const pool = new Pool({
     connectionString: connectionString,
-    // Add SSL for Neon/most cloud databases
     ssl: {
         rejectUnauthorized: false
     }
@@ -33,7 +30,6 @@ const pool = new Pool({
 
 pool.on('error', (err, client) => {
     console.error('Unexpected error on idle client', err);
-    // In a production app, you might try to gracefully restart or log the error.
 });
 
 // Helper function to simplify query execution
@@ -57,7 +53,6 @@ async function setupDatabase() {
         console.log('Database tables ensured successfully (PostgreSQL).');
     } catch (err) {
         console.error("CRITICAL ERROR: Database setup failed:", err.message);
-        // Exit process if database is unavailable
         process.exit(1); 
     }
 }
@@ -70,11 +65,9 @@ app.post('/register', async (req, res) => {
     const { username, password } = req.body;
     try {
         const hash = await bcrypt.hash(password, 10);
-        // Note: RETURNING id is used to get the newly created user's ID
         const result = await query('INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id', [username, hash]);
         res.json({ success: true, userId: result.rows[0].id });
     } catch (err) {
-        // PostgreSQL unique constraint violation error code is 23505
         if (err.code === '23505') {
             return res.json({ success: false, error: 'Username already exists.' });
         }
@@ -114,10 +107,13 @@ app.post('/login', async (req, res) => {
 app.post('/add-anime', async (req, res) => {
     let { userId, animeId, animeTitle, rating, description, characters, coverImage } = req.body;
 
-    // Server-side sanitization
+    // 🟢 FIX APPLIED HERE: Increase character limit for descriptions
+    const MAX_DESC_LENGTH = 800;
+    
+    // Server-side sanitization and truncation
     if (description) {
         description = description.replace(/<[^>]*>/g, '').trim();
-        description = description.length > 250 ? description.substring(0, 250) + '...' : description;
+        description = description.length > MAX_DESC_LENGTH ? description.substring(0, MAX_DESC_LENGTH) + '...' : description;
     }
 
     try {
