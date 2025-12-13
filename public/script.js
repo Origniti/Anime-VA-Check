@@ -102,7 +102,7 @@ async function addAnime(anime){
 
   const characters = anime.characters.edges; // Data structure from AniList API
   
-  // 🟢 FINAL FIX APPLIED HERE: Using the correct, capitalized property name (CoverImage)
+  // 🟢 FIX APPLIED HERE: Using the correct, capitalized property name (CoverImage) from the console log
   const coverImage = anime.CoverImage && anime.CoverImage.large ? anime.CoverImage.large : '';
 
   // --- DEBUGGING STEP 1: Check data before sending ---
