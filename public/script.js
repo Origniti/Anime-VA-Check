@@ -102,8 +102,8 @@ async function addAnime(anime){
 
   const characters = anime.characters.edges; // Data structure from AniList API
   
-  // 🟢 FIX APPLIED HERE: Correctly access the nested 'large' property for the cover image URL
-  const coverImage = anime.coverImage && anime.coverImage.large ? anime.coverImage.large : '';
+  // 🟢 FINAL FIX APPLIED HERE: Using the correct, capitalized property name (CoverImage)
+  const coverImage = anime.CoverImage && anime.CoverImage.large ? anime.CoverImage.large : '';
 
   // --- DEBUGGING STEP 1: Check data before sending ---
   console.log("--- addAnime started ---");
