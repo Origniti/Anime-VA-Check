@@ -112,6 +112,7 @@ async function handleLogin(event) {
     const data = await res.json();
     
     if (data.success) {
+        // Line 115 starts here
         localStorage.setItem('userId', data.userId);
         localStorage.setItem('username', username);
         
