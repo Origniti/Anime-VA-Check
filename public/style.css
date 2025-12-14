@@ -371,7 +371,67 @@ button:hover {
 }
 
 /* ------------------- */
-/* 6. Notes Modal & Buttons (NEW) */
+/* 4. Navigation and Pagination Styles */
+/* ------------------- */
+.navbar {
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--color-border);
+    padding-bottom: 10px;
+    text-align: center;
+}
+
+.navbar button {
+    background-color: #555;
+    color: white;
+    padding: 10px 15px;
+    margin: 0 5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.navbar button:hover {
+    background-color: #666;
+}
+
+.navbar button.active {
+    background-color: var(--color-accent-primary);
+    font-weight: bold;
+}
+
+/* Styling for Pagination Controls */
+#pagination-controls {
+    text-align: center;
+    /* FIX: Add substantial top padding to ensure clearance from the cards above */
+    padding-top: 40px; 
+    margin-top: 20px; 
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+#pagination-controls button {
+    padding: 8px 15px;
+    background-color: var(--color-accent-primary);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#pagination-controls button:disabled {
+    background-color: #666;
+    cursor: not-allowed;
+}
+
+#page-info {
+    margin: 0 15px;
+    font-weight: bold;
+    display: inline-block; /* Ensures it stays in line with buttons */
+}
+
+/* ------------------- */
+/* 6. Notes Modal & Buttons */
 /* ------------------- */
 
 /* Grouping the Notes and Remove buttons */
@@ -398,7 +458,7 @@ button:hover {
 .remove-btn {
     background-color: #c62828; /* Red for remove */
     padding: 5px 10px;
-    margin-top: 0; /* Important for alignment in the flex container */
+    margin-top: 0; 
     margin-bottom: 0;
     font-size: 0.9em;
     flex-shrink: 0; 
@@ -530,5 +590,10 @@ button:hover {
     .modal-content {
         width: 90%;
         margin: 20% auto;
+    }
+    
+    /* Ensure pagination controls are fully visible on mobile too */
+    #pagination-controls {
+        padding-top: 20px; /* Reduced padding for mobile */
     }
 }
