@@ -1,519 +1,511 @@
-/* ------------------- */
-/* 1. Color Palette & Globals */
-/* ------------------- */
-:root {
-    /* Base Colors */
-    --color-background-dark: #121212; /* Deep background */
-    --color-background-light: #1e1e1e; /* Card background */
-    --color-text-main: #e0e0e0; /* Light gray text */
-    --color-text-subtle: #a0a0a0; /* Subdued text */
-    --color-border: #333333;
-
-    /* Accent Colors */
-    --color-accent-primary: #ff4081; /* Pink/Magenta for titles/buttons/links */
-    --color-accent-highlight: #ffc107; /* Yellow/Amber for shared VAs */
-
-    /* Fonts */
-    --font-family-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
+/* -------------------
+ * Global & Body
+ * ------------------- */
 body {
-    background-color: var(--color-background-dark);
-    color: var(--color-text-main);
-    font-family: var(--font-family-main);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #1e1e1e;
+    color: #f1f1f1;
     margin: 0;
     padding: 0;
-    
-    /* Background Image Effect (Requires 'anime-bg.jpg' in the public directory) */
-    background-image: url('anime-bg.jpg');
-    background-size: cover;
-    background-attachment: fixed;
-    background-position: center top;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
 }
 
 #app {
-    max-width: 1200px; /* Increased max-width to comfortably fit 3 columns */
-    margin: 50px auto;
+    width: 95%;
+    max-width: 1200px;
     padding: 20px;
-    background-color: rgba(30, 30, 30, 0.95); /* Semi-transparent dark card */
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-}
-
-/* Main Application Title (Appears when logged in) */
-.app-main-title {
-    color: var(--color-accent-primary);
-    text-align: center;
-    margin-bottom: 30px;
-    font-size: 2.5em;
-    letter-spacing: 2px;
-}
-
-/* New Section Title Style (For Register, Login, Page Titles) */
-.section-title {
-    color: var(--color-accent-primary);
-    text-align: center;
-    margin-top: 30px;
-    margin-bottom: 20px;
-    font-size: 2.2em;
-    letter-spacing: 1.5px;
-}
-
-h2 {
-    color: var(--color-text-main);
-    text-align: center;
-    margin: 20px 0;
-    font-size: 1.5em;
-}
-
-/* ------------------- */
-/* 2. Form and Controls */
-/* ------------------- */
-/* FIX: Explicitly target both types for consistent styling */
-input[type="text"], 
-input[type="password"],
-input[type="number"],
-input[type="date"],
-select {
-    background-color: #2c2c2c;
-    color: var(--color-text-main);
-    border: 1px solid var(--color-border);
-    padding: 10px;
-    border-radius: 6px;
-    margin: 5px 0 15px 0; /* Increased margin-bottom for separation */
-    width: 100%;
     box-sizing: border-box;
 }
 
-button {
-    background-color: var(--color-accent-primary);
+h1 {
+    color: #4db6ac;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 2.5em;
+    font-weight: 700;
+}
+
+.section-title {
+    font-size: 1.8em;
+    color: #bdbdbd;
+    border-bottom: 2px solid #4db6ac;
+    padding-bottom: 5px;
+    margin-top: 30px;
+    margin-bottom: 20px;
+}
+
+/* -------------------
+ * Authentication
+ * ------------------- */
+#auth {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 20px;
+    background: #2a2a2a;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    text-align: center;
+}
+
+#auth h2 {
+    color: #4db6ac;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+#auth input {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background-color: #333;
+    color: #f1f1f1;
+}
+
+#auth button {
+    background-color: #4db6ac;
     color: white;
     border: none;
     padding: 10px 15px;
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
-    font-weight: bold;
+    font-size: 1em;
     transition: background-color 0.2s;
+    margin-top: 5px;
 }
 
-button:hover {
-    background-color: #d81b60; /* Darker pink on hover */
+#auth button:hover {
+    background-color: #388e83;
 }
 
-/* Auth Section */
-#auth {
-    padding: 20px;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-#auth > div {
-    margin-bottom: 15px;
-}
-
-/* Search and VA Language Controls Layout */
-.controls-container {
+/* -------------------
+ * Navigation Bar (UPDATED)
+ * ------------------- */
+.navbar {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap; 
-}
-
-/* General Controls Bar (Used for sorting/VA lang/Search in new page structure) */
-.controls-bar {
-    display: flex;
-    justify-content: flex-end; /* Align controls to the right by default */
-    align-items: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 15px; /* Spacing between control groups */
-}
-
-.controls-bar select {
-    width: auto;
-    min-width: 120px;
-    margin-left: 5px;
-    margin-bottom: 0; /* Override general input margin */
-}
-
-.controls-bar input[type="text"] {
-    width: 300px; /* Give search input a fixed size in the bar */
-    margin-right: auto; /* Push search input to the left */
-    margin-bottom: 0;
-}
-
-
-.controls-container label,
-.controls-bar label {
-    color: var(--color-text-subtle);
-    margin-right: 5px;
-}
-
-.controls-container .control-group {
-    display: flex;
-    align-items: center;
-    margin: 5px 15px 5px 0;
-}
-
-.controls-container select {
-    width: auto;
-    min-width: 120px;
-    margin-left: 5px;
-    margin-bottom: 0; /* Override general input margin */
-}
-
-#anime-search {
-    width: 100%;
-    margin-top: 10px;
-    margin-bottom: 20px;
-}
-
-/* Search Results Dropdown */
-#search-results, #user-search-results {
-    list-style: none;
-    padding: 0;
-    background-color: #242424;
-    border: 1px solid var(--color-border);
-    border-top: none;
-    border-radius: 0 0 6px 6px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-    position: relative;
-    z-index: 10;
-}
-
-#search-results li, #user-search-results li {
-    padding: 10px 15px;
-    cursor: pointer;
-    transition: background-color 0.15s;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 30px;
+    padding: 10px 0;
     border-bottom: 1px solid #333;
 }
 
-#search-results li:last-child, #user-search-results li:last-child {
-    border-bottom: none;
+.navbar button {
+    background-color: #333;
+    color: #bdbdbd;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.1em;
+    transition: all 0.2s;
 }
 
-#search-results li:hover, #user-search-results li:hover {
-    background-color: #383838;
+.navbar button:hover {
+    background-color: #444;
+    color: white;
 }
 
-/* ------------------- */
-/* 3. Watched List (Card Layout) */
-/* ------------------- */
-#watched-list.grid-container, #watchlist-items.grid-container {
+.navbar button.active {
+    background-color: #4db6ac;
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 0 10px rgba(77, 182, 172, 0.5);
+}
+
+/* -------------------
+ * Controls (Sort, VA, Search, List Status)
+ * ------------------- */
+.controls-bar,
+.controls-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 20px;
+    padding: 15px 0;
+    border-bottom: 1px solid #333;
+    margin-bottom: 20px;
+}
+
+.controls-bar label,
+.controls-container label {
+    font-weight: bold;
+    color: #bdbdbd;
+}
+
+#sort-by,
+#va-lang,
+#search-lang,
+#add-to-list-status {
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #555;
+    background-color: #333;
+    color: white;
+    cursor: pointer;
+}
+
+#anime-search {
+    flex-grow: 1;
+    min-width: 200px;
+    padding: 10px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background-color: #333;
+    color: white;
+    font-size: 1em;
+}
+
+/* -------------------
+ * Grid Display (Watched/Watchlist)
+ * ------------------- */
+.grid-container {
     list-style: none;
     padding: 0;
-    
-    /* === CRITICAL GRID RULES for UNIFORM HEIGHT === */
-    display: grid; 
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 20px; 
-    
-    /* Set a minimum height, allowing growth if "Read More" is used */
-    grid-auto-rows: minmax(400px, auto); 
-    /* This ensures all columns start/end at the same vertical position */
-    align-items: stretch; 
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 25px;
 }
 
-#watched-list li, #watchlist-items li {
-    background-color: var(--color-background-light);
-    padding: 15px;
-    margin-bottom: 0; 
-    border-radius: 10px;
-    
-    /* Item stacking within the grid cell */
-    display: flex;
-    flex-direction: column; 
-    align-items: center;
-    text-align: center;
-    
-    border-left: 5px solid var(--color-accent-primary);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    transition: transform 0.2s;
-    height: 100%; /* Ensures uniform height in the grid row */
-}
-
-#watched-list li:hover, #watchlist-items li:hover {
-    transform: translateY(-2px); /* Slight lift on hover */
-}
-
-/* --- IMAGE FIX CSS --- */
-/* 1. NEW FIXED ASPECT RATIO CONTAINER (2:3 poster ratio) */
-.anime-cover-container {
-    width: 100%;
-    /* 2:3 Ratio is 150% height of its width (3 / 2 = 1.5) */
-    padding-bottom: 150%; 
-    position: relative; 
-    overflow: hidden;
-    border-radius: 6px;
+.grid-container > li {
+    background: #2a2a2a;
+    border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-    margin-bottom: 10px;
+    display: flex;
+    overflow: hidden;
+    padding: 15px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.grid-container > li:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.6);
+}
+
+.anime-cover-container {
+    width: 100px;
     flex-shrink: 0;
+    margin-right: 15px;
+    overflow: hidden;
+    border-radius: 4px;
 }
 
-/* 2. UPDATED IMAGE STYLES */
 .anime-cover {
-    /* Position the image inside the fixed-ratio container */
-    position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
-    height: 100%;
-    
-    /* Use 'contain' to ensure the entire image is visible */
-    object-fit: contain; 
-    
-    /* Add a subtle background color to the empty space */
-    background-color: #000000; /* Dark black to fill letterbox/pillarbox areas */
-    
-    border-radius: 6px; 
+    height: auto;
+    display: block;
 }
-/* --- END IMAGE FIX CSS --- */
 
-
-/* --- CRITICAL FIX FOR CONSISTENT CARD HEIGHT --- */
 .anime-info {
-    flex-grow: 1; /* Allows this block to take up remaining vertical space */
-    text-align: center;
-    width: 100%;
-    padding: 0 5px;
-    position: relative; 
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
-    /* This ensures the Remove button is always at the bottom edge */
-    justify-content: space-between; 
-    align-items: center;
+    min-width: 0; /* Allows content to shrink */
 }
 
-/* Original Title (Bold text) */
 .anime-info b {
-    color: var(--color-accent-primary);
+    color: #4db6ac;
     font-size: 1.1em;
-    display: block;
     margin-bottom: 5px;
-    /* Allow full title to wrap normally */
-    white-space: normal; 
-    overflow: visible; 
-    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* *** Description Wrapper for Read More (must contain text and button) *** */
+.anilist-rating,
+.anime-info p {
+    font-size: 0.9em;
+    color: #bdbdbd;
+    margin: 2px 0;
+}
+
+/* -------------------
+ * Description/Read More (UPDATED)
+ * ------------------- */
 .description-wrapper {
-    width: 100%;
-    text-align: left; /* Align text content to the left */
-    flex-grow: 1;
     position: relative;
-    padding-bottom: 5px; 
+    margin: 5px 0 10px;
+    overflow: hidden;
+    flex-grow: 1;
 }
 
-/* Description Text (Initial Clipping State) */
 .anime-description-text {
-    color: var(--color-text-subtle);
-    font-style: normal;
     display: block;
-    margin-top: 5px;
-    margin-bottom: 0; 
-    
-    /* --- FIXED CLIPPING HEIGHT FOR INITIAL VIEW (ABOUT 6-7 LINES) --- */
-    max-height: 7em; 
-    overflow: hidden; 
-    width: 100%;
-    /* Smooth transition for expansion */
-    transition: max-height 0.3s ease-out; 
+    font-size: 0.85em;
+    line-height: 1.4;
+    color: #9e9e9e;
+    max-height: 4em; /* Show 3-4 lines initially */
+    mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+    margin-top: 0;
 }
 
-/* Style for the Read More button/link */
+.description-wrapper.expanded .anime-description-text {
+    max-height: 500px; /* Arbitrarily large value */
+    mask-image: none;
+    -webkit-mask-image: none;
+}
+
 .read-more-btn {
     background: none;
     border: none;
-    color: var(--color-accent-primary);
+    color: #4db6ac;
     cursor: pointer;
+    font-size: 0.85em;
     padding: 0;
-    margin-top: 5px;
-    font-size: 0.9em;
-    text-align: left; /* Align to the left of the card */
+    margin-top: 3px;
     display: block;
-    width: auto;
-}
-.read-more-btn:hover {
-    text-decoration: underline;
-    background: none;
-}
-
-/* Class added by JS when Read More is clicked */
-.expanded .anime-description-text {
-    max-height: 1000px; /* Use a large value to 'unclip' and show full text */
-    overflow: visible;
-}
-
-/* VA Tags Container (to hold the tags together) */
-.va-tags-container {
-    margin-top: 5px;
-    flex-shrink: 0; 
-    flex-grow: 0;
-    width: 100%;
-    text-align: left; /* Keep tags left-aligned within the container */
-}
-
-/* VA Tags (Displaying inline-block for proper wrapping) */
-.va {
-    display: inline-block;
-    background-color: #383838;
-    color: var(--color-text-main);
-    padding: 4px 8px;
-    margin: 4px; 
-    border-radius: 4px;
-    font-size: 0.8em; 
-}
-
-/* Shared VA Highlight */
-.highlight {
-    background-color: var(--color-accent-highlight);
-    color: #121212;
-    padding: 2px 4px;
-    border-radius: 3px;
     font-weight: bold;
 }
 
-/* ------------------- */
-/* 4. Navigation and Pagination Styles */
-/* ------------------- */
-.navbar {
-    margin-bottom: 20px;
-    border-bottom: 2px solid var(--color-border);
-    padding-bottom: 10px;
-    text-align: center;
+/* -------------------
+ * VA Tags (Voice Actors)
+ * ------------------- */
+.va-tags-container {
+    margin: 10px 0;
+    padding: 5px 0;
+    border-top: 1px solid #333;
+    border-bottom: 1px solid #333;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
 }
 
-.navbar button {
-    background-color: #555;
-    color: white;
-    padding: 10px 15px;
-    margin: 0 5px;
+.va {
+    background-color: #383838;
+    color: #f1f1f1;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    cursor: help; /* Indicates title attribute provides more info */
+}
+
+.va .highlight {
+    color: #ffd700; /* Gold/Yellow highlight for top VAs */
+    font-weight: bold;
+}
+
+/* -------------------
+ * Action Buttons
+ * ------------------- */
+.action-buttons {
+    margin-top: auto; /* Pushes buttons to the bottom */
+    display: flex;
+    gap: 10px;
+    padding-top: 10px;
+}
+
+.action-buttons button {
+    padding: 8px 12px;
     border: none;
-    border-radius: 5px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+
+.notes-btn {
+    background-color: #00796b;
+    color: white;
+}
+
+.notes-btn:hover {
+    background-color: #004d40;
+}
+
+.remove-btn {
+    background-color: #c62828;
+    color: white;
+}
+
+.remove-btn:hover {
+    background-color: #8e0000;
+}
+
+/* -------------------
+ * Search Results
+ * ------------------- */
+#search-results {
+    list-style: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+#search-results li {
+    background: #2a2a2a;
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+#search-results li:hover {
+    background: #333;
+    color: #4db6ac;
+}
+
+#search-results li.highlight {
+    /* Indicates anime is already added to list */
+    background: #444; 
+    color: #bdbdbd;
+    cursor: default;
+    border-left: 5px solid #4db6ac;
+}
+
+/* -------------------
+ * Pagination Controls (NEW)
+ * ------------------- */
+#pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 30px;
+    padding: 15px 0;
+    border-top: 1px solid #333;
+}
+
+#pagination-controls button {
+    background-color: #4db6ac;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
     cursor: pointer;
     transition: background-color 0.2s;
 }
 
-.navbar button:hover {
-    background-color: #666;
-}
-
-.navbar button.active {
-    background-color: var(--color-accent-primary);
-    font-weight: bold;
-}
-
-/* Styling for Pagination Controls */
-#pagination-controls {
-    text-align: center;
-    /* FIX: Add substantial top padding to ensure clearance from the cards above */
-    padding-top: 40px; 
-    margin-top: 20px; 
-    margin-bottom: 20px;
-    width: 100%;
-}
-
-#pagination-controls button {
-    padding: 8px 15px;
-    background-color: var(--color-accent-primary);
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+#pagination-controls button:hover:not(:disabled) {
+    background-color: #388e83;
 }
 
 #pagination-controls button:disabled {
-    background-color: #666;
+    background-color: #555;
     cursor: not-allowed;
+    opacity: 0.6;
 }
 
 #page-info {
-    margin: 0 15px;
     font-weight: bold;
-    display: inline-block; /* Ensures it stays in line with buttons */
+    color: #bdbdbd;
 }
 
-/* ------------------- */
-/* 6. Notes/Detail Modal & Buttons */
-/* ------------------- */
-
-/* Grouping the Notes and Remove buttons */
-.action-buttons {
-    display: flex;
-    gap: 5px;
-    width: 100%;
-    justify-content: center;
-    margin-top: 10px; /* Space from VA tags */
-    flex-shrink: 0;
-}
-
-.notes-btn {
-    background-color: #00bcd4; /* Cyan/Teal color for Notes */
-    padding: 5px 10px;
-    font-size: 0.9em;
-    flex-grow: 1;
-}
-
-.notes-btn:hover {
-    background-color: #0097a7; 
-}
-
-.remove-btn {
-    background-color: #c62828; /* Red for remove */
-    padding: 5px 10px;
-    margin-top: 0; 
-    margin-bottom: 0;
-    font-size: 0.9em;
-    flex-shrink: 0; 
-    flex-grow: 1; /* Match notes button width */
-}
-
-/* Modal Backdrop */
+/* -------------------
+ * Anime Detail Modal (UPDATED)
+ * ------------------- */
 .modal {
     display: none; 
-    position: fixed; 
-    z-index: 20; /* Above all other content */
+    position: fixed;
+    z-index: 100;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,0.8); /* Dark semi-transparent background */
+    background-color: rgba(0, 0, 0, 0.8);
+    padding-top: 60px;
 }
 
-/* Modal Content Box */
 .modal-content {
-    background-color: var(--color-background-light);
-    margin: 10% auto; /* 10% from the top and centered */
-    padding: 20px;
-    border: 1px solid var(--color-border);
+    background-color: #2a2a2a;
+    margin: 5% auto;
+    padding: 25px;
     border-radius: 8px;
-    width: 80%; /* Width on desktop */
-    max-width: 600px;
-    position: relative;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7);
+    animation: fadeIn 0.3s;
 }
 
 .modal-content h3 {
-    color: var(--color-accent-primary);
+    color: #4db6ac;
     margin-top: 0;
+    border-bottom: 1px solid #444;
+    padding-bottom: 10px;
 }
 
-/* Detail Modal specific groups */
+.modal-content label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+    color: #bdbdbd;
+}
+
 .detail-group {
-    margin-bottom: 15px;
-}
-.modal-content input[type="date"],
-.modal-content input[type="number"] {
-    margin-bottom: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    gap: 15px;
 }
 
+.detail-group input,
+.detail-group select {
+    width: 60%; 
+    padding: 8px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background-color: #333;
+    color: white;
+}
 
-/* Close button */
+#notes-textarea {
+    width: calc(100% - 20px);
+    height: 150px;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background-color: #333;
+    color: white;
+    resize: vertical;
+}
+
+#save-detail-btn,
+#detail-close-btn {
+    width: 48%;
+    padding: 10px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+#save-detail-btn {
+    background-color: #4db6ac;
+    color: white;
+}
+
+#save-detail-btn:hover {
+    background-color: #388e83;
+}
+
+#detail-close-btn {
+    background-color: #555;
+    color: white;
+}
+
+#detail-close-btn:hover {
+    background-color: #777;
+}
+
 .close-button {
-    color: var(--color-text-subtle);
+    color: #aaa;
     float: right;
     font-size: 28px;
     font-weight: bold;
@@ -522,124 +514,76 @@ button:hover {
 
 .close-button:hover,
 .close-button:focus {
-    color: var(--color-text-main);
+    color: #fff;
     text-decoration: none;
-    cursor: pointer;
 }
 
-/* Text area for notes */
-#notes-textarea {
-    width: 100%;
-    min-height: 200px;
-    background-color: #2c2c2c;
-    color: var(--color-text-main);
-    border: 1px solid var(--color-border);
-    padding: 10px;
-    border-radius: 6px;
-    margin: 10px 0 20px 0;
-    box-sizing: border-box;
-    resize: vertical;
-}
-
-/* Modal Save/Close Buttons */
-.modal-content button {
-    width: 100%;
-    padding: 10px;
-    font-size: 1.1em;
-    margin-top: 10px;
-}
-
-.modal-content #detail-close-btn {
-    background-color: #555;
-}
-.modal-content #detail-close-btn:hover {
-    background-color: #666;
-}
-
-/* ------------------- */
-/* 7. Notification Pop-up (NEW) */
-/* ------------------- */
+/* -------------------
+ * Notifications (NEW)
+ * ------------------- */
 .notification-popup {
-    display: none; /* Controlled by JS */
+    display: none;
     position: fixed;
     top: 20px;
-    right: 20px;
-    background-color: #4CAF50; /* Success green */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #4CAF50; /* Success green default */
     color: white;
     padding: 15px 25px;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    z-index: 1000; /* Ensure it is on top of everything */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
     font-weight: bold;
-    /* Animations will be handled by JavaScript for control */
+    opacity: 0.95;
 }
 
-
-/* ------------------- */
-/* 8. Responsive Adjustments */
-/* ------------------- */
-@media (max-width: 950px) {
-    /* Change from 3 columns to 2 columns on medium screens */
-    #watched-list.grid-container, #watchlist-items.grid-container {
-        grid-template-columns: repeat(2, 1fr);
-    }
+/* -------------------
+ * Profile Page (New STATS section)
+ * ------------------- */
+#profile-content {
+    background-color: #2a2a2a;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 400px;
+    margin: 20px auto;
 }
 
-@media (max-width: 650px) {
-    #app {
-        margin: 20px;
-        padding: 15px;
-    }
-    
-    /* Change from 2 columns to 1 column on small screens */
-    #watched-list.grid-container, #watchlist-items.grid-container {
-        grid-template-columns: 1fr;
-    }
-    
-    /* Ensure full title/description is shown on mobile */
-    .anime-description-text {
-        max-height: none !important; /* Force override for mobile readability */
-        overflow: visible;
-    }
-    
-    .read-more-btn {
-        display: none; /* Hide button on mobile when full text is visible */
-    }
+#profile-content p {
+    font-size: 1.1em;
+    padding: 5px 0;
+    border-bottom: 1px dashed #333;
+}
 
-    #watched-list li, #watchlist-items li {
-        text-align: left;
-    }
-    
-    /* Adjustments for the new image container on mobile */
-    .anime-cover-container {
-        max-width: 120px; /* Constrain the size on mobile */
-        margin: 0 auto 10px auto; /* Center the container */
-        /* Recalculate padding based on 120px max-width and 2:3 ratio */
-        padding-bottom: 180px; /* 120px * 1.5 = 180px */
-    }
+#profile-content strong {
+    color: #4db6ac;
+}
 
-    .controls-container, .controls-bar {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-    .controls-bar {
-        align-items: flex-start;
-    }
+#profile-content button {
+    background-color: #c62828;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background-color 0.2s;
+}
 
-    .controls-bar input[type="text"] {
-        width: 100%;
-        margin-right: 0;
-        margin-bottom: 10px;
-    }
-    
-    .modal-content {
-        width: 90%;
-        margin: 20% auto;
-    }
-    
-    /* Ensure pagination controls are fully visible on mobile too */
-    #pagination-controls {
-        padding-top: 20px; /* Reduced padding for mobile */
-    }
+#profile-content button:hover {
+    background-color: #8e0000;
+}
+
+/* -------------------
+ * Date Info (NEW)
+ * ------------------- */
+.date-info-container {
+    display: flex;
+    gap: 15px;
+    margin: 5px 0;
+    font-size: 0.85em;
+    color: #bdbdbd;
+}
+
+.date-info-container b {
+    color: #4db6ac;
 }
