@@ -198,18 +198,18 @@ button:hover {
 /* 3. Watched List (Card Layout) */
 /* ------------------- */
 #watched-list.grid-container {
-    list-style: none;
-    padding: 0;
-    
-    /* === CRITICAL GRID RULES for UNIFORM HEIGHT === */
-    display: grid; 
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 20px; 
-    
-    /* Set a minimum height, allowing growth if "Read More" is used */
-    grid-auto-rows: minmax(400px, auto); 
-    /* This ensures all columns start/end at the same vertical position */
-    align-items: stretch; 
+    list-style: none;
+    padding: 0;
+    
+    /* === CRITICAL GRID RULES for UNIFORM HEIGHT === */
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 20px; 
+    
+    /* Set a minimum height, allowing growth if "Read More" is used */
+    grid-auto-rows: minmax(500px, auto); /* <--- FIXED: Increased from 400px to 500px */
+    /* This ensures all columns start/end at the same vertical position */
+    align-items: stretch; 
 }
 
 #watched-list li {
@@ -309,10 +309,10 @@ button:hover {
     font-style: normal;
     display: block;
     margin-top: 5px;
-    margin-bottom: 5px; /* FIX 1: Adds space below clipped text to prevent Read More button overlap */
+    margin-bottom: 5px; /* KEPT: Fixes the overlap issue */
     
-    /* --- INCREASED CLIPPING HEIGHT TO FILL CARD (ABOUT 10 LINES) --- */
-    max-height: 10em;  /* FIX 2: Increased from 7em to 10em to fill the card better */
+    /* --- REVERTED CLIPPING HEIGHT --- */
+    max-height: 7em;  /* REVERTED: Back to 7em so clipping occurs */
     overflow: hidden; 
     width: 100%;
     /* Smooth transition for expansion */
