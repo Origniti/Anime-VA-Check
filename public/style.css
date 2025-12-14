@@ -204,8 +204,10 @@ button:hover {
     display: grid; 
     grid-template-columns: repeat(3, 1fr); 
     gap: 20px; 
-    /* The grid alignment must be set to stretch to handle variable content height */
-    align-items: stretch;
+    
+    /* FIX: ALLOW ROWS TO SIZE INDEPENDENTLY (No 3x3 alignment distortion) */
+    grid-auto-rows: 1fr; 
+    align-items: start; /* Ensures items start at the top of their grid cell */
 }
 
 #watched-list li {
@@ -223,7 +225,8 @@ button:hover {
     border-left: 5px solid var(--color-accent-primary);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     transition: transform 0.2s;
-    height: 100%; /* Ensures uniform height in the grid row */
+    /* Height must be auto for grid-auto-rows to work */
+    height: auto; 
 }
 
 #watched-list li:hover {
@@ -261,10 +264,14 @@ button:hover {
     font-size: 1.1em;
     display: block;
     margin-bottom: 5px;
-    /* === FIX: PREVENT LONG TITLES FROM WRAPPING AND ADDING CARD HEIGHT === */
-    white-space: nowrap; 
-    overflow: hidden; 
-    text-overflow: ellipsis; 
+
+    /* FIX: ALLOW FULL TITLE WRAP, REMOVING ALL CLAMPING */
+    white-space: normal; 
+    overflow: visible; 
+    display: block;
+    -webkit-line-clamp: unset;
+    -webkit-box-orient: unset;
+    text-overflow: unset; 
 }
 
 /* *** ABSOLUTE FIX: DESCRIPTION HEIGHT LIMIT ***
@@ -405,17 +412,15 @@ button:hover {
         grid-template-columns: 1fr;
     }
     
-    /* Remove text overflow limits on mobile since the full width is available */
+    /* Allow titles and descriptions to be fully visible on mobile */
     .anime-info i {
         max-height: none;
         overflow: visible;
     }
 
-    /* Allow titles to wrap on mobile since cards are full-width */
     .anime-info b {
         white-space: normal; 
         overflow: visible; 
-        text-overflow: clip; 
     }
 
     #watched-list li {
