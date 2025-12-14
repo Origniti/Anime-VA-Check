@@ -234,12 +234,12 @@ button:hover {
 }
 
 /* --- START IMAGE FIX CSS --- */
-/* 1. NEW FIXED ASPECT RATIO CONTAINER (3:4 poster ratio) */
+/* 1. NEW FIXED ASPECT RATIO CONTAINER (2:3 poster ratio) */
 .anime-cover-container {
     width: 100%;
-    /* 4:3 Ratio is 133.33% height of its width (4 / 3 = 1.3333) */
-    padding-bottom: 133.33%; /* Creates a tall, fixed-ratio box (3:4 ratio) */
-    position: relative; /* Needed for the absolute positioning of the image */
+    /* CHANGED: 2:3 Ratio is 150% height of its width (3 / 2 = 1.5) */
+    padding-bottom: 150%; 
+    position: relative; 
     overflow: hidden;
     border-radius: 6px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
@@ -477,9 +477,11 @@ button:hover {
     
     /* Adjustments for the new image container on mobile */
     .anime-cover-container {
-        max-width: 150px; /* Constrain the size on mobile */
+        /* CHANGED: Reduced size to 120px */
+        max-width: 120px; /* Constrain the size on mobile */
         margin: 0 auto 10px auto; /* Center the container */
-        padding-bottom: calc(150px * 4 / 3); /* Recalculate padding based on max-width */
+        /* Recalculate padding based on 120px max-width and 2:3 ratio */
+        padding-bottom: calc(120px * 3 / 2); 
     }
 
     .controls-container, .controls-bar {
