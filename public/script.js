@@ -3,11 +3,11 @@ let userId = localStorage.getItem('animeTrackerUserId'); // Load userId from sto
 const watched = [];
 let currentController = null;
 
-// New Global Variables for Pagination
+// New Global Variables for Filtering and Pagination
 const ITEMS_PER_PAGE = 9;
 let currentPage = 1;
 let totalPages = 1;
-
+let currentVAFilter = null; // NEW: Stores the currently active voice actor name filter
 
 // New function to initialize the app (run on page load)
 function init() {
@@ -115,6 +115,22 @@ function changePage(delta) {
         currentPage = newPage;
         renderWatchedList();
     }
+}
+
+
+// -------------------
+// VOICE ACTOR FILTER LOGIC (NEW FUNCTION)
+// -------------------
+function filterByVA(vaName) {
+    // If the same filter is clicked, clear the filter
+    if (currentVAFilter === vaName) {
+        currentVAFilter = null;
+    } else {
+        currentVAFilter = vaName;
+    }
+    // Reset to the first page and re-render the list
+    currentPage = 1;
+    renderWatchedList();
 }
 
 
@@ -255,7 +271,7 @@ async function loadWatched(){
 
 
 // -------------------
-// Read More/Less Toggle Function (Final version with scroll fix)
+// Read More/Less Toggle Function
 // -------------------
 function toggleReadMore(event) {
     const readMoreButton = event.target;
@@ -277,7 +293,7 @@ function toggleReadMore(event) {
     // 3. Force Grid Recalculation (Essential for preserving row alignment)
     const gridContainer = document.getElementById('watched-list');
     if (gridContainer) {
-        // --- FIX: Store Scroll Position to prevent screen jumping ---
+        // FIX: Store Scroll Position to prevent screen jumping
         const scrollY = window.scrollY; 
         
         // Temporarily hide, force browser reflow, then restore display
@@ -285,18 +301,39 @@ function toggleReadMore(event) {
         void gridContainer.offsetWidth; // Force browser reflow/recalculation
         gridContainer.style.display = 'grid'; 
         
-        // --- FIX: Restore Scroll Position ---
+        // FIX: Restore Scroll Position
         window.scrollTo(0, scrollY);
     }
 }
 
 
 // -------------------
-// RENDER WATCHED LIST 
+// RENDER WATCHED LIST (MODIFIED for VA Filtering)
 // -------------------
 function renderWatchedList() {
-    // 1. Calculate Pagination Range
-    totalPages = Math.ceil(watched.length / ITEMS_PER_PAGE);
+    
+    // 1. Apply VA Filter to the full list
+    const vaLang = document.getElementById('va-lang').value;
+    let filteredAnime = watched;
+
+    if (currentVAFilter) {
+        filteredAnime = watched.filter(anime => {
+            const vaString = anime.voice_actors_parsed[vaLang] || "";
+            // Check if the current VA filter name exists in the VA string for this anime
+            return vaString.includes(currentVAFilter); 
+        });
+        
+        // Update the page title to show the active filter
+        document.getElementById('watched-list-title').textContent = 
+            `Your Watched List (Filtered by: ${currentVAFilter} - click to clear)`;
+    } else {
+        // Clear filter text
+        document.getElementById('watched-list-title').textContent = 'Your Watched List';
+    }
+
+
+    // 2. Calculate Pagination Range based on the filtered list
+    totalPages = Math.ceil(filteredAnime.length / ITEMS_PER_PAGE);
     if (currentPage > totalPages && totalPages > 0) {
         currentPage = totalPages;
     } else if (totalPages === 0) {
@@ -306,13 +343,13 @@ function renderWatchedList() {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     const end = start + ITEMS_PER_PAGE;
 
-    // Slice the watched array to get only the items for the current page
-    const animeToRender = watched.slice(start, end);
+    // Slice the filtered array to get only the items for the current page
+    const animeToRender = filteredAnime.slice(start, end);
     
-    // 2. VA Count (Count across ALL watched items for highlighting accuracy)
-    const vaLang = document.getElementById('va-lang').value;
+    
+    // 3. VA Count (Count across ALL watched items for highlighting accuracy)
     const vaCount = {};
-    watched.forEach(a => {
+    watched.forEach(a => { // NOTE: Still uses the full 'watched' list for accurate count
         const vaString = a.voice_actors_parsed[vaLang] || "";
         vaString.split('|').filter(Boolean).forEach(va => {
             const vaName = va.split(': ')[1]?.trim();
@@ -322,12 +359,11 @@ function renderWatchedList() {
         });
     });
 
-    // 3. Render List
+    // 4. Render List
     const list = document.getElementById('watched-list');
     list.innerHTML = ''; 
 
     animeToRender.forEach(anime => {
-        // Rebuild the HTML structure for each anime using DOM methods
         const li = document.createElement('li');
 
         // Image Display
@@ -354,25 +390,21 @@ function renderWatchedList() {
         const descriptionWrapper = document.createElement('div');
         descriptionWrapper.className = 'description-wrapper';
 
-        // Description Text (Clips based on CSS max-height)
         const descriptionText = document.createElement('i');
         descriptionText.className = 'anime-description-text';
         descriptionText.textContent = anime.description || 'No description available.';
         descriptionWrapper.appendChild(descriptionText);
 
-        // Read More Button
-        // Check if description is long enough
         if ((anime.description?.length || 0) > 250) { 
             const readMoreButton = document.createElement('button');
             readMoreButton.className = 'read-more-btn';
             readMoreButton.textContent = 'Read More';
-            // Attach the new toggle function
             readMoreButton.addEventListener('click', toggleReadMore); 
             descriptionWrapper.appendChild(readMoreButton);
         }
         
         animeInfo.appendChild(descriptionWrapper);
-        // --- End Description Wrapper ---
+
 
         // VA Tags Container
         const vaTagsContainer = document.createElement('div');
@@ -383,22 +415,41 @@ function renderWatchedList() {
         const vaList = vaString.split('|').filter(Boolean);
         
         vaList.forEach(va=>{
-            // va is "Character1, Character2: VA Name"
             const parts = va.split(': ');
             const vaName = parts[1]?.trim() || '';
             
             if(vaName){
                 let vaHtml = va;
                 
-                // Check if the VA name is shared
+                const vaSpan = document.createElement('span');
+                vaSpan.className = 'va';
+
+                // Check if the VA name is shared (and should be clickable)
                 if(vaCount[vaName]>1) {
                     // Wrap the VA name in a highlight span
                     vaHtml = va.replace(vaName, `<span class="highlight">${vaName}</span>`);
+                    vaSpan.innerHTML = vaHtml;
+                    
+                    // NEW: Add click listener to the highlight span
+                    // We must find the inner span after setting innerHTML
+                    setTimeout(() => {
+                        const highlightSpan = vaSpan.querySelector('.highlight');
+                        if (highlightSpan) {
+                            // Check if this VA is the currently active filter, add a class for styling
+                            if (currentVAFilter === vaName) {
+                                highlightSpan.classList.add('active-filter');
+                            }
+                            highlightSpan.addEventListener('click', (e) => {
+                                e.stopPropagation(); // Prevent any parent click events
+                                filterByVA(vaName);
+                            });
+                        }
+                    }, 0);
+                    
+                } else {
+                    vaSpan.innerHTML = vaHtml;
                 }
                 
-                const vaSpan = document.createElement('span');
-                vaSpan.className = 'va';
-                vaSpan.innerHTML = vaHtml;
                 vaTagsContainer.appendChild(vaSpan);
             }
         });
@@ -409,7 +460,6 @@ function renderWatchedList() {
         const removeBtn = document.createElement('button');
         removeBtn.className = 'remove-btn';
         removeBtn.textContent = 'Remove';
-        // Use a click listener for the remove function
         removeBtn.addEventListener('click', () => removeAnime(anime.anime_id));
         animeInfo.appendChild(removeBtn);
 
@@ -417,8 +467,8 @@ function renderWatchedList() {
         list.appendChild(li);
     });
 
-    // 4. Update Pagination Controls
-    document.getElementById('page-info').textContent = `Page ${totalPages > 0 ? currentPage : 0} of ${totalPages}`;
+    // 5. Update Pagination Controls
+    document.getElementById('page-info').textContent = `Page ${totalPages > 0 ? currentPage : 0} of ${totalPages} (${filteredAnime.length} item${filteredAnime.length === 1 ? '' : 's'})`;
     document.getElementById('prev-page').disabled = currentPage === 1 || totalPages === 0;
     document.getElementById('next-page').disabled = currentPage === totalPages || totalPages === 0;
 }
@@ -433,4 +483,5 @@ window.searchAnime = actualSearchAnime;
 window.removeAnime = removeAnime;
 window.showPage = showPage; // New export
 window.changePage = changePage; // New export
+window.filterByVA = filterByVA; // New export
 window.onload = init; // This is now the entry point
