@@ -432,7 +432,7 @@ button:hover {
 }
 
 /* ------------------- */
-/* 5. Notes Modal Styles (EXISTING) */
+/* 5. Notes Modal Styles (NEW) */
 /* ------------------- */
 
 /* Backdrop (covers the entire screen) */
@@ -504,7 +504,7 @@ button:hover {
 
 
 /* ------------------- */
-/* 6. Responsive Adjustments (EXISTING) */
+/* 6. Responsive Adjustments */
 /* ------------------- */
 @media (max-width: 950px) {
     /* Change from 3 columns to 2 columns on medium screens */
