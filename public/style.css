@@ -200,15 +200,14 @@ button:hover {
     list-style: none;
     padding: 0;
     
-    /* === CRITICAL GRID RULES for UNIFORM HEIGHT === */
+    /* === CRITICAL GRID RULES for ADAPTABLE HEIGHT === */
     display: grid; 
     grid-template-columns: repeat(3, 1fr); 
     gap: 20px; 
     
-    /* Set a minimum height, allowing growth if "Read More" is used */
-    grid-auto-rows: minmax(400px, auto); 
-    /* This ensures all columns start/end at the same vertical position */
-    align-items: stretch; 
+    /* REMOVED: grid-auto-rows and align-items: stretch;
+       This allows each card row to shrink/grow based on its content, 
+       eliminating the need for fixed image height. */
 }
 
 #watched-list li {
@@ -226,23 +225,26 @@ button:hover {
     border-left: 5px solid var(--color-accent-primary);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     transition: transform 0.2s;
-    height: 100%; /* Ensures uniform height in the grid row */
+    height: auto; /* Changed from 100% to auto */
 }
 
 #watched-list li:hover {
     transform: translateY(-2px); /* Slight lift on hover */
 }
 
+/* === IMAGE FIX: REMOVE FIXED HEIGHT === */
 .anime-cover {
     width: 100%;
     max-width: 100%; 
-    height: 180px; 
-    object-fit: contain; /* <-- FIX: Changed to 'contain' to prevent image cropping */
+    height: auto; /* FIX: Removed fixed height (180px) */
+    object-fit: fill; 
     border-radius: 6px;
     flex-shrink: 0;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
     margin-bottom: 10px;
 }
+/* ==================================== */
+
 
 /* --- CRITICAL FIX FOR CONSISTENT CARD HEIGHT --- */
 .anime-info {
