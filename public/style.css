@@ -13,6 +13,11 @@
     --color-accent-primary: #ff4081; /* Pink/Magenta for titles/buttons/links */
     --color-accent-highlight: #ffc107; /* Yellow/Amber for shared VAs */
 
+    /* New Action Colors */
+    --color-action-info: #00bcd4; /* Cyan/Teal for More Info Button */
+    --color-action-save: #4caf50; /* Green for Save Button */
+    --color-action-remove: #c62828; /* Red for Remove Button */
+    
     /* Fonts */
     --font-family-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -70,9 +75,11 @@ h2 {
 /* ------------------- */
 /* 2. Form and Controls */
 /* ------------------- */
-/* FIX: Explicitly target both types for consistent styling */
+/* FIX: Explicitly target all necessary input types for consistent styling */
 input[type="text"], 
 input[type="password"], 
+input[type="number"], /* NEW */
+input[type="date"],   /* NEW */
 select {
     background-color: #2c2c2c;
     color: var(--color-text-main);
@@ -234,8 +241,7 @@ button:hover {
     transform: translateY(-2px); /* Slight lift on hover */
 }
 
-/* --- START IMAGE FIX CSS --- */
-/* 1. NEW FIXED ASPECT RATIO CONTAINER (2:3 poster ratio) */
+/* --- IMAGE FIX CSS --- */
 .anime-cover-container {
     width: 100%;
     /* 2:3 Ratio is 150% height of its width (3 / 2 = 1.5) */
@@ -248,19 +254,15 @@ button:hover {
     flex-shrink: 0;
 }
 
-/* 2. UPDATED IMAGE STYLES */
 .anime-cover {
-    /* Position the image inside the fixed-ratio container */
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     
-    /* Use 'contain' to ensure the entire image is visible */
     object-fit: contain; 
     
-    /* Add a subtle background color to the empty space */
     background-color: #000000; /* Dark black to fill letterbox/pillarbox areas */
     
     border-radius: 6px; 
@@ -288,11 +290,21 @@ button:hover {
     font-size: 1.1em;
     display: block;
     margin-bottom: 5px;
-    /* Allow full title to wrap normally */
     white-space: normal; 
     overflow: visible; 
     text-align: center;
 }
+
+/* === NEW: User Rating Color Fixes (Point #3) === */
+.high-rating {
+    color: #4caf50; /* Green (Success color) */
+    font-weight: 700;
+}
+.low-rating {
+    color: #ff9800; /* Orange (Warning color) */
+    font-weight: 700;
+}
+
 
 /* *** Description Wrapper for Read More (must contain text and button) *** */
 .description-wrapper {
@@ -433,7 +445,7 @@ button:hover {
 }
 
 /* ------------------- */
-/* 6. Notes Modal & Buttons */
+/* 6. Notes Modal & Buttons (Updated to More Info) */
 /* ------------------- */
 
 /* Grouping the Notes and Remove buttons */
@@ -446,8 +458,9 @@ button:hover {
     flex-shrink: 0;
 }
 
+/* Updated More Info Button */
 .notes-btn {
-    background-color: #00bcd4; /* Cyan/Teal color for Notes */
+    background-color: var(--color-action-info); /* Cyan/Teal color for More Info */
     padding: 5px 10px;
     font-size: 0.9em;
     flex-grow: 1;
@@ -458,7 +471,7 @@ button:hover {
 }
 
 .remove-btn {
-    background-color: #c62828; /* Red for remove */
+    background-color: var(--color-action-remove); /* Red for remove */
     padding: 5px 10px;
     margin-top: 0; 
     margin-bottom: 0;
@@ -484,7 +497,7 @@ button:hover {
 .modal-content {
     background-color: var(--color-background-light);
     margin: 10% auto; /* 10% from the top and centered */
-    padding: 20px;
+    padding: 30px; /* Increased padding */
     border: 1px solid var(--color-border);
     border-radius: 8px;
     width: 80%; /* Width on desktop */
@@ -493,9 +506,13 @@ button:hover {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
 }
 
-.modal-content h3 {
+/* Title inside the modal (The Anime Name) */
+#modal-anime-title {
     color: var(--color-accent-primary);
-    margin-top: 0;
+    text-align: center;
+    font-size: 1.6em;
+    margin-bottom: 20px;
+    font-weight: 600;
 }
 
 /* Close button */
@@ -514,6 +531,44 @@ button:hover {
     cursor: pointer;
 }
 
+/* --- NEW: Tracking Fields Grid Layout --- */
+.tracking-fields {
+    display: grid;
+    /* Define grid structure for label and input */
+    grid-template-columns: 1fr 1.5fr; /* Slightly wider input column */
+    gap: 15px 15px; 
+    margin-bottom: 25px;
+    padding: 15px 10px;
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.tracking-fields label {
+    text-align: right;
+    font-weight: bold;
+    padding-right: 10px;
+    align-self: center; /* Vertically center with input */
+    color: var(--color-text-subtle);
+    font-size: 0.95em;
+}
+
+/* Input fields inside the modal */
+.tracking-fields input[type="number"],
+.tracking-fields input[type="date"] {
+    width: 95%; /* Adjust width slightly for spacing */
+    margin: 0;
+    padding: 8px;
+    font-size: 1em;
+}
+/* --- END NEW TRACKING FIELDS --- */
+
+/* Text area header */
+.modal-content h4 {
+    color: var(--color-text-main);
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+
 /* Text area for notes */
 #notes-textarea {
     width: 100%;
@@ -529,10 +584,15 @@ button:hover {
 }
 
 /* Modal Save Button */
-.modal-content button {
+#notes-save-btn {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     font-size: 1.1em;
+    background-color: var(--color-action-save); /* Green Save Button */
+}
+
+#notes-save-btn:hover {
+    background-color: #388e3c; /* Darker green on hover */
 }
 
 /* ------------------- */
@@ -711,5 +771,17 @@ button:hover {
     #profile-container {
         top: 100px; /* Move it down below other controls on small screens */
         right: 15px;
+    }
+    
+    /* Mobile Modal Layout Adjustments */
+    .tracking-fields {
+        grid-template-columns: 1fr; /* Stack fields vertically on mobile */
+        padding: 15px 5px;
+    }
+    
+    .tracking-fields label {
+        text-align: left; /* Align labels to the left edge */
+        padding-right: 0;
+        margin-bottom: -10px; /* Pull the label closer to the input it describes */
     }
 }
