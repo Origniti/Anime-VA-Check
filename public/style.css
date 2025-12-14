@@ -307,10 +307,10 @@ button:hover {
     font-style: normal;
     display: block;
     margin-top: 5px;
-    margin-bottom: 5px; /* <<< FIXED: Ensures space before the Read More/Less button */
+    margin-bottom: 5px; /* Ensures space before the Read More/Less button */
     
-    /* --- FIXED CLIPPING HEIGHT FOR INITIAL VIEW (ABOUT 6-7 LINES) --- */
-    max-height: 7em; 
+    /* --- INCREASED CLIPPING HEIGHT TO FILL CARD (ABOUT 10 LINES) --- */
+    max-height: 10em;  /* <<< CHANGED from 7em to 10em */
     overflow: hidden; 
     width: 100%;
     /* Smooth transition for expansion */
@@ -339,7 +339,7 @@ button:hover {
 .expanded .anime-description-text {
     max-height: 1000px; /* Use a large value to 'unclip' and show full text */
     overflow: visible;
-    margin-bottom: 10px; /* <<< FIXED: Adds extra space below expanded text */
+    margin-bottom: 10px; /* Adds extra space below expanded text */
 }
 
 /* VA Tags Container (to hold the tags together) */
