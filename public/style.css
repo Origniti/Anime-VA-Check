@@ -261,12 +261,13 @@ button:hover {
     font-size: 1.1em;
     display: block;
     margin-bottom: 5px;
-    white-space: nowrap;
-    overflow: hidden;
+    /* === FIX: PREVENT LONG TITLES FROM WRAPPING AND ADDING CARD HEIGHT === */
+    white-space: nowrap; 
+    overflow: hidden; 
     text-overflow: ellipsis; 
 }
 
-/* *** ABSOLUTE FIX APPLIED HERE ***
+/* *** ABSOLUTE FIX: DESCRIPTION HEIGHT LIMIT ***
    Enforcing a height limit on the description text (the i tag)
 */
 .anime-info i {
@@ -408,6 +409,13 @@ button:hover {
     .anime-info i {
         max-height: none;
         overflow: visible;
+    }
+
+    /* Allow titles to wrap on mobile since cards are full-width */
+    .anime-info b {
+        white-space: normal; 
+        overflow: visible; 
+        text-overflow: clip; 
     }
 
     #watched-list li {
