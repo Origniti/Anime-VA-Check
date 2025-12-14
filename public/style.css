@@ -1,447 +1,537 @@
-/* -------------------
- * Global & Body
- * ------------------- */
+/* ------------------- */
+/* 1. Color Palette & Globals */
+/* ------------------- */
+:root {
+    /* Base Colors */
+    --color-background-dark: #121212; /* Deep background */
+    --color-background-light: #1e1e1e; /* Card background */
+    --color-text-main: #e0e0e0; /* Light gray text */
+    --color-text-subtle: #a0a0a0; /* Subdued text */
+    --color-border: #333333;
+
+    /* Accent Colors */
+    --color-accent-primary: #ff4081; /* Pink/Magenta for titles/buttons/links */
+    --color-accent-highlight: #ffc107; /* Yellow/Amber for shared VAs */
+    --color-accent-secondary: #00bcd4; /* Cyan/Teal for detail button (Notes) */
+
+    /* Fonts */
+    --font-family-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #1e1e1e;
-    color: #f1f1f1;
+    background-color: var(--color-background-dark);
+    color: var(--color-text-main);
+    font-family: var(--font-family-main);
     margin: 0;
     padding: 0;
-    display: flex;
-    justify-content: center;
-    min-height: 100vh;
+    
+    /* Background Image Effect (Requires 'anime-bg.jpg' in the public directory) */
+    background-image: url('anime-bg.jpg');
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center top;
 }
 
 #app {
-    width: 95%;
-    max-width: 1200px;
+    max-width: 1200px; 
+    margin: 50px auto;
     padding: 20px;
+    background-color: rgba(30, 30, 30, 0.95); /* Semi-transparent dark card */
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Main Application Title (Appears when logged in) */
+.app-main-title {
+    color: var(--color-accent-primary);
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2.5em;
+    letter-spacing: 2px;
+}
+
+/* New Section Title Style (For Register, Login, Page Titles) */
+.section-title {
+    color: var(--color-accent-primary);
+    text-align: center;
+    margin-top: 30px;
+    margin-bottom: 20px;
+    font-size: 2.2em;
+    letter-spacing: 1.5px;
+}
+
+h2 {
+    color: var(--color-text-main);
+    text-align: center;
+    margin: 20px 0;
+    font-size: 1.5em;
+}
+
+/* ------------------- */
+/* 2. Form and Controls */
+/* ------------------- */
+input[type="text"], 
+input[type="password"], 
+input[type="date"], /* ADDED DATE INPUT */
+input[type="number"], /* ADDED NUMBER INPUT */
+select {
+    background-color: #2c2c2c;
+    color: var(--color-text-main);
+    border: 1px solid var(--color-border);
+    padding: 10px;
+    border-radius: 6px;
+    margin: 5px 0 15px 0; 
+    width: 100%;
     box-sizing: border-box;
 }
 
-h1 {
-    color: #4db6ac;
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 2.5em;
-    font-weight: 700;
-}
-
-.section-title {
-    font-size: 1.8em;
-    color: #bdbdbd;
-    border-bottom: 2px solid #4db6ac;
-    padding-bottom: 5px;
-    margin-top: 30px;
-    margin-bottom: 20px;
-}
-
-/* -------------------
- * Authentication
- * ------------------- */
-#auth {
-    max-width: 400px;
-    margin: 50px auto;
-    padding: 20px;
-    background: #2a2a2a;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-    text-align: center;
-}
-
-#auth h2 {
-    color: #4db6ac;
-    border-bottom: 1px solid #333;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
-}
-
-#auth input {
-    width: calc(100% - 20px);
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #444;
-    border-radius: 4px;
-    background-color: #333;
-    color: #f1f1f1;
-}
-
-#auth button {
-    background-color: #4db6ac;
+button {
+    background-color: var(--color-accent-primary);
     color: white;
     border: none;
     padding: 10px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.2s;
-    margin-top: 5px;
-}
-
-#auth button:hover {
-    background-color: #388e83;
-}
-
-/* -------------------
- * Navigation Bar (UPDATED)
- * ------------------- */
-.navbar {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 30px;
-    padding: 10px 0;
-    border-bottom: 1px solid #333;
-}
-
-.navbar button {
-    background-color: #333;
-    color: #bdbdbd;
-    border: none;
-    padding: 10px 20px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 1.1em;
-    transition: all 0.2s;
-}
-
-.navbar button:hover {
-    background-color: #444;
-    color: white;
-}
-
-.navbar button.active {
-    background-color: #4db6ac;
-    color: white;
     font-weight: bold;
-    box-shadow: 0 0 10px rgba(77, 182, 172, 0.5);
+    transition: background-color 0.2s;
 }
 
-/* -------------------
- * Controls (Sort, VA, Search, List Status)
- * ------------------- */
-.controls-bar,
+button:hover {
+    background-color: #d81b60; /* Darker pink on hover */
+}
+
+/* Auth Section */
+#auth {
+    padding: 20px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+#auth > div {
+    margin-bottom: 15px;
+}
+
+/* Search and VA Language Controls Layout */
 .controls-container {
     display: flex;
-    flex-wrap: wrap;
+    justify-content: space-between;
     align-items: center;
-    justify-content: flex-start;
-    gap: 20px;
-    padding: 15px 0;
-    border-bottom: 1px solid #333;
+    margin-bottom: 20px;
+    flex-wrap: wrap; 
+}
+
+/* General Controls Bar (Used for sorting/VA lang/Search in new page structure) */
+.controls-bar {
+    display: flex;
+    justify-content: flex-end; 
+    align-items: center;
     margin-bottom: 20px;
 }
 
-.controls-bar label,
-.controls-container label {
-    font-weight: bold;
-    color: #bdbdbd;
+.controls-bar select {
+    width: auto;
+    min-width: 120px;
+    margin-left: 5px;
+    margin-bottom: 0; 
 }
 
-#sort-by,
-#va-lang,
-#search-lang,
-#add-to-list-status {
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid #555;
-    background-color: #333;
-    color: white;
-    cursor: pointer;
+.controls-bar input[type="text"] {
+    width: 300px; 
+    margin-right: auto; 
+    margin-bottom: 0;
+}
+
+
+.controls-container label,
+.controls-bar label {
+    color: var(--color-text-subtle);
+    margin-right: 5px;
+}
+
+.controls-container .control-group {
+    display: flex;
+    align-items: center;
+    margin: 5px 15px 5px 0;
+}
+
+.controls-container select {
+    width: auto;
+    min-width: 120px;
+    margin-left: 5px;
+    margin-bottom: 0; 
 }
 
 #anime-search {
-    flex-grow: 1;
-    min-width: 200px;
-    padding: 10px;
-    border: 1px solid #555;
-    border-radius: 4px;
-    background-color: #333;
-    color: white;
-    font-size: 1em;
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 20px;
 }
 
-/* -------------------
- * Grid Display (Watched/Watchlist)
- * ------------------- */
-.grid-container {
+/* Search Results Dropdown */
+#search-results {
     list-style: none;
     padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 25px;
+    background-color: #242424;
+    border: 1px solid var(--color-border);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    position: relative;
+    z-index: 10;
 }
 
-.grid-container > li {
-    background: #2a2a2a;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-    display: flex;
-    overflow: hidden;
+#search-results li {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    border-bottom: 1px solid #333;
+}
+
+#search-results li:last-child {
+    border-bottom: none;
+}
+
+#search-results li:hover {
+    background-color: #383838;
+}
+
+#search-results li.highlight {
+    /* Indicates anime is already added to list */
+    background: #444; 
+    color: var(--color-accent-primary); /* Highlight color */
+    cursor: default;
+    border-left: 5px solid var(--color-accent-primary);
+}
+
+
+/* ------------------- */
+/* 3. Watched List (Card Layout) */
+/* ------------------- */
+#watched-list.grid-container {
+    list-style: none;
+    padding: 0;
+    
+    /* === CRITICAL GRID RULES for UNIFORM HEIGHT === */
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 20px; 
+    
+    /* Set a minimum height, allowing growth if "Read More" is used */
+    grid-auto-rows: minmax(400px, auto); 
+    /* This ensures all columns start/end at the same vertical position */
+    align-items: stretch; 
+}
+
+#watched-list li {
+    background-color: var(--color-background-light);
     padding: 15px;
-    transition: transform 0.2s, box-shadow 0.2s;
+    margin-bottom: 0; 
+    border-radius: 10px;
+    
+    /* Item stacking within the grid cell */
+    display: flex;
+    flex-direction: column; 
+    align-items: center;
+    text-align: center;
+    
+    border-left: 5px solid var(--color-accent-primary); /* Accent color border */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s;
+    height: 100%; 
 }
 
-.grid-container > li:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.6);
+#watched-list li:hover {
+    transform: translateY(-2px); 
 }
 
+/* --- IMAGE FIX CSS --- */
 .anime-cover-container {
-    width: 100px;
-    flex-shrink: 0;
-    margin-right: 15px;
+    width: 100%;
+    padding-bottom: 150%; 
+    position: relative; 
     overflow: hidden;
-    border-radius: 4px;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    margin-bottom: 10px;
+    flex-shrink: 0;
 }
 
 .anime-cover {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: auto;
-    display: block;
+    height: 100%;
+    object-fit: contain; 
+    background-color: #000000; 
+    border-radius: 6px; 
 }
 
+/* --- CRITICAL FIX FOR CONSISTENT CARD HEIGHT --- */
 .anime-info {
-    flex-grow: 1;
+    flex-grow: 1; 
+    text-align: center;
+    width: 100%;
+    padding: 0 5px;
+    position: relative; 
     display: flex;
     flex-direction: column;
-    min-width: 0; /* Allows content to shrink */
+    justify-content: space-between; 
+    align-items: center;
 }
 
+/* Original Title (Bold text) */
 .anime-info b {
-    color: #4db6ac;
+    color: var(--color-accent-primary); /* Accent color */
     font-size: 1.1em;
+    display: block;
     margin-bottom: 5px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal; 
+    overflow: visible; 
+    text-align: center;
 }
 
+/* Anime Rating and Type */
 .anilist-rating,
 .anime-info p {
     font-size: 0.9em;
-    color: #bdbdbd;
+    color: var(--color-text-subtle);
     margin: 2px 0;
 }
 
-/* -------------------
- * Description/Read More (UPDATED)
- * ------------------- */
-.description-wrapper {
-    position: relative;
-    margin: 5px 0 10px;
-    overflow: hidden;
-    flex-grow: 1;
-}
-
-.anime-description-text {
-    display: block;
+/* Date Info (NEW) */
+.date-info-container {
+    display: flex;
+    gap: 15px;
+    margin: 5px 0;
     font-size: 0.85em;
-    line-height: 1.4;
-    color: #9e9e9e;
-    max-height: 4em; /* Show 3-4 lines initially */
-    mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
-    overflow: hidden;
-    transition: max-height 0.3s ease-in-out;
-    margin-top: 0;
+    color: var(--color-text-subtle);
 }
 
-.description-wrapper.expanded .anime-description-text {
-    max-height: 500px; /* Arbitrarily large value */
-    mask-image: none;
-    -webkit-mask-image: none;
+.date-info-container b {
+    color: var(--color-accent-primary); /* Accent color */
 }
 
+/* *** Description Wrapper for Read More (must contain text and button) *** */
+.description-wrapper {
+    width: 100%;
+    text-align: left; 
+    flex-grow: 1;
+    position: relative;
+    padding-bottom: 5px; 
+}
+
+/* Description Text (Initial Clipping State) */
+.anime-description-text {
+    color: var(--color-text-subtle);
+    font-style: normal;
+    display: block;
+    margin-top: 5px;
+    margin-bottom: 0; 
+    
+    /* --- FIXED CLIPPING HEIGHT FOR INITIAL VIEW (ABOUT 6-7 LINES) --- */
+    max-height: 7em; 
+    overflow: hidden; 
+    width: 100%;
+    /* Smooth transition for expansion */
+    transition: max-height 0.3s ease-out; 
+}
+
+/* Style for the Read More button/link */
 .read-more-btn {
     background: none;
     border: none;
-    color: #4db6ac;
+    color: var(--color-accent-primary); /* Accent color */
     cursor: pointer;
-    font-size: 0.85em;
     padding: 0;
-    margin-top: 3px;
-    display: block;
-    font-weight: bold;
-}
-
-/* -------------------
- * VA Tags (Voice Actors)
- * ------------------- */
-.va-tags-container {
-    margin: 10px 0;
-    padding: 5px 0;
-    border-top: 1px solid #333;
-    border-bottom: 1px solid #333;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-}
-
-.va {
-    background-color: #383838;
-    color: #f1f1f1;
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 0.75em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-    cursor: help; /* Indicates title attribute provides more info */
-}
-
-.va .highlight {
-    color: #ffd700; /* Gold/Yellow highlight for top VAs */
-    font-weight: bold;
-}
-
-/* -------------------
- * Action Buttons
- * ------------------- */
-.action-buttons {
-    margin-top: auto; /* Pushes buttons to the bottom */
-    display: flex;
-    gap: 10px;
-    padding-top: 10px;
-}
-
-.action-buttons button {
-    padding: 8px 12px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+    margin-top: 5px;
     font-size: 0.9em;
+    text-align: left; 
+    display: block;
+    width: auto;
+}
+.read-more-btn:hover {
+    text-decoration: underline;
+    background: none;
+}
+
+/* Class added by JS when Read More is clicked */
+.expanded .anime-description-text {
+    max-height: 1000px; 
+    overflow: visible;
+}
+
+/* VA Tags Container (to hold the tags together) */
+.va-tags-container {
+    margin-top: 5px;
+    flex-shrink: 0; 
+    flex-grow: 0;
+    width: 100%;
+    text-align: center; /* Center the tags within the container */
+}
+
+/* VA Tags (Displaying inline-block for proper wrapping) */
+.va {
+    display: inline-block;
+    background-color: #383838;
+    color: var(--color-text-main);
+    padding: 4px 8px;
+    margin: 4px; 
+    border-radius: 4px;
+    font-size: 0.8em; 
+}
+
+/* Shared VA Highlight */
+.highlight {
+    background-color: var(--color-accent-highlight); /* Yellow accent */
+    color: #121212;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+/* ------------------- */
+/* 4. Navigation and Pagination Styles */
+/* ------------------- */
+.navbar {
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--color-border);
+    padding-bottom: 10px;
+    text-align: center;
+}
+
+.navbar button {
+    background-color: #555;
+    color: white;
+    padding: 10px 15px;
+    margin: 0 5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
     transition: background-color 0.2s;
-    white-space: nowrap;
+}
+
+.navbar button:hover {
+    background-color: #666;
+}
+
+.navbar button.active {
+    background-color: var(--color-accent-primary); /* Accent color for active nav */
+    font-weight: bold;
+}
+
+/* Styling for Pagination Controls */
+#pagination-controls {
+    text-align: center;
+    padding-top: 40px; 
+    margin-top: 20px; 
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+#pagination-controls button {
+    padding: 8px 15px;
+    background-color: var(--color-accent-primary); /* Accent color */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#pagination-controls button:hover:not(:disabled) {
+    background-color: #d81b60;
+}
+
+#pagination-controls button:disabled {
+    background-color: #666;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+#page-info {
+    margin: 0 15px;
+    font-weight: bold;
+    display: inline-block; 
+}
+
+/* ------------------- */
+/* 6. Notes Modal & Buttons */
+/* ------------------- */
+
+/* Grouping the Notes and Remove buttons */
+.action-buttons {
+    display: flex;
+    gap: 5px;
+    width: 100%;
+    justify-content: center;
+    margin-top: 10px; 
+    flex-shrink: 0;
 }
 
 .notes-btn {
-    background-color: #00796b;
-    color: white;
+    background-color: var(--color-accent-secondary); /* Cyan/Teal color for Notes */
+    padding: 5px 10px;
+    font-size: 0.9em;
+    flex-grow: 1;
 }
 
 .notes-btn:hover {
-    background-color: #004d40;
+    background-color: #0097a7; /* Darker secondary accent */
 }
 
 .remove-btn {
-    background-color: #c62828;
-    color: white;
+    background-color: #c62828; /* Red for remove */
+    padding: 5px 10px;
+    margin-top: 0; 
+    margin-bottom: 0;
+    font-size: 0.9em;
+    flex-shrink: 0; 
+    flex-grow: 1; 
 }
 
 .remove-btn:hover {
     background-color: #8e0000;
 }
 
-/* -------------------
- * Search Results
- * ------------------- */
-#search-results {
-    list-style: none;
-    padding: 0;
-    margin-top: 20px;
-}
-
-#search-results li {
-    background: #2a2a2a;
-    padding: 10px 15px;
-    margin-bottom: 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-}
-
-#search-results li:hover {
-    background: #333;
-    color: #4db6ac;
-}
-
-#search-results li.highlight {
-    /* Indicates anime is already added to list */
-    background: #444; 
-    color: #bdbdbd;
-    cursor: default;
-    border-left: 5px solid #4db6ac;
-}
-
-/* -------------------
- * Pagination Controls (NEW)
- * ------------------- */
-#pagination-controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    margin-top: 30px;
-    padding: 15px 0;
-    border-top: 1px solid #333;
-}
-
-#pagination-controls button {
-    background-color: #4db6ac;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-#pagination-controls button:hover:not(:disabled) {
-    background-color: #388e83;
-}
-
-#pagination-controls button:disabled {
-    background-color: #555;
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-#page-info {
-    font-weight: bold;
-    color: #bdbdbd;
-}
-
-/* -------------------
- * Anime Detail Modal (UPDATED)
- * ------------------- */
+/* Modal Backdrop */
 .modal {
     display: none; 
-    position: fixed;
-    z-index: 100;
+    position: fixed; 
+    z-index: 20; 
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0, 0, 0, 0.8);
-    padding-top: 60px;
+    background-color: rgba(0,0,0,0.8); 
 }
 
+/* Modal Content Box */
 .modal-content {
-    background-color: #2a2a2a;
-    margin: 5% auto;
-    padding: 25px;
+    background-color: var(--color-background-light);
+    margin: 10% auto; 
+    padding: 20px;
+    border: 1px solid var(--color-border);
     border-radius: 8px;
-    width: 90%;
-    max-width: 500px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7);
-    animation: fadeIn 0.3s;
+    width: 80%; 
+    max-width: 600px;
+    position: relative;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
 }
 
 .modal-content h3 {
-    color: #4db6ac;
+    color: var(--color-accent-primary); /* Accent color */
     margin-top: 0;
-    border-bottom: 1px solid #444;
+    border-bottom: 1px solid var(--color-border);
     padding-bottom: 10px;
 }
 
+/* Detail Modal specific styling (NEW) */
 .modal-content label {
     display: block;
     margin-top: 10px;
     font-weight: bold;
-    color: #bdbdbd;
+    color: var(--color-text-subtle);
 }
 
 .detail-group {
@@ -456,56 +546,12 @@ h1 {
 .detail-group select {
     width: 60%; 
     padding: 8px;
-    border: 1px solid #555;
-    border-radius: 4px;
-    background-color: #333;
-    color: white;
+    margin: 5px 0; /* Adjusted margin for cleaner layout */
 }
 
-#notes-textarea {
-    width: calc(100% - 20px);
-    height: 150px;
-    padding: 10px;
-    margin-top: 5px;
-    border: 1px solid #555;
-    border-radius: 4px;
-    background-color: #333;
-    color: white;
-    resize: vertical;
-}
-
-#save-detail-btn,
-#detail-close-btn {
-    width: 48%;
-    padding: 10px;
-    margin-top: 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.2s;
-}
-
-#save-detail-btn {
-    background-color: #4db6ac;
-    color: white;
-}
-
-#save-detail-btn:hover {
-    background-color: #388e83;
-}
-
-#detail-close-btn {
-    background-color: #555;
-    color: white;
-}
-
-#detail-close-btn:hover {
-    background-color: #777;
-}
-
+/* Close button */
 .close-button {
-    color: #aaa;
+    color: var(--color-text-subtle);
     float: right;
     font-size: 28px;
     font-weight: bold;
@@ -514,20 +560,64 @@ h1 {
 
 .close-button:hover,
 .close-button:focus {
-    color: #fff;
+    color: var(--color-text-main);
     text-decoration: none;
+    cursor: pointer;
 }
 
-/* -------------------
- * Notifications (NEW)
- * ------------------- */
+/* Text area for notes */
+#notes-textarea {
+    width: 100%;
+    min-height: 150px; /* Adjusted height for better fit */
+    background-color: #2c2c2c;
+    color: var(--color-text-main);
+    border: 1px solid var(--color-border);
+    padding: 10px;
+    border-radius: 6px;
+    margin: 10px 0 20px 0;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+/* Modal Action Buttons */
+.modal-action-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+#save-detail-btn,
+#detail-close-btn {
+    width: 50%;
+    padding: 10px;
+    font-size: 1.1em;
+    margin: 0;
+}
+
+#save-detail-btn {
+    background-color: var(--color-accent-primary); /* Accent color */
+}
+#save-detail-btn:hover {
+    background-color: #d81b60;
+}
+
+#detail-close-btn {
+    background-color: #666; /* Neutral color for close */
+}
+#detail-close-btn:hover {
+    background-color: #777;
+}
+
+/* ------------------- */
+/* 7. Notifications (NEW) */
+/* ------------------- */
 .notification-popup {
     display: none;
     position: fixed;
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background-color: #4CAF50; /* Success green default */
+    background-color: #4CAF50; /* Success Green */
     color: white;
     padding: 15px 25px;
     border-radius: 8px;
@@ -535,55 +625,118 @@ h1 {
     z-index: 1000;
     font-weight: bold;
     opacity: 0.95;
+    min-width: 200px;
+    text-align: center;
 }
 
-/* -------------------
- * Profile Page (New STATS section)
- * ------------------- */
+/* ------------------- */
+/* 8. Profile Page (NEW) */
+/* ------------------- */
 #profile-content {
-    background-color: #2a2a2a;
-    padding: 20px;
-    border-radius: 8px;
-    max-width: 400px;
-    margin: 20px auto;
+    background-color: var(--color-background-light);
+    padding: 30px;
+    border-radius: 10px;
+    max-width: 450px;
+    margin: 40px auto;
+    text-align: left;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
 }
 
 #profile-content p {
     font-size: 1.1em;
-    padding: 5px 0;
-    border-bottom: 1px dashed #333;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--color-border);
 }
 
 #profile-content strong {
-    color: #4db6ac;
+    color: var(--color-accent-primary); /* Accent color */
+    font-weight: bold;
 }
 
 #profile-content button {
-    background-color: #c62828;
+    background-color: #c62828; /* Red for logout/delete account */
     color: white;
     border: none;
     padding: 10px 15px;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     margin-top: 20px;
     transition: background-color 0.2s;
+    width: 100%;
 }
 
 #profile-content button:hover {
     background-color: #8e0000;
 }
 
-/* -------------------
- * Date Info (NEW)
- * ------------------- */
-.date-info-container {
-    display: flex;
-    gap: 15px;
-    margin: 5px 0;
-    font-size: 0.85em;
-    color: #bdbdbd;
+
+/* ------------------- */
+/* 9. Responsive Adjustments */
+/* ------------------- */
+@media (max-width: 950px) {
+    #watched-list.grid-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
-.date-info-container b {
-    color: #4db6ac;
+@media (max-width: 650px) {
+    #app {
+        margin: 20px;
+        padding: 15px;
+    }
+    
+    #watched-list.grid-container {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Ensure full title/description is shown on mobile */
+    .anime-description-text {
+        max-height: none;
+        overflow: visible;
+    }
+    
+    .read-more-btn {
+        display: none; 
+    }
+
+    #watched-list li {
+        text-align: left;
+    }
+    
+    /* Adjustments for the new image container on mobile */
+    .anime-cover-container {
+        max-width: 120px; 
+        margin: 0 auto 10px auto; 
+        padding-bottom: calc(120px * 3 / 2); 
+    }
+
+    .controls-container, .controls-bar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .controls-bar input[type="text"] {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    
+    .modal-content {
+        width: 90%;
+        margin: 20% auto;
+    }
+    
+    #pagination-controls {
+        padding-top: 20px; 
+    }
+
+    .modal-action-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    #save-detail-btn,
+    #detail-close-btn {
+        width: 100%;
+    }
 }
