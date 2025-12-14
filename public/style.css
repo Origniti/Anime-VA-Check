@@ -202,11 +202,10 @@ button:hover {
     
     /* === CRITICAL GRID RULES === */
     display: grid; 
-    /* Create 3 equal columns across the available space */
     grid-template-columns: repeat(3, 1fr); 
-    /* Set space between grid items */
     gap: 20px; 
-    /* =========================== */
+    /* The grid alignment must be set to stretch to handle variable content height */
+    align-items: stretch;
 }
 
 #watched-list li {
@@ -242,17 +241,31 @@ button:hover {
     margin-bottom: 10px;
 }
 
+/* --- CRITICAL FIX FOR CONSISTENT CARD HEIGHT --- */
 .anime-info {
-    flex-grow: 1;
+    flex-grow: 1; /* Allows this block to take up remaining vertical space */
     text-align: center;
     width: 100%;
     padding: 0 5px;
-    /* FIX: Force relative positioning for safe content alignment */
     position: relative; 
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* Ensures the remove button is pushed to the bottom */
+    /* This ensures the Remove button is always at the bottom edge */
+    justify-content: space-between; 
     align-items: center;
+}
+
+/* New style to control the actual description text */
+.anime-description {
+    /* Maximum height for the text content before it gets cut off */
+    max-height: 200px; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    margin-bottom: 10px; 
+    /* Ensure flex item behavior */
+    flex-shrink: 0;
+    flex-grow: 0;
+    padding: 0 5px;
 }
 
 .anime-info b {
@@ -269,12 +282,17 @@ button:hover {
     color: var(--color-text-subtle);
     font-style: normal;
     display: block;
-    margin-top: 10px;
+    margin-top: 5px; /* Reduced margin */
+    margin-bottom: 5px;
 }
 
 /* VA Tags Container (to hold the tags together) */
 .va-tags-container {
-    margin-top: 10px;
+    margin-top: 5px;
+    /* Ensure the tags container doesn't take unlimited height */
+    flex-shrink: 0; 
+    flex-grow: 0;
+    width: 100%;
 }
 
 /* VA Tags */
@@ -300,10 +318,11 @@ button:hover {
 .remove-btn {
     background-color: #c62828; /* Red for remove */
     padding: 5px 10px;
-    /* FIX: Enforce a solid top margin to separate the button from content above, ensuring no overlap */
-    margin-top: 15px; 
+    /* Ensure a clear separation from VA tags and that it sits at the bottom */
+    margin-top: auto; 
+    margin-bottom: 0;
     font-size: 0.9em;
-    flex-shrink: 0; /* Prevent button from shrinking */
+    flex-shrink: 0; 
 }
 .remove-btn:hover {
     background-color: #b71c1c;
@@ -342,7 +361,7 @@ button:hover {
 /* Styling for Pagination Controls */
 #pagination-controls {
     text-align: center;
-    /* FIX: Increased top margin to give a larger buffer below potentially tall grid items */
+    /* Keep a generous top margin to ensure clearance */
     margin-top: 60px; 
     margin-bottom: 20px;
 }
@@ -387,6 +406,12 @@ button:hover {
         grid-template-columns: 1fr;
     }
     
+    /* Remove text overflow limits on mobile since the full width is available */
+    .anime-description {
+        max-height: none;
+        overflow: visible;
+    }
+
     #watched-list li {
         text-align: left;
     }
