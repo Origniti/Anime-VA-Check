@@ -237,7 +237,7 @@ button:hover {
 /* 1. NEW FIXED ASPECT RATIO CONTAINER (2:3 poster ratio) */
 .anime-cover-container {
     width: 100%;
-    /* CHANGED: 2:3 Ratio is 150% height of its width (3 / 2 = 1.5) */
+    /* 2:3 Ratio is 150% height of its width (3 / 2 = 1.5) */
     padding-bottom: 150%; 
     position: relative; 
     overflow: hidden;
@@ -370,74 +370,107 @@ button:hover {
     font-weight: bold;
 }
 
+/* ------------------- */
+/* 6. Notes Modal & Buttons (NEW) */
+/* ------------------- */
+
+/* Grouping the Notes and Remove buttons */
+.action-buttons {
+    display: flex;
+    gap: 5px;
+    width: 100%;
+    justify-content: center;
+    margin-top: 10px; /* Space from VA tags */
+    flex-shrink: 0;
+}
+
+.notes-btn {
+    background-color: #00bcd4; /* Cyan/Teal color for Notes */
+    padding: 5px 10px;
+    font-size: 0.9em;
+    flex-grow: 1;
+}
+
+.notes-btn:hover {
+    background-color: #0097a7; 
+}
+
 .remove-btn {
     background-color: #c62828; /* Red for remove */
     padding: 5px 10px;
-    /* Use margin-top: auto to force the button to the bottom edge of the flex container */
-    margin-top: auto; 
+    margin-top: 0; /* Important for alignment in the flex container */
     margin-bottom: 0;
     font-size: 0.9em;
     flex-shrink: 0; 
-}
-.remove-btn:hover {
-    background-color: #b71c1c;
+    flex-grow: 1; /* Match notes button width */
 }
 
-/* ------------------- */
-/* 4. Navigation and Pagination Styles (NEW) */
-/* ------------------- */
-.navbar {
-    margin-bottom: 20px;
-    border-bottom: 2px solid var(--color-border);
-    padding-bottom: 10px;
-    text-align: center;
+/* Modal Backdrop */
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 20; /* Above all other content */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.8); /* Dark semi-transparent background */
 }
 
-.navbar button {
-    background-color: #555;
-    color: white;
-    padding: 10px 15px;
-    margin: 0 5px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.2s;
+/* Modal Content Box */
+.modal-content {
+    background-color: var(--color-background-light);
+    margin: 10% auto; /* 10% from the top and centered */
+    padding: 20px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    width: 80%; /* Width on desktop */
+    max-width: 600px;
+    position: relative;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
 }
 
-.navbar button:hover {
-    background-color: #666;
+.modal-content h3 {
+    color: var(--color-accent-primary);
+    margin-top: 0;
 }
 
-.navbar button.active {
-    background-color: var(--color-accent-primary);
+/* Close button */
+.close-button {
+    color: var(--color-text-subtle);
+    float: right;
+    font-size: 28px;
     font-weight: bold;
-}
-
-/* Styling for Pagination Controls */
-#pagination-controls {
-    text-align: center;
-    /* Keep a generous top margin to ensure clearance */
-    margin-top: 60px; 
-    margin-bottom: 20px;
-}
-
-#pagination-controls button {
-    padding: 8px 15px;
-    background-color: var(--color-accent-primary);
-    color: white;
-    border: none;
-    border-radius: 5px;
     cursor: pointer;
 }
 
-#pagination-controls button:disabled {
-    background-color: #666;
-    cursor: not-allowed;
+.close-button:hover,
+.close-button:focus {
+    color: var(--color-text-main);
+    text-decoration: none;
+    cursor: pointer;
 }
 
-#page-info {
-    margin: 0 15px;
-    font-weight: bold;
+/* Text area for notes */
+#notes-textarea {
+    width: 100%;
+    min-height: 200px;
+    background-color: #2c2c2c;
+    color: var(--color-text-main);
+    border: 1px solid var(--color-border);
+    padding: 10px;
+    border-radius: 6px;
+    margin: 10px 0 20px 0;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+/* Modal Save Button */
+.modal-content button {
+    width: 100%;
+    padding: 10px;
+    font-size: 1.1em;
 }
 
 /* ------------------- */
@@ -477,7 +510,6 @@ button:hover {
     
     /* Adjustments for the new image container on mobile */
     .anime-cover-container {
-        /* CHANGED: Reduced size to 120px */
         max-width: 120px; /* Constrain the size on mobile */
         margin: 0 auto 10px auto; /* Center the container */
         /* Recalculate padding based on 120px max-width and 2:3 ratio */
@@ -493,5 +525,10 @@ button:hover {
         width: 100%;
         margin-right: 0;
         margin-bottom: 10px;
+    }
+    
+    .modal-content {
+        width: 90%;
+        margin: 20% auto;
     }
 }
