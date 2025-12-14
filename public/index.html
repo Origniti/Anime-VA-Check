@@ -3,108 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anime Voice Actor Tracker</title>
+    <title>Anime Watched List</title>
     <link rel="stylesheet" href="style.css">
-</head>
+    </head>
 <body>
-
     <div id="app">
-        <h1 class="app-main-title">Anime Voice Actor Tracker</h1>
-
         <div id="auth">
-            <h2 class="section-title">Login / Register</h2>
-            
+            <h1 class="section-title">Login / Register</h1>
             <div>
-                <h3>Login</h3>
-                <input type="text" id="login-username" placeholder="Username">
-                <input type="password" id="login-password" placeholder="Password">
-                <button onclick="login()">Login</button>
+                <input type="text" id="username" placeholder="Username" required>
             </div>
-
-            <hr style="border-color: var(--color-border); margin: 20px 0;">
-
             <div>
-                <h3>Register</h3>
-                <input type="text" id="reg-username" placeholder="Username">
-                <input type="password" id="reg-password" placeholder="Password">
-                <button onclick="register()">Register</button>
+                <input type="password" id="password" placeholder="Password" required>
             </div>
+            <button onclick="login()">Login</button>
+            <button onclick="register()">Register</button>
+            <p id="auth-message"></p>
         </div>
 
-        <div id="main" style="display:none;">
+        <div id="main-content" style="display:none;">
+            <h1 class="app-main-title">My Watched Anime List</h1>
 
             <div class="navbar">
-                <button id="nav-watched" class="active" onclick="showPage('watched')">Watched List</button>
-                <button id="nav-search" onclick="showPage('search')">Search & Add</button>
+                <button onclick="logout()">Logout</button>
+                <button onclick="showPage('list')">Watched List</button>
+                <button onclick="showPage('add')">Add New Anime</button>
             </div>
-            
-            <div id="page-watched" class="page-content">
+
+            <div id="list-page" class="page">
                 
-                <h2 id="watched-list-title">Your Watched List</h2> 
-
                 <div class="controls-bar">
-                    <label for="va-lang">Voice Actor Language:</label>
-                    <select id="va-lang">
-                        <option value="japanese">Japanese</option>
-                        <option value="english">English</option>
+                    <label for="sort-select">Sort By:</label>
+                    <select id="sort-select" onchange="loadWatchedList()">
+                        <option value="dateAdded">Date Added (Newest)</option>
+                        <option value="nameAsc">Title (A-Z)</option>
+                        <option value="nameDesc">Title (Z-A)</option>
                     </select>
+                    
+                    <label for="va-lang-filter" style="margin-left: 15px;">VA Language:</label>
+                    <select id="va-lang-filter" onchange="loadWatchedList()">
+                        <option value="all">All</option>
+                        </select>
                 </div>
-
+                
+                <h2 id="watched-list-title">Your List</h2>
                 <ul id="watched-list" class="grid-container">
                     </ul>
-
-                <div id="pagination-controls">
-                    <button id="prev-page" onclick="changePage(-1)">Previous</button>
-                    <span id="page-info">Page 1 of 1</span>
-                    <button id="next-page" onclick="changePage(1)">Next</button>
-                </div>
-
-            </div>
-
-            <div id="page-search" class="page-content" style="display: none;">
-                <h2 class="section-title">Search for Anime</h2>
                 
-                <div class="controls-bar">
-                    <div class="controls-group-search">
-                        <input type="text" id="anime-search" placeholder="Search anime by title...">
-                    
-                        <label for="search-lang" style="white-space: nowrap;">Title Language:</label>
-                        <select id="search-lang">
-                            <option value="romaji">Romaji</option>
-                            <option value="english">English</option>
-                        </select>
-                    </div>
+                <div id="pagination-controls">
+                    <button id="prev-page-btn" onclick="prevPage()">Previous</button>
+                    <span id="page-info">Page 1 of 1</span>
+                    <button id="next-page-btn" onclick="nextPage()">Next</button>
                 </div>
-
-                <ul id="search-results">
-                    </ul>
             </div>
 
+            <div id="add-page" class="page" style="display:none;">
+                <h2 class="section-title">Add Anime to List</h2>
+                <div class="search-container">
+                    <input type="text" id="anime-search" placeholder="Search for anime (e.g., Attack on Titan)" oninput="searchAnime()">
+                    <ul id="search-results">
+                        </ul>
+                </div>
+            </div>
         </div>
     </div>
-    
+
     <div id="notes-modal" class="modal-backdrop" style="display: none;">
         <div class="modal-content">
             <span class="close-btn" onclick="closeNotesModal()">&times;</span>
             <h3 id="notes-modal-title">Notes for [Anime Title]</h3>
-            
             <textarea id="notes-input" placeholder="Type your notes here..."></textarea>
-            
             <button onclick="saveNotes()">Save Notes</button>
             <p id="notes-status"></p>
-        </div>
-    </div>
-
-    <div id="date-modal" class="modal-backdrop" style="display: none;">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeDateModal()">&times;</span>
-            <h3 id="date-modal-title">Set Finished Date for [Anime Title]</h3>
-            
-            <input type="date" id="finished-date-input">
-            
-            <button onclick="saveFinishedDate()">Save Date</button>
-            <button class="remove-btn" onclick="clearFinishedDate()">Clear Date</button>
-            <p id="date-status"></p>
         </div>
     </div>
 
