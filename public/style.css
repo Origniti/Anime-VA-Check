@@ -371,6 +371,26 @@ button:hover {
     font-weight: bold;
 }
 
+/* --- NEW: VA Highlight Clickable Style --- */
+.highlight.clickable {
+    cursor: pointer;
+    /* Optional: Add a subtle visual hover effect */
+    transition: background-color 0.15s, transform 0.1s; 
+}
+
+.highlight.clickable:hover {
+    background-color: #ffd740; /* Slightly lighter yellow/amber on hover */
+    transform: scale(1.02);
+}
+
+/* Style for when a filter is active */
+.highlight.clickable.active-filter {
+    /* You can make it darker or add a border to show it's currently selected */
+    background-color: #ff9800; /* Orange/Darker Amber */
+}
+/* -------------------------------------- */
+
+
 /* ------------------- */
 /* 4. Navigation and Pagination Styles */
 /* ------------------- */
