@@ -255,19 +255,7 @@ button:hover {
     align-items: center;
 }
 
-/* New style to control the actual description text */
-.anime-description {
-    /* Maximum height for the text content before it gets cut off */
-    max-height: 200px; 
-    overflow: hidden; 
-    text-overflow: ellipsis; 
-    margin-bottom: 10px; 
-    /* Ensure flex item behavior */
-    flex-shrink: 0;
-    flex-grow: 0;
-    padding: 0 5px;
-}
-
+/* Original Title (Bold text) */
 .anime-info b {
     color: var(--color-accent-primary);
     font-size: 1.1em;
@@ -278,13 +266,23 @@ button:hover {
     text-overflow: ellipsis; 
 }
 
+/* *** ABSOLUTE FIX APPLIED HERE ***
+   Enforcing a height limit on the description text (the i tag)
+*/
 .anime-info i {
     color: var(--color-text-subtle);
     font-style: normal;
     display: block;
-    margin-top: 5px; /* Reduced margin */
+    margin-top: 5px;
     margin-bottom: 5px;
+    
+    /* Enforce Height Limit on Description */
+    max-height: 10em; /* Max height equivalent to about 8-10 lines of text */
+    overflow: hidden; 
+    text-align: left; /* Ensure text flows naturally within the limited box */
+    width: 100%;
 }
+
 
 /* VA Tags Container (to hold the tags together) */
 .va-tags-container {
@@ -295,7 +293,7 @@ button:hover {
     width: 100%;
 }
 
-/* VA Tags */
+/* VA Tags (Displaying inline-block for proper wrapping) */
 .va {
     display: inline-block;
     background-color: #383838;
@@ -318,7 +316,7 @@ button:hover {
 .remove-btn {
     background-color: #c62828; /* Red for remove */
     padding: 5px 10px;
-    /* Ensure a clear separation from VA tags and that it sits at the bottom */
+    /* Use margin-top: auto to force the button to the bottom edge of the flex container */
     margin-top: auto; 
     margin-bottom: 0;
     font-size: 0.9em;
@@ -407,7 +405,7 @@ button:hover {
     }
     
     /* Remove text overflow limits on mobile since the full width is available */
-    .anime-description {
+    .anime-info i {
         max-height: none;
         overflow: visible;
     }
