@@ -34,7 +34,7 @@
             <h1 class="app-main-title">My Anime List</h1>
 
             <nav class="navbar">
-                <button id="nav-watched" onclick="showPage('watched')">My List</button>
+                <button id="nav-watched" onclick="showPage('watched')">Watched</button>
                 <button id="nav-watchlist" onclick="showPage('watchlist')">Watchlist</button>
                 <button id="nav-search" onclick="showPage('search')">Search</button>
                 <button id="nav-profile" onclick="showPage('profile')">Profile</button>
@@ -78,6 +78,15 @@
             <div id="page-search" class="page-content" style="display: none;">
                 <div class="controls-container">
                     <input type="text" id="anime-search" placeholder="Search for anime...">
+                    
+                    <div class="control-group">
+                        <label for="add-to-list-status">Add to:</label>
+                        <select id="add-to-list-status">
+                            <option value="Watched">Watched</option>
+                            <option value="Watchlist">Watchlist</option>
+                        </select>
+                    </div>
+
                     <div class="control-group">
                         <label for="search-lang">Search Title Language:</label>
                         <select id="search-lang">
@@ -92,57 +101,52 @@
             </div>
 
             <div id="page-profile" class="page-content" style="display: none;">
-                <h2 class="section-title">Welcome, <span id="profile-username">User</span></h2>
-                
-                <div class="profile-stats">
-                    <h3>My Stats</h3>
-                    <p>Total Watched: <span id="stats-watched-count">0</span></p>
-                    <p>Average Rating: <span id="stats-avg-rating">N/A</span></p>
-                </div>
-                
-                <div class="friend-system">
-                    <h3>Friend Finder</h3>
-                    <input type="text" id="friend-search-input" placeholder="Search users by username">
-                    <button onclick="searchUsers()">Search</button>
-                    <ul id="user-search-results">
-                        </ul>
-                    
-                    <h3>Friend Requests</h3>
-                    <ul id="friend-requests-list">
-                        </ul>
-                    
-                    <h3>My Friends</h3>
-                    <ul id="friends-list">
-                        </ul>
+                <p class="section-title">User Profile & Stats</p>
+                <div id="profile-content">
+                    <p>Username: <strong id="profile-username"></strong></p>
+                    <p>Total Watched: <strong id="stat-watched-count">0</strong></p>
+                    <p>Average Score Given: <strong id="stat-avg-rating">N/A</strong></p>
+                    <p>Top VA: <strong id="stat-top-va">N/A</strong></p>
+                    <button onclick="logout()">Logout</button>
                 </div>
             </div>
+        </div> 
 
-        </div> </div> <div id="anime-detail-modal" class="modal">
+    </div> 
+    
+    <div id="anime-detail-modal" class="modal">
         <div class="modal-content">
             <span class="close-button" onclick="closeDetailModal()">&times;</span>
             <h3 id="modal-anime-title">Anime Title</h3>
-            
+
             <div class="detail-group">
-                <label for="user-rating">My Rating (1-10):</label>
-                <input type="number" id="user-rating" min="1" max="10" step="0.5" placeholder="e.g., 8.5">
+                <label for="modal-status-select">List Status:</label>
+                <select id="modal-status-select">
+                    <option value="Watched">Watched</option>
+                    <option value="Watchlist">Watchlist</option>
+                </select>
             </div>
-            
+
             <div class="detail-group">
-                <label for="start-date">Start Date:</label>
-                <input type="date" id="start-date">
+                <label for="modal-user-rating">My Rating (1-10):</label>
+                <input type="number" id="modal-user-rating" min="1" max="10" step="0.5" placeholder="e.g. 9.5">
             </div>
-            
+
             <div class="detail-group">
-                <label for="finish-date">Finish Date:</label>
-                <input type="date" id="finish-date">
+                <label for="modal-start-date">Date Started:</label>
+                <input type="date" id="modal-start-date">
             </div>
+
+            <div class="detail-group">
+                <label for="modal-finish-date">Date Finished:</label>
+                <input type="date" id="modal-finish-date">
+            </div>
+
+            <label for="notes-textarea">Notes:</label>
+            <textarea id="notes-textarea" placeholder="Enter your personal notes here..."></textarea>
             
-            <label for="notes-textarea">My Notes:</label>
-            <textarea id="notes-textarea" placeholder="Add your personal thoughts and review..."></textarea>
-            
-            <button id="detail-save-btn">Save Changes</button>
-            
-            <button id="detail-close-btn" class="alt-button">Close</button>
+            <button id="save-detail-btn" onclick="saveAnimeDetails()">Save Details</button>
+            <button id="detail-close-btn" onclick="closeDetailModal()">Close</button>
         </div>
     </div>
 
