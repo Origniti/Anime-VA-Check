@@ -1,566 +1,496 @@
-/* ------------------- */
-/* 1. Color Palette & Globals */
-/* ------------------- */
 :root {
-    /* Base Colors */
-    --color-background-dark: #121212; /* Deep background */
-    --color-background-light: #1e1e1e; /* Card background */
-    --color-text-main: #e0e0e0; /* Light gray text */
-    --color-text-subtle: #a0a0a0; /* Subdued text */
-    --color-border: #333333;
-
-    /* Accent Colors */
-    --color-accent-primary: #ff4081; /* Pink/Magenta for titles/buttons/links */
-    --color-accent-highlight: #ffc107; /* Yellow/Amber for shared VAs */
-
-    /* Fonts */
-    --font-family-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --color-background: #1e1e1e;
+    --color-surface: #252526;
+    --color-primary: #8e24aa; /* Purple for key actions/active state */
+    --color-primary-dark: #671b7a;
+    --color-accent: #ff4081; /* Pink accent */
+    --color-text-main: #f0f0f0;
+    --color-text-subtle: #aaa;
+    --color-border: #444;
 }
 
 body {
-    background-color: var(--color-background-dark);
-    color: var(--color-text-main);
-    font-family: var(--font-family-main);
-    margin: 0;
-    padding: 0;
-    
-    /* Background Image Effect (Requires 'anime-bg.jpg' in the public directory) */
-    background-image: url('anime-bg.jpg');
-    background-size: cover;
-    background-attachment: fixed;
-    background-position: center top;
+    font-family: Arial, sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-text-main);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
 }
 
 #app {
-    max-width: 1200px; /* Increased max-width to comfortably fit 3 columns */
-    margin: 50px auto;
-    padding: 20px;
-    background-color: rgba(30, 30, 30, 0.95); /* Semi-transparent dark card */
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    max-width: 1200px;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
-/* Main Application Title (Appears when logged in) */
 .app-main-title {
-    color: var(--color-accent-primary);
-    text-align: center;
-    margin-bottom: 30px;
-    font-size: 2.5em;
-    letter-spacing: 2px;
+    color: var(--color-primary);
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2.5em;
+    text-shadow: 0 0 10px rgba(142, 36, 170, 0.5);
 }
 
-/* New Section Title Style (For Register, Login, Page Titles) */
 .section-title {
-    color: var(--color-accent-primary);
-    text-align: center;
-    margin-top: 30px;
-    margin-bottom: 20px;
-    font-size: 2.2em;
-    letter-spacing: 1.5px;
+    color: var(--color-text-main);
+    border-bottom: 2px solid var(--color-border);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
 }
 
-/* Title for the Watched List (Can be updated by JS to show filter state) */
-#watched-list-title { 
-    color: var(--color-text-main);
-    text-align: center;
-    margin: 20px 0;
-    font-size: 1.5em;
+/* --- Authentication & Forms --- */
+#auth, #main > div {
+    background-color: var(--color-surface);
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
-h2 {
-    color: var(--color-text-main);
-    text-align: center;
-    margin: 20px 0;
-    font-size: 1.5em;
+#auth input, #auth button, #page-search input, #page-search select {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 5px;
+    background-color: #333;
+    color: var(--color-text-main);
+    box-sizing: border-box;
 }
 
-/* ------------------- */
-/* 2. Form and Controls */
-/* ------------------- */
-input[type="text"], 
-input[type="password"], 
-select {
-    background-color: #2c2c2c;
-    color: var(--color-text-main);
-    border: 1px solid var(--color-border);
-    padding: 10px;
-    border-radius: 6px;
-    margin: 5px 0 15px 0; 
-    width: 100%;
-    box-sizing: border-box;
+#auth button, .card-buttons-group button {
+    background-color: var(--color-primary);
+    color: white;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s;
 }
 
-button {
-    background-color: var(--color-accent-primary);
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.2s;
+#auth button:hover {
+    background-color: var(--color-primary-dark);
 }
 
-button:hover {
-    background-color: #d81b60; /* Darker pink on hover */
-}
+/* --- ENHANCED NAVIGATION BAR STYLES --- */
 
-/* Auth Section */
-#auth {
-    padding: 20px;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-#auth > div {
-    margin-bottom: 15px;
-}
-
-/* General Controls Bar (Used for sorting/VA lang) */
-.controls-bar {
-    display: flex;
-    justify-content: flex-end; 
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.controls-bar select {
-    width: auto;
-    min-width: 120px;
-    margin-left: 5px;
-    margin-bottom: 0; 
-}
-
-.controls-bar label {
-    color: var(--color-text-subtle);
-    margin-right: 5px;
-}
-
-/* Search input layout */
-.search-container {
-    width: 100%;
-}
-#anime-search {
-    width: 100%;
-    margin-top: 10px;
-    margin-bottom: 20px;
-}
-
-/* Search Results Dropdown */
-#search-results {
-    list-style: none;
-    padding: 0;
-    background-color: #242424;
-    border: 1px solid var(--color-border);
-    border-top: none;
-    border-radius: 0 0 6px 6px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-    position: relative;
-    z-index: 10;
-}
-
-#search-results li {
-    padding: 10px 15px;
-    cursor: pointer;
-    transition: background-color 0.15s;
-    border-bottom: 1px solid #333;
-}
-
-#search-results li:last-child {
-    border-bottom: none;
-}
-
-#search-results li:hover {
-    background-color: #383838;
-}
-
-/* ------------------- */
-/* 3. Watched List (Card Layout) */
-/* ------------------- */
-#watched-list.grid-container {
-    list-style: none;
-    padding: 0;
-    
-    /* === CRITICAL GRID RULES for ADAPTABLE HEIGHT === */
-    display: grid; 
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 20px; 
-}
-
-#watched-list li {
-    background-color: var(--color-background-light);
-    padding: 15px;
-    margin-bottom: 0; 
-    border-radius: 10px;
-    
-    /* Item stacking within the grid cell */
-    display: flex;
-    flex-direction: column; 
-    align-items: center;
-    text-align: center;
-    
-    border-left: 5px solid var(--color-accent-primary);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    transition: transform 0.2s;
-    height: auto; /* Allows card height to be determined by content */
-}
-
-#watched-list li:hover {
-    transform: translateY(-2px); /* Slight lift on hover */
-}
-
-/* === IMAGE FIX: REMOVE FIXED HEIGHT === */
-.anime-cover {
-    width: 100%;
-    max-width: 100%; 
-    height: auto;
-    object-fit: fill; 
-    border-radius: 6px;
-    flex-shrink: 0;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-    margin-bottom: 10px;
-}
-/* ==================================== */
-
-/* --- CRITICAL FLEX RULES FOR CARD LAYOUT --- */
-.anime-info {
-    flex-grow: 1; 
-    text-align: center;
-    width: 100%;
-    padding: 0 5px;
-    position: relative; 
-    display: flex;
-    flex-direction: column;
-    /* This pushes the button group to the bottom */
-    justify-content: space-between; 
-    align-items: center;
-}
-
-/* Original Title (Bold text) */
-.anime-info b {
-    color: var(--color-accent-primary);
-    font-size: 1.1em;
-    display: block;
-    margin-bottom: 5px;
-    white-space: normal; 
-    overflow: visible; 
-    text-align: center;
-}
-
-/* *** Description Wrapper for Read More (must contain text and button) *** */
-.description-wrapper {
-    width: 100%;
-    text-align: left; /* Align text content to the left */
-    flex-grow: 1;
-    position: relative;
-    padding-bottom: 5px; 
-}
-
-/* Description Text (Initial Clipping State) */
-.anime-description-text {
-    color: var(--color-text-subtle);
-    font-style: normal;
-    display: block;
-    margin-top: 5px;
-    margin-bottom: 0; 
-    
-    /* --- FIXED CLIPPING HEIGHT FOR INITIAL VIEW (ABOUT 6-7 LINES) --- */
-    max-height: 7em; 
-    overflow: hidden; 
-    width: 100%;
-    transition: max-height 0.3s ease-out; 
-}
-
-/* Style for the Read More button/link */
-.read-more-btn {
-    background: none;
-    border: none;
-    color: var(--color-accent-primary);
-    cursor: pointer;
-    padding: 0;
-    margin-top: 5px;
-    font-size: 0.9em;
-    text-align: left; 
-    display: block;
-    width: auto;
-}
-.read-more-btn:hover {
-    text-decoration: underline;
-    background: none;
-}
-
-/* Class added by JS when Read More is clicked */
-.expanded .anime-description-text {
-    max-height: 1000px; /* Unclip */
-    overflow: visible;
-}
-
-/* VA Tags Container (to hold the tags together) */
-.va-tags-container {
-    margin-top: 5px;
-    flex-shrink: 0; 
-    flex-grow: 0;
-    width: 100%;
-}
-
-/* VA Tags (Displaying inline-block for proper wrapping) */
-.va {
-    display: inline-block;
-    background-color: #383838;
-    color: var(--color-text-main);
-    padding: 4px 8px;
-    margin: 4px; 
-    border-radius: 4px;
-    font-size: 0.8em; 
-}
-
-/* Shared VA Highlight (Clickable) */
-.highlight {
-    background-color: var(--color-accent-highlight);
-    color: #121212;
-    padding: 2px 4px;
-    border-radius: 3px;
-    font-weight: bold;
-    cursor: pointer; /* Indicates it's clickable */
-    transition: background-color 0.2s;
-}
-
-.highlight:hover {
-    background-color: #fdd835; /* Lighter shade on hover */
-}
-
-/* Style for the VA that is currently actively filtering the list */
-.highlight.active-filter {
-    background-color: var(--color-accent-primary); 
-    color: white; 
-    box-shadow: 0 0 5px var(--color-accent-primary);
-}
-
-
-/* --- Button Group (NEW) --- */
-.card-buttons-group {
-    display: flex;
-    gap: 5px;
-    margin-top: 10px;
-    width: 100%;
-    flex-direction: column; /* Stack buttons vertically for better fit */
-}
-
-/* Notes Button (NEW) */
-.notes-btn {
-    background-color: #4CAF50; /* Green color for notes */
-    padding: 5px 10px;
-    font-size: 0.9em;
-    flex-shrink: 0;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.notes-btn:hover {
-    background-color: #45a049;
-}
-
-
-/* Remove Button */
-.remove-btn {
-    background-color: #c62828; /* Red for remove */
-    padding: 5px 10px;
-    margin-bottom: 0;
-    font-size: 0.9em;
-    flex-shrink: 0; 
-    width: 100%;
-    box-sizing: border-box;
-}
-.remove-btn:hover {
-    background-color: #b71c1c;
-}
-
-/* ------------------- */
-/* 4. Navigation and Pagination Styles */
-/* ------------------- */
 .navbar {
-    margin-bottom: 20px;
-    border-bottom: 2px solid var(--color-border);
-    padding-bottom: 10px;
-    text-align: center;
+    display: flex;
+    justify-content: center;
+    gap: 10px; /* Space between buttons */
+    padding: 10px 0;
+    margin-bottom: 25px;
+    background-color: #212121; /* Slightly darker than main body */
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
 }
 
 .navbar button {
-    background-color: #555;
-    color: white;
-    padding: 10px 15px;
-    margin: 0 5px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.2s;
+    background: #333;
+    color: var(--color-text-main);
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: inset 0 0 0 1px #444; /* Subtle inner border */
 }
 
 .navbar button:hover {
-    background-color: #666;
+    background: #444;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
 }
 
 .navbar button.active {
-    background-color: var(--color-accent-primary);
-    font-weight: bold;
+    background: var(--color-primary); /* Use a distinct color for the active tab */
+    color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5), inset 0 0 0 2px var(--color-primary-dark);
+    transform: translateY(0);
 }
 
-/* Styling for Pagination Controls */
+/* --- ENHANCED CONTROLS BAR & SEARCH STYLES --- */
+
+.controls-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    margin-bottom: 20px;
+    background-color: #212121;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Grouping for Search & Language controls */
+.controls-group-search {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    width: 100%; /* Take up full width in the search page */
+}
+
+/* Style Inputs and Selects consistently */
+#anime-search, #search-lang, #va-lang {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background-color: #2c2c2c;
+    color: var(--color-text-main);
+    font-size: 1em;
+    height: 40px; /* Uniform height */
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+#anime-search {
+    flex-grow: 1; /* Allow the search box to take up most of the space */
+    min-width: 200px;
+}
+
+/* Style the label/select group for VA language */
+.controls-bar label {
+    color: var(--color-text-subtle);
+    font-size: 0.95em;
+    font-weight: 500;
+}
+
+#va-lang {
+    width: 150px;
+}
+
+/* --- Search Results --- */
+#search-results {
+    list-style: none;
+    padding: 0;
+    background-color: var(--color-surface);
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+#search-results li {
+    padding: 10px;
+    border-bottom: 1px solid #333;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#search-results li:hover {
+    background-color: #383838;
+}
+
+/* --- Watched Anime Grid --- */
+.grid-container {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.grid-container li {
+    background-color: #2c2c2c;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    min-height: 400px; /* Ensure a minimum size */
+    position: relative; /* For the date display */
+    overflow: hidden; /* Prevent read-more overflow */
+}
+
+.anime-cover {
+    width: 100%;
+    height: auto;
+    max-height: 200px; /* Constrain image height */
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.anime-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.anime-info b {
+    color: var(--color-accent);
+    margin-bottom: 5px;
+    font-size: 1.1em;
+}
+
+.anime-description-text {
+    font-style: italic;
+    color: var(--color-text-subtle);
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+
+/* Read More/Less Toggle Styles */
+.description-wrapper {
+    max-height: 70px; /* Initial height */
+    overflow: hidden;
+    position: relative;
+    transition: max-height 0.3s ease-out;
+    margin-bottom: 10px;
+}
+
+.description-wrapper.expanded {
+    max-height: 500px; /* Large enough to show full text */
+}
+
+.description-wrapper:not(.expanded) .anime-description-text:after {
+    content: "";
+    position: absolute;
+    bottom: 25px; /* Position above the Read More button */
+    left: 0;
+    right: 0;
+    height: 15px;
+    background: linear-gradient(to top, rgba(44, 44, 44, 1), rgba(44, 44, 44, 0));
+    pointer-events: none;
+}
+
+.read-more-btn {
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.9em;
+    text-align: left;
+    margin-top: 5px;
+    align-self: flex-start;
+}
+
+.read-more-btn:hover {
+    text-decoration: underline;
+}
+
+/* VA Tags */
+.va-tags-container {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #333;
+    flex-grow: 1; /* Push buttons to the bottom */
+}
+
+.va {
+    display: block;
+    font-size: 0.85em;
+    line-height: 1.4;
+    color: var(--color-text-subtle);
+}
+
+.highlight {
+    color: var(--color-accent);
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+    border-bottom: 1px dotted var(--color-accent);
+}
+
+.highlight:hover {
+    color: #ff80ab;
+}
+
+.highlight.active-filter {
+    color: #fff;
+    background-color: var(--color-primary);
+    padding: 1px 4px;
+    border-radius: 3px;
+    border-bottom: none;
+}
+
+/* Card Buttons */
+.card-buttons-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #333;
+}
+
+.card-buttons-group button {
+    padding: 8px;
+    border-radius: 5px;
+    font-size: 0.9em;
+    flex-grow: 1;
+}
+
+.remove-btn {
+    background-color: #d32f2f !important;
+}
+.remove-btn:hover {
+    background-color: #b71c1c !important;
+}
+.notes-btn {
+    background-color: #5c6bc0;
+}
+.notes-btn:hover {
+    background-color: #3f51b5;
+}
+
+/* Date Button on the card (NEW) */
+.date-btn {
+    background-color: #3f51b5 !important; 
+    padding: 5px 10px;
+    font-size: 0.9em;
+    flex-shrink: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.date-btn:hover {
+    background-color: #303f9f !important;
+}
+
+/* --- Pagination Controls --- */
 #pagination-controls {
-    text-align: center;
-    margin-top: 60px; 
-    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 15px;
 }
 
 #pagination-controls button {
-    padding: 8px 15px;
-    background-color: var(--color-accent-primary);
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+    padding: 10px 15px;
+    background-color: #444;
+    color: var(--color-text-main);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#pagination-controls button:hover:not(:disabled) {
+    background-color: #555;
 }
 
 #pagination-controls button:disabled {
-    background-color: #666;
-    cursor: not-allowed;
+    cursor: not-allowed;
+    opacity: 0.5;
 }
 
 #page-info {
-    margin: 0 15px;
-    font-weight: bold;
+    color: var(--color-text-subtle);
 }
 
-/* ------------------- */
-/* 5. Notes Modal Styles (NEW) */
-/* ------------------- */
 
-/* Backdrop (covers the entire screen) */
+/* --- Modal (Notes and Date) Styles --- */
 .modal-backdrop {
-    position: fixed;
-    z-index: 100; /* High z-index to cover everything */
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.7); /* Dark semi-transparent background */
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
-/* Modal Content Box */
 .modal-content {
-    background-color: var(--color-background-light);
-    color: var(--color-text-main);
-    padding: 30px;
-    border-radius: 10px;
-    width: 90%;
-    max-width: 600px;
-    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.8);
-    position: relative;
-    animation: fadeIn 0.3s;
+    background-color: var(--color-surface);
+    padding: 30px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7);
+    position: relative;
 }
 
-/* Fade In Animation */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Close Button */
 .close-btn {
-    color: var(--color-text-subtle);
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    position: absolute;
-    top: 10px;
-    right: 20px;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 24px;
+    color: var(--color-text-subtle);
+    cursor: pointer;
 }
 
-.close-btn:hover,
-.close-btn:focus {
-    color: var(--color-accent-primary);
+.modal-content h3 {
+    color: var(--color-accent);
+    margin-top: 0;
+    margin-bottom: 20px;
+    text-align: center;
 }
 
-/* Notes Textarea */
 #notes-input {
-    width: 100%;
-    height: 200px;
-    margin-bottom: 15px;
-    resize: vertical;
-    font-family: var(--font-family-main);
+    width: 100%;
+    min-height: 150px;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid var(--color-border);
+    border-radius: 5px;
+    background-color: #333;
+    color: var(--color-text-main);
+    box-sizing: border-box;
+    resize: vertical;
 }
 
-/* Status Message */
-#notes-status {
-    color: var(--color-accent-primary);
-    text-align: center;
-    margin-top: 10px;
+.modal-content button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: var(--color-primary);
+    color: white;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.2s;
 }
 
-
-/* ------------------- */
-/* 6. Responsive Adjustments */
-/* ------------------- */
-@media (max-width: 950px) {
-    /* Change from 3 columns to 2 columns on medium screens */
-    #watched-list.grid-container {
-        grid-template-columns: repeat(2, 1fr);
-    }
+.modal-content button:hover {
+    background-color: var(--color-primary-dark);
 }
 
-@media (max-width: 650px) {
-    #app {
-        margin: 20px;
-        padding: 15px;
-    }
-    
-    /* Change from 2 columns to 1 column on small screens */
-    #watched-list.grid-container {
-        grid-template-columns: 1fr;
-    }
-    
-    /* Ensure full title/description is shown on mobile */
-    .anime-description-text {
-        max-height: none;
-        overflow: visible;
-    }
-    
-    .read-more-btn {
-        display: none; /* Hide button on mobile when full text is visible */
-    }
+#notes-status, #date-status {
+    text-align: center;
+    margin-top: 15px;
+    color: var(--color-accent);
+    font-style: italic;
+}
 
-    #watched-list li {
-        text-align: left;
-    }
-    
-    .anime-cover {
-        max-width: 150px;
-        height: auto;
-        margin: 0 auto 10px auto; /* Center image */
-    }
+/* --- New Date Feature Styles --- */
 
-    .controls-bar {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .controls-bar select {
-        width: 100%;
-        margin-left: 0;
-        margin-top: 5px;
-    }
-    
-    .controls-bar label {
-        margin-top: 10px;
-    }
+/* Date Display at the top of the card */
+.finished-date-display {
+    width: 100%;
+    background-color: #3f51b5; /* A nice blue color */
+    color: white;
+    padding: 5px 10px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    font-size: 0.9em;
+    font-weight: normal;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
 
-    .modal-content {
-        /* Slightly smaller padding on mobile */
-        padding: 20px; 
-    }
+.finished-date-display b {
+    color: #ffc107; /* Yellow highlight for the date */
+}
+
+/* Styling for the date input inside the modal */
+#finished-date-input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    /* Reset background/color to fit modal style */
+    background-color: #2c2c2c; 
+    color: var(--color-text-main);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
 }
