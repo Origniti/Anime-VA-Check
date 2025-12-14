@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anime Tracker</title>
     <link rel="stylesheet" href="style.css">
-    <script src="script.js" defer></script>
+    <script src="script.js" defer></script> 
 </head>
 <body>
     <div id="app">
@@ -27,33 +27,47 @@
 
         <div id="main" style="display:none;">
             
-            <h1 class="app-main-title">Watched Anime</h1>
+            <div class="navbar">
+                <button onclick="showPage('search')" id="nav-search" class="active">Search</button>
+                <button onclick="showPage('watched')" id="nav-watched">Watched List</button>
+                </div>
 
-            <div class="controls-container">
-                <div class="control-group">
-                    <label for="search-lang">Search Title Language:</label>
+            <div id="page-search" class="page-content">
+                <h2>Search Anime</h2>
+                <div class="controls-bar">
+                    <input type="text" id="anime-search" placeholder="Search for anime..." oninput="searchAnime()">
                     <select id="search-lang">
-                        <option value="romaji">Romaji</option>
-                        <option value="english">English</option>
+                        <option value="romaji">Romaji Titles</option>
+                        <option value="english">English Titles</option>
                     </select>
                 </div>
-                <div class="control-group">
-                    <label for="va-lang">VA Highlight Language:</label>
+                
+                <ul id="search-results">
+                    </ul>
+            </div>
+
+            <div id="page-watched" class="page-content" style="display: none;">
+                <h2>Your Watched List</h2>
+                
+                <div class="controls-bar">
+                    <label for="va-lang">VA Language:</label>
                     <select id="va-lang">
                         <option value="english">English</option>
                         <option value="japanese">Japanese</option>
                     </select>
                 </div>
+                
+                <ul id="watched-list" class="grid-container">
+                    </ul>
+
+                <div id="pagination-controls">
+                    <button onclick="changePage(-1)" id="prev-page" disabled>Previous</button>
+                    <span id="page-info">Page 1 of 1</span>
+                    <button onclick="changePage(1)" id="next-page" disabled>Next</button>
+                </div>
             </div>
             
-            <h1 class="section-title">Add Anime</h1>
-            
-            <input type="text" id="anime-search" placeholder="Search for an anime title...">
-            <ul id="search-results"></ul>
-            
-            <h2>Your Watched List</h2>
-            <ul id="watched-list"></ul>
-        </div>
+            </div>
     </div>
 </body>
 </html>
