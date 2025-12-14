@@ -31,18 +31,19 @@
 
         <div id="main-app" style="display:none;"> 
             
+            <h1 class="app-main-title" style="display:none;">Your Anime Tracker</h1> 
+            
             <div class="navbar">
                 <button id="nav-search" class="active">Search</button>
                 <button id="nav-watched">Watched List</button>
             </div>
 
             <div id="profile-container" style="display: none;">
-                <div class="profile-button"> <button class="notification-icon" id="notification-trigger">
+                <div class="profile-button">
+                    <button class="notification-icon" id="notification-trigger">
                         🔔
                     </button>
-                    
-                    <div class="avatar-icon">
-                    </div>
+                    <div class="avatar-icon"></div>
                     <span id="profile-username">user_name</span>
                     <span class="dropdown-arrow"></span>
                 </div>
@@ -74,6 +75,13 @@
                         <option value="english">English</option>
                         <option value="japanese">Japanese</option>
                     </select>
+
+                    <label for="sort-by-select">Sort By:</label>
+                    <select id="sort-by-select"> 
+                        <option value="title">Title (A-Z)</option>
+                        <option value="rating-desc">Rating (High to Low)</option>
+                        <option value="rating-asc">Rating (Low to High)</option>
+                    </select>
                 </div>
                 
                 <ul id="watched-list" class="grid-container">
@@ -96,7 +104,9 @@
             
             <div class="tracking-fields">
                 <label for="modal-rating">Your Rating (1-100):</label>
-                <input type="number" id="modal-rating" min="0" max="100" step="1"> <label for="modal-start-date">Watch Start Date:</label>
+                <input type="number" id="modal-rating" min="0" max="100" step="1"> 
+
+                <label for="modal-start-date">Watch Start Date:</label>
                 <input type="date" id="modal-start-date">
 
                 <label for="modal-end-date">Watch End Date:</label>
