@@ -196,35 +196,44 @@ button:hover {
 /* ------------------- */
 /* 3. Watched List (Card Layout) */
 /* ------------------- */
-#watched-list {
+
+/*
+   *** FIX APPLIED HERE ***
+   We combine #watched-list with .grid-container to ensure the
+   display: grid property is specific enough to override any default UL/LIST styles.
+*/
+#watched-list.grid-container {
     list-style: none;
     padding: 0;
-}
-
-/* --- GRID CONTAINER STYLES (New for 3x3 layout) --- */
-.grid-container {
-    display: grid;
-    /* Create 3 equal columns */
+    
+    /* === CRITICAL GRID RULES === */
+    display: grid; 
+    /* Create 3 equal columns across the available space */
     grid-template-columns: repeat(3, 1fr); 
     /* Set space between grid items */
     gap: 20px; 
-    list-style: none;
-    padding: 0;
+    /* =========================== */
 }
+
+/* The base #watched-list selector is no longer needed separately, but we leave it
+   in case it was being used elsewhere. We rely on #watched-list.grid-container now. */
 
 #watched-list li {
     background-color: var(--color-background-light);
     padding: 15px;
-    margin-bottom: 0; /* Remove margin-bottom as gap handles spacing */
+    margin-bottom: 0; /* Important: removes old list margin-bottom, relies on grid gap */
     border-radius: 10px;
+    
+    /* Item stacking within the grid cell */
     display: flex;
-    flex-direction: column; /* Stack image and text vertically inside the grid item */
+    flex-direction: column; 
     align-items: center;
     text-align: center;
+    
     border-left: 5px solid var(--color-accent-primary);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     transition: transform 0.2s;
-    height: 100%; /* Ensure all items are the same height */
+    height: 100%; /* Ensures uniform height in the grid row */
 }
 
 #watched-list li:hover {
@@ -358,7 +367,7 @@ button:hover {
 /* ------------------- */
 @media (max-width: 950px) {
     /* Change from 3 columns to 2 columns on medium screens */
-    .grid-container {
+    #watched-list.grid-container {
         grid-template-columns: repeat(2, 1fr);
     }
 }
@@ -370,7 +379,7 @@ button:hover {
     }
     
     /* Change from 2 columns to 1 column on small screens */
-    .grid-container {
+    #watched-list.grid-container {
         grid-template-columns: 1fr;
     }
     
