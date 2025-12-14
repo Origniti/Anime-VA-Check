@@ -13,10 +13,6 @@
     --color-accent-primary: #ff4081; /* Pink/Magenta for titles/buttons/links */
     --color-accent-highlight: #ffc107; /* Yellow/Amber for shared VAs */
 
-    /* New Color for Date Feature (Using a distinct, professional blue) */
-    --color-date-blue: #3f51b5;
-    --color-date-blue-dark: #303f9f;
-
     /* Fonts */
     --font-family-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -364,6 +360,7 @@ button:hover {
     background-color: #45a049;
 }
 
+
 /* Remove Button */
 .remove-btn {
     background-color: #c62828; /* Red for remove */
@@ -435,7 +432,7 @@ button:hover {
 }
 
 /* ------------------- */
-/* 5. Notes Modal Styles (EXISTING) */
+/* 5. Notes Modal Styles (NEW) */
 /* ------------------- */
 
 /* Backdrop (covers the entire screen) */
@@ -507,7 +504,7 @@ button:hover {
 
 
 /* ------------------- */
-/* 6. Responsive Adjustments (EXISTING) */
+/* 6. Responsive Adjustments */
 /* ------------------- */
 @media (max-width: 950px) {
     /* Change from 3 columns to 2 columns on medium screens */
@@ -566,98 +563,4 @@ button:hover {
         /* Slightly smaller padding on mobile */
         padding: 20px; 
     }
-}
-
-/* ------------------- */
-/* 7. FINISHED DATE FEATURE STYLES (NEW/IMPROVED) */
-/* ------------------- */
-
-/* 7.1 Date Button on Card */
-.date-btn {
-    background-color: var(--color-date-blue) !important; /* Use the new blue variable */
-    padding: 5px 10px;
-    font-size: 0.9em;
-    flex-shrink: 0;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.date-btn:hover {
-    background-color: var(--color-date-blue-dark) !important;
-}
-
-/* 7.2 Date Display on Card */
-.finished-date-display {
-    width: 100%;
-    background-color: var(--color-date-blue);
-    color: white;
-    padding: 5px 10px;
-    margin-bottom: 10px;
-    border-radius: 6px;
-    font-size: 0.9em;
-    font-weight: normal;
-    text-align: center;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-}
-
-.finished-date-display b {
-    color: var(--color-accent-highlight); /* Yellow highlight for the date */
-}
-
-/* 7.3 Date Modal Improvements */
-
-#date-modal-title {
-    /* Match the accent color and center it */
-    color: var(--color-accent-primary);
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-#finished-date-input {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 15px;
-    font-size: 1.1em;
-    /* Use the dark surface and main text color */
-    background-color: #2c2c2c; 
-    color: var(--color-text-main);
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    box-sizing: border-box;
-}
-
-/* Style the buttons inside the date modal (to override the general modal button style for the "Clear Date" button) */
-#date-modal .modal-content button {
-    display: block;
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
-    border: none;
-    border-radius: 5px;
-    font-size: 1em;
-    transition: background-color 0.2s;
-}
-
-/* Targeted style for the Save Date button */
-#date-modal .modal-content button:first-of-type {
-    background-color: var(--color-date-blue);
-}
-
-#date-modal .modal-content button:first-of-type:hover {
-    background-color: var(--color-date-blue-dark);
-}
-
-/* Targeted style for the Clear Date button (using existing remove-btn class, but targeting in the modal) */
-#date-modal .remove-btn {
-    background-color: #c62828 !important; /* Red for clear */
-}
-
-#date-modal .remove-btn:hover {
-    background-color: #b71c1c !important;
-}
-
-#date-status {
-    color: var(--color-accent-highlight);
-    text-align: center;
-    margin-top: 15px;
 }
