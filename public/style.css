@@ -32,7 +32,7 @@ body {
 }
 
 #app {
-    max-width: 900px;
+    max-width: 1200px; /* Increased max-width to comfortably fit 3 columns */
     margin: 50px auto;
     padding: 20px;
     background-color: rgba(30, 30, 30, 0.95); /* Semi-transparent dark card */
@@ -49,13 +49,13 @@ body {
     letter-spacing: 2px;
 }
 
-/* New Section Title Style (For Register, Login, Add Anime) */
+/* New Section Title Style (For Register, Login, Page Titles) */
 .section-title {
     color: var(--color-accent-primary);
     text-align: center;
     margin-top: 30px;
     margin-bottom: 20px;
-    font-size: 2.2em; /* Slightly smaller than main H1 */
+    font-size: 2.2em;
     letter-spacing: 1.5px;
 }
 
@@ -118,8 +118,32 @@ button:hover {
     flex-wrap: wrap; 
 }
 
-.controls-container label {
+/* General Controls Bar (Used for sorting/VA lang/Search in new page structure) */
+.controls-bar {
+    display: flex;
+    justify-content: flex-end; /* Align controls to the right by default */
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.controls-bar select {
+    width: auto;
+    min-width: 120px;
+    margin-left: 5px;
+    margin-bottom: 0; /* Override general input margin */
+}
+
+.controls-bar input[type="text"] {
+    width: 300px; /* Give search input a fixed size in the bar */
+    margin-right: auto; /* Push search input to the left */
+    margin-bottom: 0;
+}
+
+
+.controls-container label,
+.controls-bar label {
     color: var(--color-text-subtle);
+    margin-right: 5px;
 }
 
 .controls-container .control-group {
@@ -161,6 +185,10 @@ button:hover {
     border-bottom: 1px solid #333;
 }
 
+#search-results li:last-child {
+    border-bottom: none;
+}
+
 #search-results li:hover {
     background-color: #383838;
 }
@@ -173,16 +201,30 @@ button:hover {
     padding: 0;
 }
 
+/* --- GRID CONTAINER STYLES (New for 3x3 layout) --- */
+.grid-container {
+    display: grid;
+    /* Create 3 equal columns */
+    grid-template-columns: repeat(3, 1fr); 
+    /* Set space between grid items */
+    gap: 20px; 
+    list-style: none;
+    padding: 0;
+}
+
 #watched-list li {
     background-color: var(--color-background-light);
     padding: 15px;
-    margin-bottom: 20px;
+    margin-bottom: 0; /* Remove margin-bottom as gap handles spacing */
     border-radius: 10px;
     display: flex;
-    gap: 20px;
-    border-left: 5px solid var(--color-accent-primary); /* Accent line */
+    flex-direction: column; /* Stack image and text vertically inside the grid item */
+    align-items: center;
+    text-align: center;
+    border-left: 5px solid var(--color-accent-primary);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     transition: transform 0.2s;
+    height: 100%; /* Ensure all items are the same height */
 }
 
 #watched-list li:hover {
@@ -190,23 +232,32 @@ button:hover {
 }
 
 .anime-cover {
-    width: 100px;
-    height: 150px; /* Fixed height for visual consistency */
+    width: 100%;
+    max-width: 100%; 
+    height: 180px; /* Slightly taller fixed height for better visibility in grid */
     object-fit: cover;
     border-radius: 6px;
     flex-shrink: 0;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    margin-bottom: 10px;
 }
 
 .anime-info {
     flex-grow: 1;
+    text-align: center;
+    /* Ensure text inside info block starts where it should */
+    width: 100%;
 }
 
 .anime-info b {
     color: var(--color-accent-primary);
-    font-size: 1.2em;
+    font-size: 1.1em;
     display: block;
     margin-bottom: 5px;
+    /* Prevent title wrapping issues in small grid cell */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; 
 }
 
 .anime-info i {
@@ -224,7 +275,7 @@ button:hover {
     padding: 4px 8px;
     margin: 5px 5px 5px 0;
     border-radius: 4px;
-    font-size: 0.85em;
+    font-size: 0.8em; /* Slightly smaller VA text in the grid */
 }
 
 /* Shared VA Highlight */
@@ -247,33 +298,100 @@ button:hover {
 }
 
 /* ------------------- */
-/* 4. Responsive Adjustments */
+/* 4. Navigation and Pagination Styles (NEW) */
 /* ------------------- */
-@media (max-width: 600px) {
+.navbar {
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--color-border);
+    padding-bottom: 10px;
+    text-align: center;
+}
+
+.navbar button {
+    background-color: #555;
+    color: white;
+    padding: 10px 15px;
+    margin: 0 5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.navbar button:hover {
+    background-color: #666;
+}
+
+.navbar button.active {
+    background-color: var(--color-accent-primary);
+    font-weight: bold;
+}
+
+/* Styling for Pagination Controls */
+#pagination-controls {
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+#pagination-controls button {
+    padding: 8px 15px;
+    background-color: var(--color-accent-primary);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#pagination-controls button:disabled {
+    background-color: #666;
+    cursor: not-allowed;
+}
+
+#page-info {
+    margin: 0 15px;
+    font-weight: bold;
+}
+
+/* ------------------- */
+/* 5. Responsive Adjustments */
+/* ------------------- */
+@media (max-width: 950px) {
+    /* Change from 3 columns to 2 columns on medium screens */
+    .grid-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 650px) {
     #app {
         margin: 20px;
         padding: 15px;
     }
     
+    /* Change from 2 columns to 1 column on small screens */
+    .grid-container {
+        grid-template-columns: 1fr;
+    }
+    
     #watched-list li {
-        flex-direction: column; /* Stack image and text vertically on small screens */
-        align-items: center;
-        text-align: center;
+        text-align: left;
     }
     
     .anime-cover {
-        width: 100%;
         max-width: 150px;
         height: auto;
-        margin-bottom: 10px;
+        margin: 0 auto 10px auto; /* Center image */
     }
 
-    .controls-container {
+    .controls-container, .controls-bar {
         flex-direction: column;
         align-items: flex-start;
     }
 
-    .controls-container .control-group {
+    .controls-bar input[type="text"] {
+        width: 100%;
+        margin-right: 0;
         margin-bottom: 10px;
     }
 }
