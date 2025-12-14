@@ -9,7 +9,7 @@ let totalPages = 1;
 
 
 // -------------------
-// NEW PROFILE LOGIC (Moved to the top for clarity)
+// NEW PROFILE LOGIC (Safety/Fixes from previous step)
 // -------------------
 
 // CRITICAL FIX 1: Function to handle the notification click without triggering the profile dropdown
@@ -56,8 +56,6 @@ function init() {
 
         // NEW: Show profile container and set placeholder username
         document.getElementById('profile-container').style.display = 'block';
-        // Note: The actual username is not stored globally, so setting it from the login
-        // function is the correct approach. Keeping 'originiti' as fallback here.
         document.getElementById('profile-username').textContent = 'originiti'; 
         
         loadWatched();
@@ -68,8 +66,9 @@ function init() {
     // Set up general event listeners 
     document.getElementById('va-lang').addEventListener('change', renderWatchedList);
     
-    // NEW: Add event listeners for the Notes modal buttons
-    document.getElementById('notes-save-btn').addEventListener('click', saveNotes);
+    // === NOTES/MORE INFO MODAL LISTENERS ===
+    // NOTE: The ID is still 'notes-save-btn' but its function is now broader
+    document.getElementById('notes-save-btn').addEventListener('click', saveMoreInfo);
     document.getElementById('notes-close-btn').addEventListener('click', closeNotesModal);
     
     // Close modal if user clicks outside of it
@@ -79,16 +78,14 @@ function init() {
         }
     });
 
-    // --- CRITICAL PROFILE/NOTIFICATION EVENT LISTENERS (Moved from window.onload) ---
+    // --- CRITICAL PROFILE/NOTIFICATION EVENT LISTENERS ---
     const notificationButton = document.getElementById('notification-trigger');
     const profileButton = document.getElementById('profile-button-trigger');
 
-    // Attach the notification handler with stopPropagation
     if (notificationButton) {
         notificationButton.addEventListener('click', handleNotificationClick);
     }
     
-    // Attach the profile handler to the container
     if (profileButton) {
         profileButton.addEventListener('click', toggleProfileDropdown);
     }
@@ -101,7 +98,6 @@ function init() {
             dropdown.style.display = 'none';
         }
     });
-    // ---------------------------------------------------------------------------------
 }
 
 // -------------------
@@ -168,7 +164,6 @@ async function login(){
     } else alert(data.error);
 }
 
-
 // -------------------
 // NEW NAVIGATION LOGIC
 // -------------------
@@ -212,8 +207,6 @@ function changePage(delta) {
 // Debounced search input
 // -------------------
 const debouncedSearch = debounce(actualSearchAnime, 300);
-// NOTE: Assuming your HTML still has the inline oninput="searchAnime()"
-// I recommend replacing that with this:
 document.getElementById('anime-search').addEventListener('input', debouncedSearch);
 
 
@@ -261,7 +254,9 @@ async function addAnime(anime){
     
     const titleLang = document.getElementById('search-lang').value;
     const animeTitle = titleLang==='english' && anime.title.english ? anime.title.english : anime.title.romaji;
-    const rating = anime.averageScore/10;
+    
+    // NOTE: Initial rating is from the API, we will use the modal to update the user's personal rating.
+    const rating = anime.averageScore/10; 
     
     // Client-side cleanup for description
     let description = anime.description || '';
@@ -272,6 +267,7 @@ async function addAnime(anime){
     const coverImage = anime.coverImage?.large || anime.CoverImage?.large || '';
 
     try {
+        // Initial insert only uses API rating and no dates/notes
         const res = await fetch('/add-anime',{
             method:'POST',
             headers:{'Content-Type':'application/json'},
@@ -308,7 +304,7 @@ async function removeAnime(animeId){
 }
 
 // -------------------
-// Load watched anime (MODIFIED - no longer renders directly)
+// Load watched anime (MODIFIED - now also loads new fields if available)
 // -------------------
 async function loadWatched(){
     if (!userId) return; 
@@ -319,18 +315,17 @@ async function loadWatched(){
         if(data.success){
             
             data.data.forEach(a=>{
-                // FIX: Ensure JSON.parse handles null or undefined voice_actors gracefully
                 try {
                     a.voice_actors_parsed = JSON.parse(a.voice_actors);
                 } catch(e){
-                    // Fallback for old/malformed/empty data
                     a.voice_actors_parsed = { japanese: "", english: "" };
                 }
-                // NOTE: 'notes' column is now automatically included in the DB fetch
+                // Ensure new fields are loaded (null if not in DB yet)
+                a.start_date = a.start_date || null;
+                a.end_date = a.end_date || null;
                 watched.push(a);
             });
 
-            // If the watched page is currently visible, render it immediately
             if (document.getElementById('page-watched').style.display !== 'none') {
                 renderWatchedList(); 
             }
@@ -342,53 +337,48 @@ async function loadWatched(){
 
 
 // -------------------
-// Read More/Less Toggle Function (Final version with scroll fix)
+// Read More/Less Toggle Function
 // -------------------
 function toggleReadMore(event) {
     const readMoreButton = event.target;
-    // Get the parent wrapper (.description-wrapper)
     const descriptionWrapper = readMoreButton.closest('.description-wrapper'); 
 
     if (!descriptionWrapper) return;
 
-    // 1. Toggle the 'expanded' class
     descriptionWrapper.classList.toggle('expanded');
 
-    // 2. Change the button text
     if (descriptionWrapper.classList.contains('expanded')) {
         readMoreButton.textContent = 'Read Less';
     } else {
         readMoreButton.textContent = 'Read More';
     }
 
-    // 3. Force Grid Recalculation (Essential for preserving row alignment)
     const gridContainer = document.getElementById('watched-list');
     if (gridContainer) {
-        // --- FIX: Store Scroll Position to prevent screen jumping ---
         const scrollY = window.scrollY; 
-        
-        // Temporarily hide, force browser reflow, then restore display
         gridContainer.style.display = 'none'; 
-        void gridContainer.offsetWidth; // Force browser reflow/recalculation
+        void gridContainer.offsetWidth; // Force browser reflow
         gridContainer.style.display = 'grid'; 
-        
-        // --- FIX: Restore Scroll Position ---
         window.scrollTo(0, scrollY);
     }
 }
 
 // -------------------
-// Notes Modal Functions
+// More Info Modal Functions (RENAMED AND UPDATED)
 // -------------------
 let currentAnimeIdForNotes = null;
 
-function openNotesModal(animeId, currentNotes) {
+function openMoreInfoModal(animeId, animeTitle, rating, notes, startDate, endDate) {
     currentAnimeIdForNotes = animeId;
     const modal = document.getElementById('notes-modal');
-    const textarea = document.getElementById('notes-textarea');
     
-    // Set current notes content
-    textarea.value = currentNotes || '';
+    // Set all fields
+    document.getElementById('modal-anime-title').textContent = animeTitle;
+    document.getElementById('modal-rating').value = rating ? rating.toFixed(1) : '';
+    document.getElementById('modal-start-date').value = startDate || '';
+    document.getElementById('modal-end-date').value = endDate || '';
+    document.getElementById('notes-textarea').value = notes || '';
+
     modal.style.display = 'block';
 }
 
@@ -397,42 +387,66 @@ function closeNotesModal() {
     currentAnimeIdForNotes = null;
 }
 
-function saveNotes() {
+// RENAMED: saveNotes -> saveMoreInfo
+function saveMoreInfo() {
     if (currentAnimeIdForNotes) {
-        const notes = document.getElementById('notes-textarea').value;
+        // Collect all new fields
+        const newRating = parseFloat(document.getElementById('modal-rating').value) || null;
+        const newNotes = document.getElementById('notes-textarea').value;
+        const newStartDate = document.getElementById('modal-start-date').value || null;
+        const newEndDate = document.getElementById('modal-end-date').value || null;
+
+        // Validation (Rating 1-10)
+        if (newRating !== null && (newRating < 1 || newRating > 10)) {
+            alert("Rating must be between 1 and 10.");
+            return;
+        }
+
         // Call the new API function
-        updateNotes(currentAnimeIdForNotes, notes); 
+        updateMoreInfo(currentAnimeIdForNotes, newRating, newNotes, newStartDate, newEndDate); 
         closeNotesModal();
     }
 }
 
-async function updateNotes(animeId, notes) {
+// RENAMED: updateNotes -> updateMoreInfo (Updated to send all data)
+async function updateMoreInfo(animeId, rating, notes, startDate, endDate) {
     if (!userId) {
-        alert("You must be logged in to save notes.");
+        alert("You must be logged in to save information.");
         return;
     }
     
     try {
-        const res = await fetch('/update-notes', {
+        const res = await fetch('/update-info', { // NOTE: Change API endpoint name to reflect broader update
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, animeId, notes })
+            body: JSON.stringify({ 
+                userId, 
+                animeId, 
+                rating,          // NEW
+                notes, 
+                start_date: startDate, // NEW
+                end_date: endDate      // NEW
+            })
         });
         const data = await res.json();
         
         if (data.success) {
-            // Find the item in the local 'watched' array and update its notes
+            // Find the item in the local 'watched' array and update its new fields
             const item = watched.find(a => String(a.anime_id) === String(animeId));
             if (item) {
+                item.rating = rating; 
                 item.notes = notes;
+                item.start_date = startDate;
+                item.end_date = endDate;
             }
-            // Re-render the list to reflect the change (button text update)
+            // Re-render the list to reflect the change
             renderWatchedList(); 
         } else {
-            alert(`Failed to save notes: ${data.error}`);
+            alert(`Failed to save info: ${data.error}`);
         }
     } catch (err) {
-        console.error("Update notes API failed:", err);
+        console.error("Update info API failed:", err);
+        alert("Error connecting to server. Failed to save info.");
     }
 }
 
@@ -451,7 +465,6 @@ function renderWatchedList() {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     const end = start + ITEMS_PER_PAGE;
 
-    // Slice the watched array to get only the items for the current page
     const animeToRender = watched.slice(start, end);
     
     // 2. VA Count (Count across ALL watched items for highlighting accuracy)
@@ -472,23 +485,19 @@ function renderWatchedList() {
     list.innerHTML = ''; 
 
     animeToRender.forEach(anime => {
-        // Rebuild the HTML structure for each anime using DOM methods
         const li = document.createElement('li');
 
         // --- IMAGE DISPLAY FIX ---
         const imageUrl = anime.coverImage || anime.CoverImage || anime.coverimage;
         if(imageUrl && imageUrl.length > 10) { 
-            // 1. Create the container
             const imageContainer = document.createElement('div');
             imageContainer.className = 'anime-cover-container';
             
-            // 2. Create the image
             const img = document.createElement('img');
             img.src = imageUrl;
             img.alt = anime.anime_title;
             img.className = 'anime-cover';
             
-            // 3. Append image to container, container to list item
             imageContainer.appendChild(img);
             li.appendChild(imageContainer);
         }
@@ -500,7 +509,9 @@ function renderWatchedList() {
 
         // Title and Rating
         const title = document.createElement('b');
-        title.innerHTML = `${anime.anime_title} - ${anime.rating.toFixed(2)}`;
+        // Display the user's current rating (which is now in the DB)
+        const displayRating = anime.rating ? anime.rating.toFixed(1) : 'N/A';
+        title.innerHTML = `${anime.anime_title} - ${displayRating}`;
         animeInfo.appendChild(title);
 
 
@@ -515,12 +526,10 @@ function renderWatchedList() {
         descriptionWrapper.appendChild(descriptionText);
 
         // Read More Button
-        // Check if description is long enough
         if ((anime.description?.length || 0) > 250) { 
             const readMoreButton = document.createElement('button');
             readMoreButton.className = 'read-more-btn';
             readMoreButton.textContent = 'Read More';
-            // Attach the new toggle function
             readMoreButton.addEventListener('click', toggleReadMore); 
             descriptionWrapper.appendChild(readMoreButton);
         }
@@ -536,18 +545,16 @@ function renderWatchedList() {
         const vaString = anime.voice_actors_parsed[vaLang] || "";
         const vaList = vaString.split('|').filter(Boolean);
         
-        // --- NEW LOGIC: RENDER VAs AND COUNT THEM ---
+        // --- RENDER VAs AND COUNT THEM ---
         let actualVACount = 0;
         
         vaList.forEach(va=>{
-            // va is "Character1, Character2: VA Name"
             const parts = va.split(': ');
             const vaName = parts[1]?.trim() || '';
             
             if(vaName){
                 let vaHtml = va;
                 
-                // Check if the VA name is shared
                 if(vaCount[vaName]>1) {
                     vaHtml = va.replace(vaName, `<span class="highlight">${vaName}</span>`);
                 }
@@ -556,46 +563,48 @@ function renderWatchedList() {
                 vaSpan.className = 'va';
                 vaSpan.innerHTML = vaHtml;
                 vaTagsContainer.appendChild(vaSpan);
-                actualVACount++; // Count the successfully rendered VA tag
+                actualVACount++;
             }
         });
         animeInfo.appendChild(vaTagsContainer);
 
         // --- DYNAMIC HEIGHT ADJUSTMENT ---
-        // If there are 2 or fewer VA tags, increase the description's visible height 
-        // to fill the empty space left by fewer VA tags.
         if (actualVACount <= 2) {
-            // Overrides the default CSS max-height of 7em with 10em (about 3 more lines)
             descriptionText.style.maxHeight = '10em'; 
         }
 
-        // --- End Dynamic Height Adjustment ---
-
         // --- Action Buttons Container ---
         
-        // 1. Remove Button (Created here, but appended to actionButtons)
+        // 1. Remove Button
         const removeBtn = document.createElement('button');
         removeBtn.className = 'remove-btn';
         removeBtn.textContent = 'Remove';
         removeBtn.addEventListener('click', () => removeAnime(anime.anime_id));
         
-        // 2. Notes Button
-        const notesBtn = document.createElement('button');
-        notesBtn.className = 'notes-btn';
-        notesBtn.textContent = anime.notes && anime.notes.length > 0 ? 'Edit Notes' : 'Add Note';
-        notesBtn.addEventListener('click', () => {
-            openNotesModal(anime.anime_id, anime.notes);
+        // 2. More Info Button (Replaced Notes button)
+        const infoBtn = document.createElement('button');
+        infoBtn.className = 'notes-btn'; // Reusing the style
+        infoBtn.textContent = 'More Info';
+        
+        infoBtn.addEventListener('click', () => {
+            // Pass all required data to the new modal function
+            openMoreInfoModal(
+                anime.anime_id, 
+                anime.anime_title, 
+                anime.rating, 
+                anime.notes,
+                anime.start_date,
+                anime.end_date
+            );
         });
 
         // 3. Group buttons
         const actionButtons = document.createElement('div');
         actionButtons.className = 'action-buttons';
-        actionButtons.appendChild(notesBtn);
+        actionButtons.appendChild(infoBtn); // Now the "More Info" button
         actionButtons.appendChild(removeBtn);
 
-        animeInfo.appendChild(actionButtons); // Append the group to the info container
-
-        // --- End Action Buttons Container ---
+        animeInfo.appendChild(actionButtons);
 
         li.appendChild(animeInfo);
         list.appendChild(li);
@@ -613,13 +622,12 @@ function renderWatchedList() {
 // -------------------
 window.register = register;
 window.login = login;
-window.searchAnime = actualSearchAnime; // Exposing the actual search function
+window.searchAnime = actualSearchAnime;
 window.removeAnime = removeAnime;
 window.showPage = showPage;
 window.changePage = changePage; 
-// Removed window.toggleProfileDropdown/window.logout since they are exposed via the DOMContentLoaded setup
-window.toggleProfileDropdown = toggleProfileDropdown; // Re-expose for clarity if needed, though event listener handles it
+window.toggleProfileDropdown = toggleProfileDropdown;
 window.logout = logout; 
+window.saveMoreInfo = saveMoreInfo; // Expose the save function
 
-// Change entry point from window.onload to DOMContentLoaded for defer compatibility and better practice
 document.addEventListener('DOMContentLoaded', init);
