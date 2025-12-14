@@ -384,7 +384,8 @@ button:hover {
 .navbar button {
     background-color: #555;
     color: white;
-    padding: 10px 15px;
+    /* This padding is 10px top/bottom, 15px left/right */
+    padding: 10px 15px; 
     margin: 0 5px;
     border: none;
     border-radius: 5px;
@@ -541,9 +542,10 @@ button:hover {
 /* Container for the profile button and dropdown */
 #profile-container {
     position: absolute;
-    /* MOVED UP FURTHER: Adjusted from 10px to 5px */
-    top: 5px; 
-    right: 20px; /* Aligned with #app padding */
+    /* Adjusted top to match the vertical position of the navbar buttons */
+    /* Navbar is centered in its element, which has padding-bottom: 10px and margin-bottom: 20px */
+    top: 15px; 
+    right: 20px; 
     z-index: 50; 
 }
 
@@ -551,9 +553,12 @@ button:hover {
 .profile-button {
     display: flex;
     align-items: center;
-    background-color: var(--color-background-light); /* #1e1e1e */
-    /* MADE SMALLER: Reduced padding from 5px/15px/5px/5px to 3px/10px/3px/3px */
-    padding: 3px 10px 3px 3px; 
+    background-color: var(--color-background-light); 
+    /* MATCHED NAVBAR BUTTON SIZE: 
+       Set padding to match the .navbar button (10px top/bottom, but slightly reduced 12px right for compactness) 
+       Removed left padding since the icons provide spacing.
+    */
+    padding: 10px 12px 10px 0; 
     border-radius: 8px; 
     cursor: pointer;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
@@ -569,14 +574,13 @@ button:hover {
     background: var(--color-background-dark); 
     border: 1px solid var(--color-border); 
     color: var(--color-text-main);
-    /* MADE SMALLER: Reduced padding from 8px to 6px */
-    padding: 6px; 
-    border-radius: 50%; /* Perfect circle */
-    font-size: 1.1em; /* Slight font reduction */
-    margin-right: 8px; /* Reduced margin */
-    /* MADE SMALLER: Reduced height/width from 40px to 36px */
-    height: 36px;
-    width: 36px;
+    padding: 8px;
+    border-radius: 50%; 
+    font-size: 1.2em;
+    margin-right: 8px; 
+    /* REMOVED FIXED HEIGHT/WIDTH to let padding/font size determine size */
+    height: auto; 
+    width: auto;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -588,12 +592,12 @@ button:hover {
 
 /* 2. Avatar Icon (Blank Gray Circle) */
 .avatar-icon {
-    /* MADE SMALLER: Reduced height/width from 40px to 36px */
-    height: 36px;
-    width: 36px;
+    /* REMOVED FIXED HEIGHT/WIDTH to let the button padding handle sizing. Kept it square. */
+    height: 38px;
+    width: 38px;
     background: #505050; 
     border-radius: 50%;
-    margin-right: 8px; /* Reduced margin */
+    margin-right: 8px; 
     border: 2px solid var(--color-border);
     box-shadow: none; 
     flex-shrink: 0;
@@ -603,16 +607,16 @@ button:hover {
 #profile-username {
     color: var(--color-text-main);
     font-weight: 600;
-    font-size: 1.0em; /* Slight font reduction */
-    margin-right: 8px; /* Reduced margin */
+    font-size: 1.1em;
+    margin-right: 8px; 
     white-space: nowrap;
 }
 
 /* 4. Dropdown Arrow */
 .dropdown-arrow::after {
-    content: '\2304'; /* Unicode character for a small down arrow/chevron */
+    content: '\2304'; 
     color: var(--color-text-subtle);
-    font-size: 1.1em; /* Slight font reduction */
+    font-size: 1.2em; 
     font-weight: bold;
     transition: transform 0.2s;
 }
@@ -622,9 +626,9 @@ button:hover {
     display: none;
     position: absolute;
     right: 0;
-    top: 45px; /* Adjusted position to follow the now smaller button */
+    top: 55px; /* Adjusted position to follow the new, taller button */
     background-color: var(--color-background-light);
-    min-width: 140px; /* Slight width reduction */
+    min-width: 150px; 
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
     padding: 5px;
@@ -632,7 +636,7 @@ button:hover {
 
 #profile-dropdown button {
     width: 100%;
-    padding: 8px; /* Slight padding reduction */
+    padding: 10px; 
     text-align: left;
     background-color: transparent;
     color: var(--color-text-main);
