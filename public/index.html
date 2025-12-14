@@ -4,141 +4,79 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anime Tracker</title>
-    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script> 
 </head>
 <body>
-
     <div id="app">
-        <div id="auth" style="display: block;">
-            <h1 class="app-main-title">Anime Tracker</h1>
-            
-            <h2 class="section-title" id="auth-title">Login</h2> 
-            
-            <form id="auth-form">
-                <div>
-                    <label for="username">Username:</label>
-                    <input type="text" id="username" required>
-                </div>
-                <div>
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" required>
-                </div>
-                <button type="submit" id="login-btn">Login</button>
-                <button type="submit" id="register-btn" style="display: none;">Register</button>
-            </form>
-            <div style="text-align: center; margin-top: 15px;">
-                <a href="#" id="switch-auth">Need an account? Register</a>
-            </div>
-        </div> <div id="main" style="display: none;">
-            <h1 class="app-main-title">My Anime List</h1>
-
-            <nav class="navbar">
-                <button id="view-watched" class="active">Watched List</button>
-                <button id="view-watchlist">Watchlist</button>
-                <button id="view-profile">My Profile</button>
-            </nav>
-
-            <div class="controls-bar">
-                <label for="sort-by">Sort By:</label>
-                <select id="sort-by">
-                    <option value="date_added_desc">Date Added (Newest)</option>
-                    <option value="user_rating_desc">My Rating (Highest)</option>
-                    <option value="user_rating_asc">My Rating (Lowest)</option>
-                    <option value="finish_date_desc">Date Finished (Newest)</option>
-                    <option value="title">Title (A-Z)</option>
-                </select>
-                
-                <label for="va-lang">VA Language:</label>
-                <select id="va-lang">
-                    <option value="japanese">Japanese</option>
-                    <option value="english">English</option>
-                </select>
+        <div id="auth">
+            <h1 class="section-title">Register</h1>
+            <div>
+                <input type="text" id="reg-username" placeholder="Username">
+                <input type="password" id="reg-password" placeholder="Password">
+                <button onclick="register()">Register</button>
             </div>
             
-            <div id="page-watched" class="page-content">
-                <ul id="watched-list" class="grid-container">
-                </ul>
+            <h1 class="section-title">Login</h1>
+            <div>
+                <input type="text" id="login-username" placeholder="Username">
+                <input type="password" id="login-password" placeholder="Password">
+                <button onclick="login()">Login</button>
+            </div>
+        </div>
 
-                <div id="pagination-controls">
-                    <button id="prev-page">Previous</button>
-                    <span id="page-info">Page 0 of 0</span>
-                    <button id="next-page">Next</button>
+        <div id="main" style="display:none;">
+            
+            <div class="navbar">
+                <button onclick="showPage('search')" id="nav-search" class="active">Search</button>
+                <button onclick="showPage('watched')" id="nav-watched">Watched List</button>
                 </div>
-            </div>
 
-            <div id="page-watchlist" class="page-content" style="display: none;">
-                <p class="section-title">Anime I Plan to Watch</p>
-                <ul id="watchlist-items" class="grid-container">
-                </ul>
-            </div>
-
-            <div id="page-search" class="page-content" style="display: none;">
-                <div class="controls-container">
-                    <input type="text" id="anime-search" placeholder="Search for anime...">
-                    
-                    <div class="control-group">
-                        <label for="add-to-list-status">Add to:</label>
-                        <select id="add-to-list-status">
-                            <option value="watched">Watched</option>
-                            <option value="watchlist">Watchlist</option>
-                        </select>
-                    </div>
-
-                    <div class="control-group">
-                        <label for="search-lang">Search Title Language:</label>
-                        <select id="search-lang">
-                            <option value="romaji">Romaji</option>
-                            <option value="english">English</option>
-                        </select>
-                    </div>
+            <div id="page-search" class="page-content">
+                <h2>Search Anime</h2>
+                <div class="controls-bar">
+                    <input type="text" id="anime-search" placeholder="Search for anime..." oninput="searchAnime()">
+                    <select id="search-lang">
+                        <option value="romaji">Romaji Titles</option>
+                        <option value="english">English Titles</option>
+                    </select>
                 </div>
                 
                 <ul id="search-results">
-                </ul>
+                    </ul>
             </div>
 
-            <div id="page-profile" class="page-content" style="display: none;">
-                <p class="section-title">User Profile & Stats</p>
-                <div id="profile-content">
-                    </div>
+            <div id="page-watched" class="page-content" style="display: none;">
+                <h2>Your Watched List</h2>
+                
+                <div class="controls-bar">
+                    <label for="va-lang">VA Language:</label>
+                    <select id="va-lang">
+                        <option value="english">English</option>
+                        <option value="japanese">Japanese</option>
+                    </select>
+                </div>
+                
+                <ul id="watched-list" class="grid-container">
+                    </ul>
+
+                <div id="pagination-controls">
+                    <button onclick="changePage(-1)" id="prev-page" disabled>Previous</button>
+                    <span id="page-info">Page 1 of 1</span>
+                    <button onclick="changePage(1)" id="next-page" disabled>Next</button>
+                </div>
             </div>
-        </div> </div> <div id="detail-modal" class="modal">
+            
+            </div>
+    </div>
+    
+    <div id="notes-modal" class="modal">
         <div class="modal-content">
-            <span class="close-button" id="detail-close-btn">&times;</span> 
-            
-            <h3 id="detail-anime-title">Anime Title</h3>
-
-            <label>Your Rating (0-10):</label>
-            <div class="detail-group">
-                <input type="number" id="detail-rating" min="0" max="10" placeholder="0">
-            </div>
-
-            <label>Watched/Started Date:</label>
-            <div class="detail-group">
-                <input type="date" id="detail-date">
-            </div>
-
-            <label>Status:</label>
-            <div class="detail-group">
-                <select id="detail-status">
-                    <option value="Completed">Completed</option>
-                    <option value="Planning">Planning</option>
-                    <option value="Watching">Watching</option>
-                    <option value="Dropped">Dropped</option>
-                </select>
-            </div>
-
-            <label for="notes-textarea">Notes:</label>
-            <textarea id="notes-textarea" placeholder="Add your personal notes here..."></textarea>
-            
-            <div class="modal-action-buttons">
-                <button id="save-detail-btn">Save Details</button>
-                <button id="detail-close-btn" class="alt-btn">Close</button>
-            </div>
+            <span class="close-button" id="notes-close-btn">&times;</span>
+            <h3>Anime Notes</h3>
+            <textarea id="notes-textarea" rows="10" placeholder="Write your notes here..."></textarea>
+            <button id="notes-save-btn">Save Notes</button>
         </div>
     </div>
-
-    <script src="script.js"></script>
 </body>
 </html>
