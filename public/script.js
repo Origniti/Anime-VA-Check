@@ -13,15 +13,15 @@ const ITEMS_PER_PAGE = 9;
 
 // --- DOM Elements ---
 // Ensure all these IDs are present in your index.html
-const appDiv = document.getElementById('app');
-const authDiv = document.getElementById('auth');
+const appDiv = document.getElementById('app'); // The outermost wrapper
+const authDiv = document.getElementById('auth'); // The authentication block
+const mainDiv = document.getElementById('main'); // The logged-in content block // ADDED
 const loginBtn = document.getElementById('login-btn');
-const logoutBtn = document.getElementById('logout-btn'); // Note: This is now only used in the profile view
+const logoutBtn = document.getElementById('logout-btn'); 
 const registerBtn = document.getElementById('register-btn');
 const switchAuthBtn = document.getElementById('switch-auth');
 const authForm = document.getElementById('auth-form');
 
-// FIX: Ensure 'auth-title' element exists in your index.html
 const authTitle = document.getElementById('auth-title');
 
 const authUsernameInput = document.getElementById('username');
@@ -75,7 +75,11 @@ function showNotification(message, type = 'success') {
     popup.style.display = 'block';
 
     setTimeout(() => {
-        popup.style.display = 'none';
+        popup.style.opacity = '0';
+        setTimeout(() => {
+            popup.style.display = 'none';
+            popup.style.opacity = '1';
+        }, 500);
     }, 3000);
 }
 
@@ -196,8 +200,8 @@ function saveUserData() {
     const userData = loadUserData();
     if (userData) {
         userData.list = userList;
-        // FIX: Check if authUsernameInput exists before using its value
-        const username = document.getElementById('username').value.trim();
+        // Get the current username stored in the session
+        const username = userData.username; 
         if (username) {
             localStorage.setItem(username, JSON.stringify(userData));
         }
@@ -278,7 +282,7 @@ function addAnimeToList(anime) {
     renderList();
     showNotification(`${newAnime.title.english || newAnime.title.romaji} added to your ${listStatus}.`);
     // Clear search results after adding
-    searchResultsList.innerHTML = '';
+    if (searchResultsList) searchResultsList.innerHTML = '';
 }
 
 /**
@@ -319,25 +323,29 @@ function saveAnimeDetails() {
         anime.notes = notesTextarea.value;
         
         // Logic to move the item if the userStatus dictates a change
-        const isCurrentlyWatched = initialStatus === 'Completed';
+        const isCurrentlyWatched = initialStatus === 'Completed' || ['Watching', 'Dropped'].includes(initialStatus);
 
-        if (anime.userStatus === 'Completed' && !isCurrentlyWatched) {
-            // Move from Watchlist to Watched
-            userList.watchlist = userList.watchlist.filter(a => a.id !== currentAnimeId);
-            userList.watched.unshift(anime);
-        } else if (anime.userStatus !== 'Completed' && isCurrentlyWatched) {
-            // Move from Watched to Watchlist
-            userList.watched = userList.watched.filter(a => a.id !== currentAnimeId);
-            userList.watchlist.unshift(anime);
+        if (anime.userStatus === 'Completed' || ['Watching', 'Dropped'].includes(anime.userStatus)) {
+            // Move from Watchlist to Watched List if status is now a "watched" status
+            if (!isCurrentlyWatched) {
+                userList.watchlist = userList.watchlist.filter(a => a.id !== currentAnimeId);
+                userList.watched.unshift(anime);
+            }
+        } else if (anime.userStatus === 'Planning') {
+            // Move from Watched List to Watchlist if status is now 'Planning'
+            if (isCurrentlyWatched) {
+                userList.watched = userList.watched.filter(a => a.id !== currentAnimeId);
+                userList.watchlist.unshift(anime);
+            }
         }
         
         saveUserData();
-        detailModal.style.display = 'none';
+        if (detailModal) detailModal.style.display = 'none';
         
         // Update the view based on the change
-        if (isCurrentlyWatched && anime.userStatus !== 'Completed') {
+        if (isCurrentlyWatched && anime.userStatus === 'Planning') {
             currentView = 'watchlist';
-        } else if (!isCurrentlyWatched && anime.userStatus === 'Completed') {
+        } else if (!isCurrentlyWatched && (anime.userStatus === 'Completed' || ['Watching', 'Dropped'].includes(anime.userStatus))) {
             currentView = 'watched';
         }
 
@@ -354,7 +362,7 @@ function saveAnimeDetails() {
  */
 function showApp() {
     if (authDiv) authDiv.style.display = 'none';
-    if (appDiv) appDiv.style.display = 'block';
+    if (mainDiv) mainDiv.style.display = 'block'; // CRITICAL CHANGE: Use mainDiv
     
     // Ensure Watched is the default active view
     document.querySelectorAll('.navbar button').forEach(btn => btn.classList.remove('active'));
@@ -367,10 +375,10 @@ function showApp() {
  * Hides app content and shows the authentication form.
  */
 function showAuth() {
-    if (appDiv) appDiv.style.display = 'none';
+    if (mainDiv) mainDiv.style.display = 'none'; // CRITICAL CHANGE: Use mainDiv
     if (authDiv) authDiv.style.display = 'block';
     
-    // FIX: Check if authTitle exists before setting its textContent
+    // Check if authTitle exists before setting its textContent
     if (authTitle) {
         authTitle.textContent = 'Login';
     }
@@ -386,30 +394,37 @@ function showAuth() {
  * Updates the visibility and active state of the main list containers.
  */
 function updateViewDisplay() {
-    if (watchedListContainer) watchedListContainer.style.display = 'none';
-    if (watchlistContainer) watchlistContainer.style.display = 'none';
-    if (searchResultsList) searchResultsList.style.display = 'none';
-    if (profileContentDiv) profileContentDiv.style.display = 'none';
+    // Hide all view pages
+    const pages = ['page-watched', 'page-watchlist', 'page-search', 'page-profile'];
+    pages.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    
     if (paginationControls) paginationControls.style.display = 'none';
     
     document.querySelectorAll('.navbar button').forEach(btn => btn.classList.remove('active'));
     
-    if (currentView === 'watched') {
-        if (watchedListContainer) watchedListContainer.style.display = 'grid';
-        if (viewToggleButtons.watched) viewToggleButtons.watched.classList.add('active');
+    // Show the current view page
+    const currentPageElement = document.getElementById(`page-${currentView}`);
+    if (currentPageElement) {
+        currentPageElement.style.display = 'block';
+    }
+
+    if (currentView === 'watched' || currentView === 'watchlist') {
         if (paginationControls) paginationControls.style.display = 'flex';
-    } else if (currentView === 'watchlist') {
-        if (watchlistContainer) watchlistContainer.style.display = 'grid';
-        if (viewToggleButtons.watchlist) viewToggleButtons.watchlist.classList.add('active');
-        if (paginationControls) paginationControls.style.display = 'flex';
-    } else if (currentView === 'search') {
-        if (searchResultsList) searchResultsList.style.display = 'block';
-    } else if (currentView === 'profile') {
-        if (profileContentDiv) profileContentDiv.style.display = 'block';
-        if (viewToggleButtons.profile) viewToggleButtons.profile.classList.add('active');
+    }
+    
+    // Set active button
+    if (viewToggleButtons[currentView]) {
+        viewToggleButtons[currentView].classList.add('active');
+    }
+
+    if (currentView === 'profile') {
         renderProfileStats();
     }
 }
+
 
 /**
  * Renders the user's list (watched or watchlist) with pagination.
@@ -546,7 +561,8 @@ function createAnimeCard(anime) {
     
     if (descriptionText && readMoreBtn && descriptionWrapper) {
         // Check if description is too short to warrant a 'Read More' button
-        if (descriptionText.scrollHeight <= descriptionText.clientHeight) {
+        // Note: ClientHeight/ScrollHeight check can be tricky, relying on a simple check here.
+        if (descriptionText.scrollHeight <= descriptionText.clientHeight + 5) { 
              readMoreBtn.style.display = 'none';
         } else {
             readMoreBtn.addEventListener('click', (e) => {
@@ -573,6 +589,8 @@ function renderProfileStats() {
     const totalEpisodes = userList.watched.reduce((sum, anime) => sum + (anime.episodes || 0), 0);
     const userData = loadUserData();
 
+    // REMOVED: Average Score calculation and display line
+    
     profileContentDiv.innerHTML = `
         <div class="section-title">My Profile</div>
         <p>User: <strong>${userData ? userData.username : 'N/A'}</strong></p>
@@ -747,9 +765,8 @@ function logout() {
 
 document.addEventListener('DOMContentLoaded', () => {
     // Check if the critical authentication elements are present before proceeding
-    if (!authTitle || !loginBtn || !registerBtn || !switchAuthBtn) {
-        console.error("CRITICAL ERROR: One or more authentication elements are missing from index.html (e.g., #auth-title, #login-btn, #register-btn, #switch-auth). The app cannot initialize.");
-        // We still call initializeApp, but the functions now include null checks
+    if (!authTitle || !loginBtn || !registerBtn || !switchAuthBtn || !mainDiv) {
+        console.error("CRITICAL ERROR: One or more critical elements are missing from index.html. Initialization may fail.");
     }
     
     initializeApp();
@@ -822,6 +839,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Close modal on outside click
     if (detailModal) {
         window.addEventListener('click', (event) => {
+            // Check if the click target is the modal itself (the background)
             if (event.target === detailModal) {
                 detailModal.style.display = 'none';
             }
