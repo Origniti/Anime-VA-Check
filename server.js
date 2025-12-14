@@ -36,7 +36,7 @@ pool.on('error', (err, client) => {
 const query = (text, params) => pool.query(text, params);
 
 // -------------------
-// 2. Database Initialization (Updated for Notes)
+// 2. Database Initialization (Updated for Notes Column)
 // -------------------
 async function setupDatabase() {
     // Check if the connection string is actually set
@@ -147,9 +147,8 @@ app.post('/add-anime', async (req, res) => {
             return res.json({ success: false, error: "Anime already added" });
         }
 
-        // --- START OF VOICE ACTOR FINAL FIX: Iterating ALL VAs and Aggregating by Actor ---
+        // --- START OF VOICE ACTOR FINAL FIX ---
         
-        // Maps to hold unique VA names. The value will be an array of characters they voice.
         const japaneseVAMap = new Map();
         const englishVAMap = new Map();
 
@@ -158,7 +157,6 @@ app.post('/add-anime', async (req, res) => {
                 const char = edge.node;
                 const charName = char.name?.full;
                 
-                // Get the array of all VAs for this character
                 const voiceActorsList = edge.voiceActors || [];
 
                 if (charName) {
@@ -167,11 +165,9 @@ app.post('/add-anime', async (req, res) => {
                         const vaLanguage = role.language;
 
                         if (vaName && vaLanguage) {
-                            // Ensure the language is always treated as uppercase for comparison
                             const langUpper = vaLanguage.toUpperCase(); 
 
                             if (langUpper === 'JAPANESE') {
-                                // Aggregation: If VA already exists, append unique character name to the array
                                 const currentCharacters = japaneseVAMap.get(vaName) || [];
                                 if (!currentCharacters.includes(charName)) {
                                     currentCharacters.push(charName);
@@ -180,7 +176,6 @@ app.post('/add-anime', async (req, res) => {
                             }
                             
                             if (langUpper === 'ENGLISH') {
-                                // Aggregation: If VA already exists, append unique character name to the array
                                 const currentCharacters = englishVAMap.get(vaName) || [];
                                 if (!currentCharacters.includes(charName)) {
                                     currentCharacters.push(charName);
@@ -193,14 +188,13 @@ app.post('/add-anime', async (req, res) => {
             });
         }
 
-        // Helper function to format the Map data into the final string format: "Character1, Character2: VA Name"
         const createVAString = (map) => {
             return Array.from(map.entries())
                 .map(([vaName, charNames]) => {
-                    const charList = charNames.join(', '); // Join multiple character names with a comma
+                    const charList = charNames.join(', ');
                     return `${charList}: ${vaName}`;
                 })
-                .join('|'); // Pipe-separate the final actor entries
+                .join('|'); 
         };
         
         const vaData = {
@@ -213,7 +207,7 @@ app.post('/add-anime', async (req, res) => {
         // --- END OF VOICE ACTOR FINAL FIX ---
 
 
-        // Insert new record (Uses $1 through $7, notes is excluded as it defaults to '')
+        // Insert new record (Uses $1 through $7, notes defaults to '' in DB)
         const insertResult = await query(
             'INSERT INTO watched_anime (user_id, anime_id, anime_title, rating, voice_actors, description, "coverImage") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
             [userId, animeId, animeTitle, rating, voiceActors, description, coverImage]
@@ -221,7 +215,6 @@ app.post('/add-anime', async (req, res) => {
 
         res.json({ success: true, animeId: insertResult.rows[0].id });
     } catch (err) {
-        // Check for unique constraint violation which could still happen if duplicate logic fails
         if (err.code === '23505') {
             return res.json({ success: false, error: "Anime already added" });
         }
@@ -236,7 +229,6 @@ app.post('/add-anime', async (req, res) => {
 app.delete('/remove-anime/:userId/:animeId', async (req, res) => {
     const { userId, animeId } = req.params;
     try {
-        // Uses $1, $2
         await query('DELETE FROM watched_anime WHERE user_id=$1 AND anime_id=$2', [userId, animeId]);
         res.json({ success: true });
     } catch (err) {
@@ -246,13 +238,14 @@ app.delete('/remove-anime/:userId/:animeId', async (req, res) => {
 });
 
 // -------------------
-// Get watched anime for user
+// Get watched anime for user (FIXED: Added ORDER BY id ASC)
 // -------------------
 app.get('/watched/:userId', async (req, res) => {
     const { userId } = req.params;
     try {
-        // Uses $1
-        const result = await query('SELECT * FROM watched_anime WHERE user_id=$1', [userId]);
+        // === FIX 2: Added ORDER BY id ASC to ensure consistent order ===
+        const result = await query('SELECT * FROM watched_anime WHERE user_id=$1 ORDER BY id ASC', [userId]);
+        // =============================================================
         res.json({ success: true, data: result.rows });
     } catch (err) {
         console.error("Get watched failed:", err);
@@ -331,7 +324,7 @@ app.get('/search-anime', async (req,res) => {
     ' title { romaji english }' +
     ' description' +
     ' averageScore' +
-    ' coverImage { large }' + // Note: This field may be cased differently in the response object
+    ' coverImage { large }' +
     ' characters(role: MAIN) {' +
     ' edges {' +
     ' node { name { full } }' +
