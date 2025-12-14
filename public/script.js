@@ -21,6 +21,17 @@ function init() {
     
     // Set up event listeners 
     document.getElementById('va-lang').addEventListener('change', renderWatchedList);
+    
+    // NEW: Add event listeners for the Notes modal buttons
+    document.getElementById('notes-save-btn').addEventListener('click', saveNotes);
+    document.getElementById('notes-close-btn').addEventListener('click', closeNotesModal);
+    
+    // Close modal if user clicks outside of it
+    document.getElementById('notes-modal').addEventListener('click', (event) => {
+        if (event.target === event.currentTarget) {
+            closeNotesModal();
+        }
+    });
 }
 
 // -------------------
@@ -238,6 +249,7 @@ async function loadWatched(){
                     // Fallback for old/malformed/empty data
                     a.voice_actors_parsed = { japanese: "", english: "" };
                 }
+                // NOTE: 'notes' column is now automatically included in the DB fetch
                 watched.push(a);
             });
 
@@ -288,6 +300,64 @@ function toggleReadMore(event) {
     }
 }
 
+// -------------------
+// Notes Modal Functions (NEW)
+// -------------------
+let currentAnimeIdForNotes = null;
+
+function openNotesModal(animeId, currentNotes) {
+    currentAnimeIdForNotes = animeId;
+    const modal = document.getElementById('notes-modal');
+    const textarea = document.getElementById('notes-textarea');
+    
+    // Set current notes content
+    textarea.value = currentNotes || '';
+    modal.style.display = 'block';
+}
+
+function closeNotesModal() {
+    document.getElementById('notes-modal').style.display = 'none';
+    currentAnimeIdForNotes = null;
+}
+
+function saveNotes() {
+    if (currentAnimeIdForNotes) {
+        const notes = document.getElementById('notes-textarea').value;
+        // Call the new API function
+        updateNotes(currentAnimeIdForNotes, notes); 
+        closeNotesModal();
+    }
+}
+
+async function updateNotes(animeId, notes) {
+    if (!userId) {
+        alert("You must be logged in to save notes.");
+        return;
+    }
+    
+    try {
+        const res = await fetch('/update-notes', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, animeId, notes })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+            // Find the item in the local 'watched' array and update its notes
+            const item = watched.find(a => String(a.anime_id) === String(animeId));
+            if (item) {
+                item.notes = notes;
+            }
+            // Re-render the list to reflect the change (button text update)
+            renderWatchedList(); 
+        } else {
+            alert(`Failed to save notes: ${data.error}`);
+        }
+    } catch (err) {
+        console.error("Update notes API failed:", err);
+    }
+}
 
 // -------------------
 // RENDER WATCHED LIST 
@@ -328,7 +398,7 @@ function renderWatchedList() {
         // Rebuild the HTML structure for each anime using DOM methods
         const li = document.createElement('li');
 
-        // --- START IMAGE DISPLAY FIX ---
+        // --- IMAGE DISPLAY FIX ---
         const imageUrl = anime.coverImage || anime.CoverImage || anime.coverimage;
         if(imageUrl && imageUrl.length > 10) { 
             // 1. Create the container
@@ -411,14 +481,31 @@ function renderWatchedList() {
         });
         animeInfo.appendChild(vaTagsContainer);
 
-
-        // Remove Button
+        // --- Action Buttons Container (NEW) ---
+        
+        // 1. Remove Button (Created here, but appended to actionButtons)
         const removeBtn = document.createElement('button');
         removeBtn.className = 'remove-btn';
         removeBtn.textContent = 'Remove';
-        // Use a click listener for the remove function
         removeBtn.addEventListener('click', () => removeAnime(anime.anime_id));
-        animeInfo.appendChild(removeBtn);
+        
+        // 2. Notes Button (NEW)
+        const notesBtn = document.createElement('button');
+        notesBtn.className = 'notes-btn';
+        notesBtn.textContent = anime.notes && anime.notes.length > 0 ? 'Edit Notes' : 'Add Note';
+        notesBtn.addEventListener('click', () => {
+            openNotesModal(anime.anime_id, anime.notes);
+        });
+
+        // 3. Group buttons
+        const actionButtons = document.createElement('div');
+        actionButtons.className = 'action-buttons';
+        actionButtons.appendChild(notesBtn);
+        actionButtons.appendChild(removeBtn);
+
+        animeInfo.appendChild(actionButtons); // Append the group to the info container
+
+        // --- End Action Buttons Container ---
 
         li.appendChild(animeInfo);
         list.appendChild(li);
