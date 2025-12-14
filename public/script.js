@@ -1,4 +1,3 @@
-// At the top of script.js, update the userId variable
 let userId = localStorage.getItem('animeTrackerUserId'); // Load userId from storage
 const watched = [];
 let currentController = null;
@@ -22,7 +21,6 @@ function init() {
     
     // Set up event listeners 
     document.getElementById('va-lang').addEventListener('change', renderWatchedList);
-    // NOTE: Navigation button listeners are handled directly in index.html (onclick="showPage(...)")
 }
 
 // -------------------
@@ -330,15 +328,24 @@ function renderWatchedList() {
         // Rebuild the HTML structure for each anime using DOM methods
         const li = document.createElement('li');
 
-        // Image Display
+        // --- START IMAGE DISPLAY FIX ---
         const imageUrl = anime.coverImage || anime.CoverImage || anime.coverimage;
         if(imageUrl && imageUrl.length > 10) { 
+            // 1. Create the container
+            const imageContainer = document.createElement('div');
+            imageContainer.className = 'anime-cover-container';
+            
+            // 2. Create the image
             const img = document.createElement('img');
             img.src = imageUrl;
             img.alt = anime.anime_title;
             img.className = 'anime-cover';
-            li.appendChild(img);
+            
+            // 3. Append image to container, container to list item
+            imageContainer.appendChild(img);
+            li.appendChild(imageContainer);
         }
+        // --- END IMAGE DISPLAY FIX ---
 
         // Anime Info Container
         const animeInfo = document.createElement('div');
