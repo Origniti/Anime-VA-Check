@@ -7,7 +7,9 @@ let currentController = null;
 const ITEMS_PER_PAGE = 9;
 let currentPage = 1;
 let totalPages = 1;
-let currentVAFilter = null; // NEW: Stores the currently active voice actor name filter
+let currentVAFilter = null; 
+// NEW: Global variable to store the ID of the anime whose notes are currently open
+let currentNotesAnimeId = null; 
 
 // New function to initialize the app (run on page load)
 function init() {
@@ -119,7 +121,7 @@ function changePage(delta) {
 
 
 // -------------------
-// VOICE ACTOR FILTER LOGIC (NEW FUNCTION)
+// VOICE ACTOR FILTER LOGIC
 // -------------------
 function filterByVA(vaName) {
     // If the same filter is clicked, clear the filter
@@ -194,10 +196,6 @@ async function addAnime(anime){
     // Image Saving: Robust Check for both lowercase and capitalized properties
     const coverImage = anime.coverImage?.large || anime.CoverImage?.large || '';
 
-    console.log("--- addAnime started ---");
-    console.log("Sending data:", {userId, animeId:anime.id, animeTitle, rating, description, characters: characters ? characters.length : 'N/A', coverImage}); 
-    console.log("Raw Anime Object:", anime);
-
     try {
         const res = await fetch('/add-anime',{
             method:'POST',
@@ -206,10 +204,8 @@ async function addAnime(anime){
         });
         const data = await res.json();
         
-        console.log("Server Response:", data);
-        
         if(data.success) {
-            loadWatched();
+            loadWatched(); 
             document.getElementById('search-results').innerHTML = ''; // Clear search results on success
             document.getElementById('anime-search').value = '';
         }
@@ -217,7 +213,6 @@ async function addAnime(anime){
     } catch(err){
         console.error("Add anime failed:", err);
     }
-    console.log("--- addAnime finished ---");
 }
 
 // -------------------
@@ -238,28 +233,30 @@ async function removeAnime(animeId){
 }
 
 // -------------------
-// Load watched anime (MODIFIED - no longer renders directly)
+// Load watched anime (CRITICAL FIXES APPLIED HERE)
 // -------------------
 async function loadWatched(){
     if (!userId) return; 
     try {
         const res = await fetch(`/watched/${userId}`);
         const data = await res.json();
-        watched.length=0;
+        
         if(data.success){
+            // 1. Clear the old array content
+            watched.length = 0; 
             
+            // 2. Repopulate the array with new/updated data
             data.data.forEach(a=>{
-                // FIX: Ensure JSON.parse handles null or undefined voice_actors gracefully
+                // Ensure JSON.parse handles null or undefined voice_actors gracefully
                 try {
                     a.voice_actors_parsed = JSON.parse(a.voice_actors);
                 } catch(e){
-                    // Fallback for old/malformed/empty data
                     a.voice_actors_parsed = { japanese: "", english: "" };
                 }
                 watched.push(a);
             });
 
-            // If the watched page is currently visible, render it immediately
+            // 3. Render the list only if the watched page is currently active
             if (document.getElementById('page-watched').style.display !== 'none') {
                 renderWatchedList(); 
             }
@@ -271,68 +268,146 @@ async function loadWatched(){
 
 
 // -------------------
+// Notes Modal Logic (NEW)
+// -------------------
+
+// Function to open the modal and load notes
+async function openNotesModal(animeId, animeTitle) {
+    if (!userId) {
+        alert("Please log in to manage notes.");
+        return;
+    }
+    
+    // Set the global tracker ID
+    currentNotesAnimeId = animeId;
+    
+    // 1. Update Modal Title
+    document.getElementById('notes-modal-title').textContent = `Notes for ${animeTitle}`;
+    
+    // 2. Clear previous content and status
+    document.getElementById('notes-input').value = 'Loading notes...';
+    document.getElementById('notes-status').textContent = '';
+    
+    // 3. Fetch existing notes
+    try {
+        // NOTE: This assumes you have created this endpoint on your server
+        const res = await fetch(`/api/notes/${userId}/${animeId}`);
+        const data = await res.json(); 
+        
+        if (data.success) {
+            document.getElementById('notes-input').value = data.notes || '';
+        } else {
+            document.getElementById('notes-input').value = 'Could not load existing notes.';
+        }
+    } catch (error) {
+        console.error("Error fetching notes:", error);
+        document.getElementById('notes-input').value = 'Error fetching notes. Check server connection.';
+    }
+
+    // 4. Show the modal
+    document.getElementById('notes-modal').style.display = 'flex';
+}
+
+// Function to close the modal
+function closeNotesModal() {
+    document.getElementById('notes-modal').style.display = 'none';
+    currentNotesAnimeId = null; // Clear the tracker ID
+    document.getElementById('notes-status').textContent = ''; // Clear status
+}
+
+// Function to save the notes
+async function saveNotes() {
+    if (!currentNotesAnimeId || !userId) return;
+
+    const notes = document.getElementById('notes-input').value;
+    const statusElement = document.getElementById('notes-status');
+    statusElement.textContent = 'Saving...';
+
+    try {
+        // NOTE: This assumes you have created this endpoint on your server
+        const res = await fetch('/api/notes', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: userId,
+                animeId: currentNotesAnimeId,
+                notes: notes
+            })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+            statusElement.textContent = 'Notes saved successfully!';
+            // Reload the watched list to potentially update a 'has notes' indicator (optional)
+            loadWatched();
+        } else {
+            statusElement.textContent = `Failed to save notes: ${data.error}`;
+        }
+    } catch (error) {
+        console.error("Error saving notes:", error);
+        statusElement.textContent = 'Network error while saving notes.';
+    }
+    
+    // Clear status message after a few seconds
+    setTimeout(() => {
+        statusElement.textContent = '';
+    }, 3000);
+}
+
+// -------------------
 // Read More/Less Toggle Function
 // -------------------
 function toggleReadMore(event) {
     const readMoreButton = event.target;
-    // Get the parent wrapper (.description-wrapper)
     const descriptionWrapper = readMoreButton.closest('.description-wrapper'); 
 
     if (!descriptionWrapper) return;
 
-    // 1. Toggle the 'expanded' class
     descriptionWrapper.classList.toggle('expanded');
 
-    // 2. Change the button text
     if (descriptionWrapper.classList.contains('expanded')) {
         readMoreButton.textContent = 'Read Less';
     } else {
         readMoreButton.textContent = 'Read More';
     }
 
-    // 3. Force Grid Recalculation (Essential for preserving row alignment)
     const gridContainer = document.getElementById('watched-list');
     if (gridContainer) {
-        // FIX: Store Scroll Position to prevent screen jumping
         const scrollY = window.scrollY; 
         
-        // Temporarily hide, force browser reflow, then restore display
         gridContainer.style.display = 'none'; 
-        void gridContainer.offsetWidth; // Force browser reflow/recalculation
+        void gridContainer.offsetWidth;
         gridContainer.style.display = 'grid'; 
         
-        // FIX: Restore Scroll Position
         window.scrollTo(0, scrollY);
     }
 }
 
 
 // -------------------
-// RENDER WATCHED LIST (MODIFIED for VA Filtering)
+// RENDER WATCHED LIST (VA Filtering, Pagination, Highlighting, Notes Button)
 // -------------------
 function renderWatchedList() {
     
-    // 1. Apply VA Filter to the full list
+    // 1. Apply VA Filter
     const vaLang = document.getElementById('va-lang').value;
     let filteredAnime = watched;
 
     if (currentVAFilter) {
         filteredAnime = watched.filter(anime => {
             const vaString = anime.voice_actors_parsed[vaLang] || "";
-            // Check if the current VA filter name exists in the VA string for this anime
             return vaString.includes(currentVAFilter); 
         });
         
-        // Update the page title to show the active filter
         document.getElementById('watched-list-title').textContent = 
-            `Your Watched List (Filtered by: ${currentVAFilter} - click to clear)`;
+            `Your Watched List (Filtered by: ${currentVAFilter} - click VA to clear)`;
     } else {
-        // Clear filter text
         document.getElementById('watched-list-title').textContent = 'Your Watched List';
     }
 
 
-    // 2. Calculate Pagination Range based on the filtered list
+    // 2. Calculate Pagination Range
     totalPages = Math.ceil(filteredAnime.length / ITEMS_PER_PAGE);
     if (currentPage > totalPages && totalPages > 0) {
         currentPage = totalPages;
@@ -343,13 +418,12 @@ function renderWatchedList() {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     const end = start + ITEMS_PER_PAGE;
 
-    // Slice the filtered array to get only the items for the current page
     const animeToRender = filteredAnime.slice(start, end);
     
     
     // 3. VA Count (Count across ALL watched items for highlighting accuracy)
     const vaCount = {};
-    watched.forEach(a => { // NOTE: Still uses the full 'watched' list for accurate count
+    watched.forEach(a => { 
         const vaString = a.voice_actors_parsed[vaLang] || "";
         vaString.split('|').filter(Boolean).forEach(va => {
             const vaName = va.split(': ')[1]?.trim();
@@ -362,6 +436,17 @@ function renderWatchedList() {
     // 4. Render List
     const list = document.getElementById('watched-list');
     list.innerHTML = ''; 
+
+    if (animeToRender.length === 0) {
+        const message = document.createElement('h3');
+        message.style.gridColumn = '1 / -1'; 
+        message.style.textAlign = 'center';
+        message.style.color = 'var(--color-text-subtle)';
+        message.textContent = currentVAFilter ? 
+            `No anime found featuring ${currentVAFilter} on this page.` : 
+            "Your watched list is empty. Time to add some anime!";
+        list.appendChild(message);
+    }
 
     animeToRender.forEach(anime => {
         const li = document.createElement('li');
@@ -424,23 +509,18 @@ function renderWatchedList() {
                 const vaSpan = document.createElement('span');
                 vaSpan.className = 'va';
 
-                // Check if the VA name is shared (and should be clickable)
                 if(vaCount[vaName]>1) {
-                    // Wrap the VA name in a highlight span
                     vaHtml = va.replace(vaName, `<span class="highlight">${vaName}</span>`);
                     vaSpan.innerHTML = vaHtml;
                     
-                    // NEW: Add click listener to the highlight span
-                    // We must find the inner span after setting innerHTML
                     setTimeout(() => {
                         const highlightSpan = vaSpan.querySelector('.highlight');
                         if (highlightSpan) {
-                            // Check if this VA is the currently active filter, add a class for styling
                             if (currentVAFilter === vaName) {
                                 highlightSpan.classList.add('active-filter');
                             }
                             highlightSpan.addEventListener('click', (e) => {
-                                e.stopPropagation(); // Prevent any parent click events
+                                e.stopPropagation(); 
                                 filterByVA(vaName);
                             });
                         }
@@ -455,13 +535,25 @@ function renderWatchedList() {
         });
         animeInfo.appendChild(vaTagsContainer);
 
+        // --- Buttons Group (NEW CONTAINER) ---
+        const buttonsGroup = document.createElement('div');
+        buttonsGroup.className = 'card-buttons-group';
+        
+        // Notes Button (NEW)
+        const notesBtn = document.createElement('button');
+        notesBtn.className = 'notes-btn';
+        notesBtn.textContent = 'Notes'; // You could change this to 'View/Add Notes'
+        notesBtn.addEventListener('click', () => openNotesModal(anime.anime_id, anime.anime_title));
+        buttonsGroup.appendChild(notesBtn);
 
         // Remove Button
         const removeBtn = document.createElement('button');
         removeBtn.className = 'remove-btn';
         removeBtn.textContent = 'Remove';
         removeBtn.addEventListener('click', () => removeAnime(anime.anime_id));
-        animeInfo.appendChild(removeBtn);
+        buttonsGroup.appendChild(removeBtn);
+
+        animeInfo.appendChild(buttonsGroup);
 
         li.appendChild(animeInfo);
         list.appendChild(li);
@@ -481,7 +573,10 @@ window.register = register;
 window.login = login;
 window.searchAnime = actualSearchAnime;
 window.removeAnime = removeAnime;
-window.showPage = showPage; // New export
-window.changePage = changePage; // New export
-window.filterByVA = filterByVA; // New export
-window.onload = init; // This is now the entry point
+window.showPage = showPage; 
+window.changePage = changePage; 
+window.filterByVA = filterByVA; 
+window.openNotesModal = openNotesModal; // NEW
+window.closeNotesModal = closeNotesModal; // NEW
+window.saveNotes = saveNotes; // NEW
+window.onload = init;
