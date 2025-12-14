@@ -12,30 +12,36 @@ let currentPage = 1;
 const ITEMS_PER_PAGE = 9;
 
 // --- DOM Elements ---
+// Ensure all these IDs are present in your index.html
 const appDiv = document.getElementById('app');
 const authDiv = document.getElementById('auth');
 const loginBtn = document.getElementById('login-btn');
-const logoutBtn = document.getElementById('logout-btn');
+const logoutBtn = document.getElementById('logout-btn'); // Note: This is now only used in the profile view
 const registerBtn = document.getElementById('register-btn');
 const switchAuthBtn = document.getElementById('switch-auth');
 const authForm = document.getElementById('auth-form');
+
+// FIX: Ensure 'auth-title' element exists in your index.html
 const authTitle = document.getElementById('auth-title');
+
 const authUsernameInput = document.getElementById('username');
 const authPasswordInput = document.getElementById('password');
 const animeSearchInput = document.getElementById('anime-search');
 const searchResultsList = document.getElementById('search-results');
 const watchedListContainer = document.getElementById('watched-list');
 const watchlistContainer = document.getElementById('watchlist');
-const viewToggleButtons = {
-    watched: document.getElementById('view-watched'),
-    watchlist: document.getElementById('view-watchlist'),
-    profile: document.getElementById('view-profile')
-};
 const profileContentDiv = document.getElementById('profile-content');
 const paginationControls = document.getElementById('pagination-controls');
 const prevPageBtn = document.getElementById('prev-page');
 const nextPageBtn = document.getElementById('next-page');
 const pageInfoSpan = document.getElementById('page-info');
+
+// View Toggle Buttons (must be linked)
+const viewToggleButtons = {
+    watched: document.getElementById('view-watched'),
+    watchlist: document.getElementById('view-watchlist'),
+    profile: document.getElementById('view-profile')
+};
 
 // Modal Elements
 const detailModal = document.getElementById('detail-modal');
@@ -190,6 +196,11 @@ function saveUserData() {
     const userData = loadUserData();
     if (userData) {
         userData.list = userList;
+        // FIX: Check if authUsernameInput exists before using its value
+        const username = document.getElementById('username').value.trim();
+        if (username) {
+            localStorage.setItem(username, JSON.stringify(userData));
+        }
         localStorage.setItem('animeTrackerUser', JSON.stringify(userData));
     }
 }
@@ -209,7 +220,8 @@ function initializeApp() {
                 ...item,
                 userRating: item.userRating || 0,
                 watchDate: item.watchDate || '',
-                userStatus: item.userStatus || 'Completed'
+                userStatus: item.userStatus || 'Completed',
+                notes: item.notes || ''
             }));
         });
         
@@ -295,17 +307,19 @@ function removeAnime(animeId) {
 function saveAnimeDetails() {
     if (currentAnimeId === null) return;
 
-    const targetList = userList.watched.find(a => a.id === currentAnimeId) ? userList.watched : userList.watchlist;
-    const anime = targetList.find(a => a.id === currentAnimeId);
+    const list = userList.watched.concat(userList.watchlist);
+    const anime = list.find(a => a.id === currentAnimeId);
 
     if (anime) {
+        const initialStatus = anime.userStatus;
+        
         anime.userRating = parseInt(detailRatingInput.value, 10) || 0;
         anime.watchDate = detailDateInput.value;
         anime.userStatus = detailStatusSelect.value;
         anime.notes = notesTextarea.value;
         
         // Logic to move the item if the userStatus dictates a change
-        const isCurrentlyWatched = userList.watched.some(a => a.id === currentAnimeId);
+        const isCurrentlyWatched = initialStatus === 'Completed';
 
         if (anime.userStatus === 'Completed' && !isCurrentlyWatched) {
             // Move from Watchlist to Watched
@@ -322,10 +336,8 @@ function saveAnimeDetails() {
         
         // Update the view based on the change
         if (isCurrentlyWatched && anime.userStatus !== 'Completed') {
-            // Moved to watchlist, switch view
             currentView = 'watchlist';
         } else if (!isCurrentlyWatched && anime.userStatus === 'Completed') {
-            // Moved to watched, switch view
             currentView = 'watched';
         }
 
@@ -341,11 +353,13 @@ function saveAnimeDetails() {
  * Hides authentication and shows the main app content.
  */
 function showApp() {
-    authDiv.style.display = 'none';
-    appDiv.style.display = 'block';
+    if (authDiv) authDiv.style.display = 'none';
+    if (appDiv) appDiv.style.display = 'block';
+    
     // Ensure Watched is the default active view
     document.querySelectorAll('.navbar button').forEach(btn => btn.classList.remove('active'));
-    viewToggleButtons[currentView].classList.add('active');
+    if (viewToggleButtons[currentView]) viewToggleButtons[currentView].classList.add('active');
+    
     renderList();
 }
 
@@ -353,42 +367,46 @@ function showApp() {
  * Hides app content and shows the authentication form.
  */
 function showAuth() {
-    appDiv.style.display = 'none';
-    authDiv.style.display = 'block';
+    if (appDiv) appDiv.style.display = 'none';
+    if (authDiv) authDiv.style.display = 'block';
     
-    // Clear the form
-    authTitle.textContent = 'Login';
-    loginBtn.style.display = 'block';
-    registerBtn.style.display = 'none';
-    switchAuthBtn.textContent = 'Need an account? Register';
-    authForm.reset();
+    // FIX: Check if authTitle exists before setting its textContent
+    if (authTitle) {
+        authTitle.textContent = 'Login';
+    }
+    
+    if (loginBtn) loginBtn.style.display = 'block';
+    if (registerBtn) registerBtn.style.display = 'none';
+    if (switchAuthBtn) switchAuthBtn.textContent = 'Need an account? Register';
+    
+    if (authForm) authForm.reset();
 }
 
 /**
  * Updates the visibility and active state of the main list containers.
  */
 function updateViewDisplay() {
-    watchedListContainer.style.display = 'none';
-    watchlistContainer.style.display = 'none';
-    searchResultsList.style.display = 'none';
-    profileContentDiv.style.display = 'none';
-    paginationControls.style.display = 'none';
+    if (watchedListContainer) watchedListContainer.style.display = 'none';
+    if (watchlistContainer) watchlistContainer.style.display = 'none';
+    if (searchResultsList) searchResultsList.style.display = 'none';
+    if (profileContentDiv) profileContentDiv.style.display = 'none';
+    if (paginationControls) paginationControls.style.display = 'none';
     
     document.querySelectorAll('.navbar button').forEach(btn => btn.classList.remove('active'));
     
     if (currentView === 'watched') {
-        watchedListContainer.style.display = 'grid';
-        viewToggleButtons.watched.classList.add('active');
-        paginationControls.style.display = 'flex';
+        if (watchedListContainer) watchedListContainer.style.display = 'grid';
+        if (viewToggleButtons.watched) viewToggleButtons.watched.classList.add('active');
+        if (paginationControls) paginationControls.style.display = 'flex';
     } else if (currentView === 'watchlist') {
-        watchlistContainer.style.display = 'grid';
-        viewToggleButtons.watchlist.classList.add('active');
-        paginationControls.style.display = 'flex';
+        if (watchlistContainer) watchlistContainer.style.display = 'grid';
+        if (viewToggleButtons.watchlist) viewToggleButtons.watchlist.classList.add('active');
+        if (paginationControls) paginationControls.style.display = 'flex';
     } else if (currentView === 'search') {
-        searchResultsList.style.display = 'block';
+        if (searchResultsList) searchResultsList.style.display = 'block';
     } else if (currentView === 'profile') {
-        profileContentDiv.style.display = 'block';
-        viewToggleButtons.profile.classList.add('active');
+        if (profileContentDiv) profileContentDiv.style.display = 'block';
+        if (viewToggleButtons.profile) viewToggleButtons.profile.classList.add('active');
         renderProfileStats();
     }
 }
@@ -403,6 +421,8 @@ function renderList() {
 
     const list = userList[currentView];
     const container = currentView === 'watched' ? watchedListContainer : watchlistContainer;
+    if (!container) return; // Prevent errors if container is null
+    
     container.innerHTML = '';
     
     const totalItems = list.length;
@@ -436,15 +456,15 @@ function renderList() {
  * @param {number} totalPages 
  */
 function renderPagination(totalItems, totalPages) {
-    if (totalItems <= ITEMS_PER_PAGE) {
-        paginationControls.style.display = 'none';
+    if (totalItems <= ITEMS_PER_PAGE || !paginationControls) {
+        if (paginationControls) paginationControls.style.display = 'none';
         return;
     }
     
     paginationControls.style.display = 'flex';
-    pageInfoSpan.textContent = `Page ${currentPage} of ${totalPages}`;
-    prevPageBtn.disabled = currentPage === 1;
-    nextPageBtn.disabled = currentPage === totalPages;
+    if (pageInfoSpan) pageInfoSpan.textContent = `Page ${currentPage} of ${totalPages}`;
+    if (prevPageBtn) prevPageBtn.disabled = currentPage === 1;
+    if (nextPageBtn) nextPageBtn.disabled = currentPage === totalPages;
 }
 
 
@@ -523,16 +543,18 @@ function createAnimeCard(anime) {
     const readMoreBtn = li.querySelector('.read-more-btn');
     const descriptionWrapper = li.querySelector('.description-wrapper');
     const descriptionText = li.querySelector('.anime-description-text');
-
-    // Check if description is too short to warrant a 'Read More' button
-    if (descriptionText.scrollHeight <= descriptionText.clientHeight) {
-         readMoreBtn.style.display = 'none';
-    } else {
-        readMoreBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isExpanded = descriptionWrapper.classList.toggle('expanded');
-            readMoreBtn.textContent = isExpanded ? 'Read Less' : 'Read More';
-        });
+    
+    if (descriptionText && readMoreBtn && descriptionWrapper) {
+        // Check if description is too short to warrant a 'Read More' button
+        if (descriptionText.scrollHeight <= descriptionText.clientHeight) {
+             readMoreBtn.style.display = 'none';
+        } else {
+            readMoreBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isExpanded = descriptionWrapper.classList.toggle('expanded');
+                readMoreBtn.textContent = isExpanded ? 'Read Less' : 'Read More';
+            });
+        }
     }
 
     return li;
@@ -542,15 +564,18 @@ function createAnimeCard(anime) {
  * Renders the profile statistics.
  */
 function renderProfileStats() {
+    if (!profileContentDiv) return;
+
     const totalWatched = userList.watched.length;
     const totalWatchlist = userList.watchlist.length;
     
     // Calculate total episodes watched
     const totalEpisodes = userList.watched.reduce((sum, anime) => sum + (anime.episodes || 0), 0);
+    const userData = loadUserData();
 
     profileContentDiv.innerHTML = `
         <div class="section-title">My Profile</div>
-        <p>User: <strong>${loadUserData().username}</strong></p>
+        <p>User: <strong>${userData ? userData.username : 'N/A'}</strong></p>
         <p>Total Anime Watched: <strong>${totalWatched}</strong></p>
         <p>Anime in Watchlist: <strong>${totalWatchlist}</strong></p>
         <p>Total Episodes Watched: <strong>${totalEpisodes}</strong></p>
@@ -559,7 +584,10 @@ function renderProfileStats() {
     `;
 
     // Attach logout listener to the profile button
-    document.getElementById('logout-btn-profile').addEventListener('click', logout);
+    const profileLogoutBtn = document.getElementById('logout-btn-profile');
+    if (profileLogoutBtn) {
+        profileLogoutBtn.addEventListener('click', logout);
+    }
 }
 
 
@@ -570,6 +598,9 @@ function renderProfileStats() {
  */
 function toggleAuthMode(e) {
     e.preventDefault();
+    
+    if (!authTitle || !loginBtn || !registerBtn || !switchAuthBtn || !authForm) return;
+
     const isLogin = authTitle.textContent === 'Login';
     authTitle.textContent = isLogin ? 'Register' : 'Login';
     loginBtn.style.display = isLogin ? 'none' : 'block';
@@ -583,6 +614,8 @@ function toggleAuthMode(e) {
  */
 function handleAuth(e) {
     e.preventDefault();
+    if (!authUsernameInput || !authPasswordInput || !registerBtn) return;
+
     const username = authUsernameInput.value.trim();
     const password = authPasswordInput.value.trim();
     const isRegister = registerBtn.style.display === 'block';
@@ -633,6 +666,7 @@ function handleAuth(e) {
 let searchTimeout;
 function handleSearchInput() {
     clearTimeout(searchTimeout);
+    if (!animeSearchInput || !searchResultsList) return;
     
     // Clear search results and reset view when input is empty
     if (!animeSearchInput.value.trim()) {
@@ -660,6 +694,7 @@ function handleSearchInput() {
  * @param {Array} results 
  */
 function renderSearchResults(results) {
+    if (!searchResultsList) return;
     searchResultsList.innerHTML = '';
     
     if (results.length === 0) {
@@ -684,7 +719,7 @@ function renderSearchResults(results) {
         } else {
             li.addEventListener('click', () => {
                 addAnimeToList(anime);
-                animeSearchInput.value = ''; // Clear search input
+                if (animeSearchInput) animeSearchInput.value = ''; // Clear search input
                 searchResultsList.innerHTML = ''; // Clear results
             });
         }
@@ -702,8 +737,6 @@ function logout() {
     userList = { watched: [], watchlist: [] };
     currentView = 'watched';
     
-    // The previous implementation relied on initializeApp to showAuth, but a full refresh
-    // is safer and ensures all state is truly reset.
     showNotification('Logged out successfully.', 'success');
     // FORCE PAGE REFRESH TO CLEAR ALL SCRIPT STATE
     location.reload(); 
@@ -713,60 +746,65 @@ function logout() {
 // --- INITIALIZATION & LISTENERS ---
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Check if the critical authentication elements are present before proceeding
+    if (!authTitle || !loginBtn || !registerBtn || !switchAuthBtn) {
+        console.error("CRITICAL ERROR: One or more authentication elements are missing from index.html (e.g., #auth-title, #login-btn, #register-btn, #switch-auth). The app cannot initialize.");
+        // We still call initializeApp, but the functions now include null checks
+    }
+    
     initializeApp();
 
     // Authentication Listeners
-    switchAuthBtn.addEventListener('click', toggleAuthMode);
-    authForm.addEventListener('submit', handleAuth);
+    if (switchAuthBtn) switchAuthBtn.addEventListener('click', toggleAuthMode);
+    if (authForm) authForm.addEventListener('submit', handleAuth);
     
     // Main App Navigation Listeners
-    viewToggleButtons.watched.addEventListener('click', () => {
+    if (viewToggleButtons.watched) viewToggleButtons.watched.addEventListener('click', () => {
         currentView = 'watched';
         currentPage = 1;
         renderList();
     });
-    viewToggleButtons.watchlist.addEventListener('click', () => {
+    if (viewToggleButtons.watchlist) viewToggleButtons.watchlist.addEventListener('click', () => {
         currentView = 'watchlist';
         currentPage = 1;
         renderList();
     });
-    viewToggleButtons.profile.addEventListener('click', () => {
+    if (viewToggleButtons.profile) viewToggleButtons.profile.addEventListener('click', () => {
         currentView = 'profile';
         updateViewDisplay();
     });
     
-    // **Global Logout Button - REMOVED, now handled within profile**
-    // logoutBtn.addEventListener('click', logout);
-
     // Search Listener
-    animeSearchInput.addEventListener('input', handleSearchInput);
+    if (animeSearchInput) animeSearchInput.addEventListener('input', handleSearchInput);
     
     // List Action Listeners (Delegation)
     [watchedListContainer, watchlistContainer].forEach(container => {
-        container.addEventListener('click', (e) => {
-            const button = e.target.closest('button');
-            if (button) {
-                const animeId = parseInt(button.dataset.id, 10);
-                if (button.classList.contains('remove-btn')) {
-                    if (confirm('Are you sure you want to remove this anime from your list?')) {
-                        removeAnime(animeId);
+        if (container) {
+            container.addEventListener('click', (e) => {
+                const button = e.target.closest('button');
+                if (button) {
+                    const animeId = parseInt(button.dataset.id, 10);
+                    if (button.classList.contains('remove-btn')) {
+                        if (confirm('Are you sure you want to remove this anime from your list?')) {
+                            removeAnime(animeId);
+                        }
+                    } else if (button.classList.contains('notes-btn')) {
+                        openDetailModal(animeId);
                     }
-                } else if (button.classList.contains('notes-btn')) {
-                    openDetailModal(animeId);
                 }
-            }
-        });
+            });
+        }
     });
 
     // Pagination Listeners
-    prevPageBtn.addEventListener('click', () => {
+    if (prevPageBtn) prevPageBtn.addEventListener('click', () => {
         if (currentPage > 1) {
             currentPage--;
             renderList();
         }
     });
 
-    nextPageBtn.addEventListener('click', () => {
+    if (nextPageBtn) nextPageBtn.addEventListener('click', () => {
         const list = userList[currentView];
         const totalPages = Math.ceil(list.length / ITEMS_PER_PAGE);
         if (currentPage < totalPages) {
@@ -776,17 +814,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Modal Listeners
-    detailCloseBtn.addEventListener('click', () => {
-        detailModal.style.display = 'none';
+    if (detailCloseBtn) detailCloseBtn.addEventListener('click', () => {
+        if (detailModal) detailModal.style.display = 'none';
     });
-    saveDetailBtn.addEventListener('click', saveAnimeDetails);
+    if (saveDetailBtn) saveDetailBtn.addEventListener('click', saveAnimeDetails);
     
     // Close modal on outside click
-    window.addEventListener('click', (event) => {
-        if (event.target === detailModal) {
-            detailModal.style.display = 'none';
-        }
-    });
+    if (detailModal) {
+        window.addEventListener('click', (event) => {
+            if (event.target === detailModal) {
+                detailModal.style.display = 'none';
+            }
+        });
+    }
 });
 
 /**
@@ -794,17 +834,19 @@ document.addEventListener('DOMContentLoaded', () => {
  * @param {number} animeId 
  */
 function openDetailModal(animeId) {
+    if (!detailModal) return;
+
     const list = userList.watched.concat(userList.watchlist);
     const anime = list.find(a => a.id === animeId);
     
     if (anime) {
         currentAnimeId = animeId;
-        detailAnimeTitle.textContent = anime.title.english || anime.title.romaji;
+        if (detailAnimeTitle) detailAnimeTitle.textContent = anime.title.english || anime.title.romaji;
         
-        detailRatingInput.value = anime.userRating || 0;
-        detailDateInput.value = anime.watchDate || '';
-        detailStatusSelect.value = anime.userStatus || 'Completed';
-        notesTextarea.value = anime.notes || '';
+        if (detailRatingInput) detailRatingInput.value = anime.userRating || 0;
+        if (detailDateInput) detailDateInput.value = anime.watchDate || '';
+        if (detailStatusSelect) detailStatusSelect.value = anime.userStatus || 'Completed';
+        if (notesTextarea) notesTextarea.value = anime.notes || '';
 
         detailModal.style.display = 'block';
     }
