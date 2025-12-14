@@ -96,6 +96,19 @@
         </div>
     </div>
 
+    <div id="date-modal" class="modal-backdrop" style="display: none;">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeDateModal()">&times;</span>
+            <h3 id="date-modal-title">Set Finished Date for [Anime Title]</h3>
+            
+            <input type="date" id="finished-date-input">
+            
+            <button onclick="saveFinishedDate()">Save Date</button>
+            <button class="remove-btn" onclick="clearFinishedDate()">Clear Date</button>
+            <p id="date-status"></p>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
