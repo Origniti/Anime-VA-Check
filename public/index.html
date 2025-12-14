@@ -90,9 +90,23 @@
     <div id="notes-modal" class="modal">
         <div class="modal-content">
             <span class="close-button" id="notes-close-btn">&times;</span>
-            <h3>Anime Notes</h3>
+            <h3 id="modal-anime-title">Anime Title</h3>
+            
+            <div class="tracking-fields">
+                <label for="modal-rating">Your Rating (1-10):</label>
+                <input type="number" id="modal-rating" min="1" max="10" step="0.5">
+
+                <label for="modal-start-date">Watch Start Date:</label>
+                <input type="date" id="modal-start-date">
+
+                <label for="modal-end-date">Watch End Date:</label>
+                <input type="date" id="modal-end-date">
+            </div>
+
+            <h4>Notes:</h4>
             <textarea id="notes-textarea" rows="10" placeholder="Write your notes here..."></textarea>
-            <button id="notes-save-btn">Save Notes</button>
+            
+            <button id="notes-save-btn">Save Info</button>
         </div>
     </div>
 </body>
