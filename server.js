@@ -36,7 +36,7 @@ pool.on('error', (err, client) => {
 const query = (text, params) => pool.query(text, params);
 
 // -------------------
-// 2. Database Initialization
+// 2. Database Initialization (Updated for Notes)
 // -------------------
 async function setupDatabase() {
     // Check if the connection string is actually set
@@ -48,9 +48,33 @@ async function setupDatabase() {
     try {
         await query('CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username TEXT UNIQUE, password TEXT)');
         
-        // Note: PostgreSQL saves 'coverImage' as 'coverimage' (all lowercase) if not quoted.
-        await query('CREATE TABLE IF NOT EXISTS watched_anime (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), anime_id INTEGER, anime_title TEXT, rating REAL, voice_actors TEXT, description TEXT, coverImage TEXT)');
+        // Ensure the watched_anime table exists
+        await query(`
+            CREATE TABLE IF NOT EXISTS watched_anime (
+                id SERIAL PRIMARY KEY, 
+                user_id INTEGER REFERENCES users(id), 
+                anime_id INTEGER, 
+                anime_title TEXT, 
+                rating REAL, 
+                voice_actors TEXT, 
+                description TEXT, 
+                "coverImage" TEXT,
+                UNIQUE (user_id, anime_id)
+            )
+        `);
         
+        // === FIX 1: Add the 'notes' column if it does not exist ===
+        try {
+            await query("ALTER TABLE watched_anime ADD COLUMN notes TEXT DEFAULT ''");
+            console.log('Successfully added `notes` column to watched_anime table.');
+        } catch (alterErr) {
+            // Error code '42701' means the column already exists. This is expected and safe to ignore.
+            if (alterErr.code !== '42701') {
+                console.warn("Could not add `notes` column (may already exist):", alterErr.message);
+            }
+        }
+        // ==========================================================
+
         console.log('Database tables ensured successfully (PostgreSQL).');
     } catch (err) {
         console.error("CRITICAL ERROR: Database setup failed:", err.message);
@@ -189,14 +213,18 @@ app.post('/add-anime', async (req, res) => {
         // --- END OF VOICE ACTOR FINAL FIX ---
 
 
-        // Insert new record (Uses $1 through $7)
+        // Insert new record (Uses $1 through $7, notes is excluded as it defaults to '')
         const insertResult = await query(
-            'INSERT INTO watched_anime (user_id, anime_id, anime_title, rating, voice_actors, description, coverImage) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+            'INSERT INTO watched_anime (user_id, anime_id, anime_title, rating, voice_actors, description, "coverImage") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
             [userId, animeId, animeTitle, rating, voiceActors, description, coverImage]
         );
 
         res.json({ success: true, animeId: insertResult.rows[0].id });
     } catch (err) {
+        // Check for unique constraint violation which could still happen if duplicate logic fails
+        if (err.code === '23505') {
+            return res.json({ success: false, error: "Anime already added" });
+        }
         console.error("Add anime failed:", err);
         res.json({ success: false, error: err.message });
     }
@@ -229,6 +257,57 @@ app.get('/watched/:userId', async (req, res) => {
     } catch (err) {
         console.error("Get watched failed:", err);
         res.json({ success: false, error: err.message });
+    }
+});
+
+// -------------------
+// 3. API Routes for Notes (NEW)
+// -------------------
+
+// GET /api/notes/:userId/:animeId - Fetch notes for a specific anime
+app.get('/api/notes/:userId/:animeId', async (req, res) => {
+    const { userId, animeId } = req.params;
+
+    try {
+        // Select only the notes column
+        const sql = 'SELECT notes FROM watched_anime WHERE user_id = $1 AND anime_id = $2';
+        const result = await query(sql, [userId, animeId]);
+
+        if (result.rows.length > 0) {
+            // Return the notes (or an empty string if null/default)
+            res.json({ success: true, notes: result.rows[0].notes || "" });
+        } else {
+            // If the anime is not found, return an empty string for notes
+            res.json({ success: true, notes: "" });
+        }
+    } catch (err) {
+        console.error("Database error fetching notes:", err);
+        res.status(500).json({ success: false, error: "Internal server error fetching notes." });
+    }
+});
+
+// PUT /api/notes - Save/Update notes for a specific anime
+app.put('/api/notes', async (req, res) => {
+    const { userId, animeId, notes } = req.body;
+
+    if (!userId || !animeId) {
+        return res.status(400).json({ success: false, error: "Missing user or anime ID." });
+    }
+
+    try {
+        // Use an UPDATE query to set the 'notes' field
+        const sql = 'UPDATE watched_anime SET notes = $1 WHERE user_id = $2 AND anime_id = $3';
+        const result = await query(sql, [notes, userId, animeId]);
+
+        // Check the number of rows updated
+        if (result.rowCount > 0) {
+            res.json({ success: true, message: "Notes saved successfully." });
+        } else {
+            res.status(404).json({ success: false, error: "Anime not found in watched list." });
+        }
+    } catch (err) {
+        console.error("Database error saving notes:", err);
+        res.status(500).json({ success: false, error: "Internal server error saving notes." });
     }
 });
 
