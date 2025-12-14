@@ -11,49 +11,69 @@ let currentLang = 'japanese'; // Default language for VA display
 document.addEventListener('DOMContentLoaded', () => {
     // Check if user is logged in
     const userId = localStorage.getItem('userId');
-    if (userId) {
-        document.getElementById('auth').style.display = 'none';
-        document.getElementById('main-app').style.display = 'block';
-        document.querySelector('.app-main-title').style.display = 'block';
-        document.getElementById('profile-container').style.display = 'block';
-        loadWatchedAnime(userId, currentPage);
-        
-        // Set username in profile button
-        const username = localStorage.getItem('username');
-        if (username) {
-            document.getElementById('profile-username').textContent = username;
-        }
+    const mainApp = document.getElementById('main-app'); // Get the main container
+    const authContainer = document.getElementById('auth'); // Get the auth container
+    const profileContainer = document.getElementById('profile-container');
+    const mainTitle = document.querySelector('.app-main-title');
 
+    // CRITICAL FIX: Ensure all elements exist before trying to access .style
+    if (authContainer && mainApp && profileContainer && mainTitle) {
+        if (userId) {
+            authContainer.style.display = 'none';
+            mainApp.style.display = 'block';
+            mainTitle.style.display = 'block';
+            profileContainer.style.display = 'block';
+            loadWatchedAnime(userId, currentPage);
+            
+            // Set username in profile button
+            const username = localStorage.getItem('username');
+            if (username) {
+                document.getElementById('profile-username').textContent = username;
+            }
+
+        } else {
+            authContainer.style.display = 'block';
+            mainApp.style.display = 'none';
+            mainTitle.style.display = 'none';
+            profileContainer.style.display = 'none';
+        }
     } else {
-        document.getElementById('auth').style.display = 'block';
-        document.getElementById('main-app').style.display = 'none';
-        document.querySelector('.app-main-title').style.display = 'none';
-        document.getElementById('profile-container').style.display = 'none';
+        console.error("CRITICAL: One or more main HTML containers are missing (auth, main-app, profile-container, or .app-main-title). Check your index.html IDs.");
     }
 
-    // Attach event listeners
-    document.getElementById('register-form').addEventListener('submit', handleRegister);
-    document.getElementById('login-form').addEventListener('submit', handleLogin);
-    document.getElementById('logout-button').addEventListener('click', handleLogout);
-    document.getElementById('anime-search').addEventListener('input', handleSearchInput);
-    document.getElementById('va-language-select').addEventListener('change', handleLanguageChange);
-    document.getElementById('sort-by-select').addEventListener('change', handleSortChange);
-    document.getElementById('search-results').addEventListener('click', handleSearchResultSelection);
-    document.getElementById('prev-page').addEventListener('click', () => changePage(currentPage - 1));
-    document.getElementById('next-page').addEventListener('click', () => changePage(currentPage + 1));
+
+    // Attach event listeners (using form IDs and button IDs)
+    const registerForm = document.getElementById('register-form');
+    if (registerForm) {
+        registerForm.addEventListener('submit', handleRegister);
+    }
+
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
+    
+    document.getElementById('dropdown-logout-button')?.addEventListener('click', handleLogout);
+    
+    // Check if elements exist before adding listeners
+    document.getElementById('anime-search')?.addEventListener('input', handleSearchInput);
+    document.getElementById('va-language-select')?.addEventListener('change', handleLanguageChange);
+    document.getElementById('sort-by-select')?.addEventListener('change', handleSortChange);
+    document.getElementById('search-results')?.addEventListener('click', handleSearchResultSelection);
+    document.getElementById('prev-page')?.addEventListener('click', () => changePage(currentPage - 1));
+    document.getElementById('next-page')?.addEventListener('click', () => changePage(currentPage + 1));
     
     // Modal Listeners
-    document.querySelector('.close-button').addEventListener('click', closeModal);
+    document.querySelector('#more-info-modal .close-button')?.addEventListener('click', closeModal);
     window.addEventListener('click', (event) => {
         if (event.target === document.getElementById('more-info-modal')) {
             closeModal();
         }
     });
-    document.getElementById('notes-save-btn').addEventListener('click', saveMoreInfo);
+    document.getElementById('notes-save-btn')?.addEventListener('click', saveMoreInfo);
     
     // Profile Dropdown
-    document.querySelector('.profile-button').addEventListener('click', toggleProfileDropdown);
-    document.getElementById('dropdown-logout-button').addEventListener('click', handleLogout);
+    document.querySelector('.profile-button')?.addEventListener('click', toggleProfileDropdown);
 
     // Initial check for available VA languages
     updateVAPrompt();
@@ -78,7 +98,7 @@ async function handleRegister(event) {
     if (data.success) {
         alert('Registration successful! Please log in.');
         event.target.reset();
-        document.getElementById('login-form').elements.username.value = username; // Pre-fill login
+        document.getElementById('login-username').value = username; // Pre-fill login
     } else {
         alert(`Registration failed: ${data.error}`);
     }
@@ -392,12 +412,10 @@ function toggleDescription(button) {
 
 // Function to check if description is clipped and show/hide the 'Read More' button
 function checkDescriptionClipping(textElement, buttonElement) {
-    // Temporarily disable max-height to get full scroll height
     const originalMaxHeight = textElement.style.maxHeight;
     textElement.style.maxHeight = 'none';
     const isClipped = textElement.scrollHeight > textElement.clientHeight;
     
-    // Restore original max-height
     textElement.style.maxHeight = originalMaxHeight;
 
     if (isClipped) {
@@ -414,20 +432,19 @@ function checkDescriptionClipping(textElement, buttonElement) {
 function handleLanguageChange(event) {
     currentLang = event.target.value;
     updateVAPrompt();
-    // Re-render the list without fetching
     sortAndPaginate(currentAnimeList, currentPage); 
 }
 
 function handleSortChange(event) {
     currentSort = event.target.value;
-    // Re-sort and paginate from the start
     sortAndPaginate(currentAnimeList, 1); 
 }
 
 function updateVAPrompt() {
     const langSelect = document.getElementById('va-language-select');
-    // Simple visual update for the currently selected language
-    langSelect.title = `Currently displaying: ${langSelect.options[langSelect.selectedIndex].text}`;
+    if (langSelect) {
+        langSelect.title = `Currently displaying: ${langSelect.options[langSelect.selectedIndex].text}`;
+    }
 }
 
 function renderPaginationControls(totalItems) {
@@ -435,6 +452,8 @@ function renderPaginationControls(totalItems) {
     const prevButton = document.getElementById('prev-page');
     const nextButton = document.getElementById('next-page');
     const pageInfo = document.getElementById('page-info');
+
+    if (!controls) return;
 
     if (totalItems === 0) {
         controls.style.display = 'none';
@@ -458,9 +477,9 @@ function changePage(newPage) {
 /* ------------------- */
 
 function highlightSharedVAs(animeList) {
-    const vaCount = {}; // { vaName: count }
+    const vaCount = {}; 
 
-    // 1. Count VA occurrences across the paginated list
+    // 1. Count VA occurrences
     animeList.forEach(anime => {
         let vaData;
         try {
@@ -473,7 +492,6 @@ function highlightSharedVAs(animeList) {
         const vaTags = vaString.split('|').filter(tag => tag.trim() !== '');
         
         vaTags.forEach(tag => {
-            // Extract just the VA name (after the ':')
             const vaName = tag.split(':').pop().trim();
             if (vaName) {
                 vaCount[vaName] = (vaCount[vaName] || 0) + 1;
@@ -481,13 +499,12 @@ function highlightSharedVAs(animeList) {
         });
     });
 
-    // 2. Apply highlight class if count > 1
+    // 2. Apply highlight class
     animeList.forEach(anime => {
         const card = document.getElementById(`anime-card-${anime.anime_id}`);
         if (!card) return;
 
         card.querySelectorAll('.va').forEach(vaElement => {
-            // Re-extract the VA name from the tag content
             const fullTagContent = vaElement.textContent;
             const vaName = fullTagContent.split(':').pop().trim();
             
@@ -516,7 +533,6 @@ async function removeAnime(userId, animeId, animeTitle) {
 
     if (data.success) {
         alert(`"${animeTitle}" removed.`);
-        // Reload and re-paginate
         loadWatchedAnime(userId, currentPage); 
     } else {
         alert(`Removal failed: ${data.error}`);
@@ -531,11 +547,10 @@ async function removeAnime(userId, animeId, animeTitle) {
 function showMoreInfoModal(animeId) {
     const modal = document.getElementById('more-info-modal');
     
-    // Find the anime data from the current list
     const anime = currentAnimeList.find(a => a.anime_id === animeId);
 
-    if (!anime) {
-        alert("Anime data not found.");
+    if (!anime || !modal) {
+        alert("Anime data or modal not found.");
         return;
     }
 
@@ -547,8 +562,7 @@ function showMoreInfoModal(animeId) {
     document.getElementById('notes-textarea').value = anime.notes || '';
     document.getElementById('modal-rating').value = anime.rating || '';
     
-    // Set date fields: Only use the YYYY-MM-DD part (first 10 characters) and default to empty string
-    // This is crucial for HTML <input type="date">
+    // Set date fields: Use substring(0, 10) to get YYYY-MM-DD format for HTML date input
     document.getElementById('modal-start-date').value = anime.start_date ? anime.start_date.substring(0, 10) : ''; 
     document.getElementById('modal-end-date').value = anime.end_date ? anime.end_date.substring(0, 10) : ''; 
 
@@ -576,7 +590,7 @@ function saveMoreInfo() {
     let rating = ratingInput ? parseFloat(ratingInput) : null;
     rating = (rating !== null && rating >= 0 && rating <= 100) ? rating : null;
 
-    // ⭐ FIX: Check for empty date strings and convert them to null for PostgreSQL
+    // FIX: Check for empty date strings and convert them to null for PostgreSQL
     const startDateRaw = document.getElementById('modal-start-date').value;
     const endDateRaw = document.getElementById('modal-end-date').value;
 
@@ -595,7 +609,7 @@ async function updateMoreInfo(animeId, rating, notes, startDate, endDate) {
     }
 
     try {
-        const res = await fetch('/update-info', { // Corresponds to the new server route
+        const res = await fetch('/update-info', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -608,7 +622,6 @@ async function updateMoreInfo(animeId, rating, notes, startDate, endDate) {
             })
         });
 
-        // Check for server errors (non-2xx status codes)
         if (!res.ok) {
             const errorData = await res.json().catch(() => ({ error: 'Unknown server error' }));
             throw new Error(`HTTP error! Status: ${res.status}. Response: ${errorData.error}`);
@@ -619,7 +632,6 @@ async function updateMoreInfo(animeId, rating, notes, startDate, endDate) {
         if (data.success) {
             alert("Tracking info updated successfully!");
             document.getElementById('more-info-modal').style.display = 'none';
-            // Refresh list to show updated data (rating, notes, etc.)
             loadWatchedAnime(userId, currentPage); 
         } else {
             alert(`Update failed: ${data.error}`);
