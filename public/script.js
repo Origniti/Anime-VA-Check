@@ -1,6 +1,22 @@
-let userId = null;
+// At the top of script.js, update the userId variable
+let userId = localStorage.getItem('animeTrackerUserId'); // Load userId from storage
 const watched = [];
 let currentController = null;
+
+// New function to initialize the app (run on page load)
+function init() {
+    if (userId) {
+        // If userId is found, skip auth screen and go to main app
+        document.getElementById('auth').style.display = 'none';
+        document.getElementById('main').style.display = 'block';
+        loadWatched();
+    }
+    
+    // Set up event listeners (including the VA language toggle)
+    document.getElementById('va-lang').addEventListener('change', loadWatched);
+    
+    // NOTE: You will add new event listeners for page navigation here later.
+}
 
 // -------------------
 // Debounce function
@@ -14,7 +30,7 @@ function debounce(func, delay) {
 }
 
 // -------------------
-// User auth functions
+// User auth functions (UPDATED to save userId to localStorage)
 // -------------------
 async function register(){
   const username = document.getElementById('reg-username').value;
@@ -25,7 +41,14 @@ async function register(){
     body:JSON.stringify({username,password})
   });
   const data = await res.json();
-  alert(data.success ? "Registered!" : data.error);
+  if(data.success){
+      // Save the ID and start the app
+      userId = data.userId;
+      localStorage.setItem('animeTrackerUserId', userId);
+      document.getElementById('auth').style.display='none';
+      document.getElementById('main').style.display='block';
+      loadWatched();
+  } else alert(data.error);
 }
 
 async function login(){
@@ -38,10 +61,12 @@ async function login(){
   });
   const data = await res.json();
   if(data.success){
-    userId = data.userId;
-    document.getElementById('auth').style.display='none';
-    document.getElementById('main').style.display='block';
-    loadWatched();
+      // Save the ID and start the app
+      userId = data.userId;
+      localStorage.setItem('animeTrackerUserId', userId);
+      document.getElementById('auth').style.display='none';
+      document.getElementById('main').style.display='block';
+      loadWatched();
   } else alert(data.error);
 }
 
@@ -97,7 +122,7 @@ async function addAnime(anime){
   const animeTitle = titleLang==='english' && anime.title.english ? anime.title.english : anime.title.romaji;
   const rating = anime.averageScore/10;
   
-  // Client-side cleanup for description (though server-side cleanup is now the main defense)
+  // Client-side cleanup for description
   let description = anime.description || '';
 
   const characters = anime.characters.edges; // Data structure from AniList API
@@ -160,7 +185,7 @@ async function loadWatched(){
     if(data.success){
       
       data.data.forEach(a=>{
-        // 🟢 FIX: Ensure JSON.parse handles null or undefined voice_actors gracefully
+        // FIX: Ensure JSON.parse handles null or undefined voice_actors gracefully
         try {
           a.voice_actors_parsed = JSON.parse(a.voice_actors);
         } catch(e){
@@ -251,14 +276,10 @@ function highlightSharedVAs(){
 }
 
 // -------------------
-// VA language toggle
-// -------------------
-document.getElementById('va-lang').addEventListener('change', loadWatched);
-
-// -------------------
-// Expose functions globally
+// Expose functions globally and start initialization
 // -------------------
 window.register = register;
 window.login = login;
 window.searchAnime = actualSearchAnime;
 window.removeAnime = removeAnime;
+window.onload = init; // This is now the entry point
