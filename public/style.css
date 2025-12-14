@@ -233,11 +233,12 @@ button:hover {
     transform: translateY(-2px); /* Slight lift on hover */
 }
 
+/* --- UPDATED: Image CSS to prevent cropping --- */
 .anime-cover {
     width: 100%;
     max-width: 100%; 
-    height: 180px; 
-    object-fit: cover;
+    max-height: 180px; /* Sets the maximum height for the image area */
+    object-fit: contain; /* Ensures the whole image is visible, no cropping */
     border-radius: 6px;
     flex-shrink: 0;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
