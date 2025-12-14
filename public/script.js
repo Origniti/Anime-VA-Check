@@ -117,10 +117,16 @@ async function handleLogin(event) {
         localStorage.setItem('username', username);
         
         // FIX: Using optional chaining (?) for safer DOM manipulation
-        document.getElementById('auth')?.style.display = 'none';
-        document.getElementById('main-app')?.style.display = 'block';
-        document.querySelector('.app-main-title')?.style.display = 'block'; 
-        document.getElementById('profile-container')?.style.display = 'block';
+const auth = document.getElementById('auth');
+const mainApp = document.getElementById('main-app');
+const mainTitle = document.querySelector('.app-main-title');
+const profile = document.getElementById('profile-container');
+
+if (auth) auth.style.display = 'none';
+if (mainApp) mainApp.style.display = 'block';
+if (mainTitle) mainTitle.style.display = 'block';
+if (profile) profile.style.display = 'block';
+
         
         // Set username in profile button
         const profileUsername = document.getElementById('profile-username');
@@ -140,14 +146,20 @@ function handleLogout() {
     localStorage.removeItem('username');
 
     // FIX: Using optional chaining (?) for safer DOM manipulation
-    document.getElementById('auth')?.style.display = 'block';
-    document.getElementById('main-app')?.style.display = 'none';
-    document.querySelector('.app-main-title')?.style.display = 'none';
-    document.getElementById('profile-container')?.style.display = 'none';
-    document.getElementById('watched-list').innerHTML = '';
-    
-    // Hide dropdown just in case
-    document.getElementById('profile-dropdown')?.style.display = 'none';
+const auth = document.getElementById('auth');
+const mainApp = document.getElementById('main-app');
+const mainTitle = document.querySelector('.app-main-title');
+const profile = document.getElementById('profile-container');
+const dropdown = document.getElementById('profile-dropdown');
+const watchedList = document.getElementById('watched-list');
+
+if (auth) auth.style.display = 'block';
+if (mainApp) mainApp.style.display = 'none';
+if (mainTitle) mainTitle.style.display = 'none';
+if (profile) profile.style.display = 'none';
+if (dropdown) dropdown.style.display = 'none';
+if (watchedList) watchedList.innerHTML = '';
+
 }
 
 function toggleProfileDropdown() {
@@ -569,9 +581,9 @@ function showMoreInfoModal(animeId) {
 
     modal.style.display = 'block';
 }
-
 function closeModal() {
-    document.getElementById('more-info-modal')?.style.display = 'none';
+    const modal = document.getElementById('more-info-modal');
+    if (modal) modal.style.display = 'none';
 }
 
 function saveMoreInfo() {
@@ -634,7 +646,8 @@ async function updateMoreInfo(animeId, rating, notes, startDate, endDate) {
 
         if (data.success) {
             alert("Tracking info updated successfully!");
-            document.getElementById('more-info-modal')?.style.display = 'none';
+           const modal = document.getElementById('more-info-modal');
+if (modal) modal.style.display = 'none';
             loadWatchedAnime(userId, currentPage); 
         } else {
             alert(`Update failed: ${data.error}`);
