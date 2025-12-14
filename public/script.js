@@ -1,449 +1,363 @@
-// --- ANILIST API CONFIG ---
-const ANILIST_API_URL = 'https://graphql.anilist.co';
+let userId = localStorage.getItem('animeTrackerUserId'); // Load userId from storage
+const watched = [];
+let currentController = null;
 
-// --- AUTH STATE & USER DATA ---
-let isLoggedIn = false;
-let userList = {
-    watched: [],
-    watchlist: []
-};
-let currentView = 'watched'; // 'watched', 'watchlist', or 'search'
-let currentPage = 1;
+// New Global Variables for Pagination
 const ITEMS_PER_PAGE = 9;
+let currentPage = 1;
+let totalPages = 1;
 
-// --- DOM Elements ---
-// Ensure all these IDs are present in your index.html
-const appDiv = document.getElementById('app'); // The outermost wrapper
-const authDiv = document.getElementById('auth'); // The authentication block
-const mainDiv = document.getElementById('main'); // The logged-in content block // ADDED
-const loginBtn = document.getElementById('login-btn');
-const logoutBtn = document.getElementById('logout-btn'); 
-const registerBtn = document.getElementById('register-btn');
-const switchAuthBtn = document.getElementById('switch-auth');
-const authForm = document.getElementById('auth-form');
 
-const authTitle = document.getElementById('auth-title');
-
-const authUsernameInput = document.getElementById('username');
-const authPasswordInput = document.getElementById('password');
-const animeSearchInput = document.getElementById('anime-search');
-const searchResultsList = document.getElementById('search-results');
-const watchedListContainer = document.getElementById('watched-list');
-const watchlistContainer = document.getElementById('watchlist');
-const profileContentDiv = document.getElementById('profile-content');
-const paginationControls = document.getElementById('pagination-controls');
-const prevPageBtn = document.getElementById('prev-page');
-const nextPageBtn = document.getElementById('next-page');
-const pageInfoSpan = document.getElementById('page-info');
-
-// View Toggle Buttons (must be linked)
-const viewToggleButtons = {
-    watched: document.getElementById('view-watched'),
-    watchlist: document.getElementById('view-watchlist'),
-    profile: document.getElementById('view-profile')
-};
-
-// Modal Elements
-const detailModal = document.getElementById('detail-modal');
-const saveDetailBtn = document.getElementById('save-detail-btn');
-const detailCloseBtn = document.getElementById('detail-close-btn');
-const notesTextarea = document.getElementById('notes-textarea');
-const detailAnimeTitle = document.getElementById('detail-anime-title');
-const detailRatingInput = document.getElementById('detail-rating');
-const detailDateInput = document.getElementById('detail-date');
-const detailStatusSelect = document.getElementById('detail-status');
-
-let currentAnimeId = null; // Stores the ID of the anime being edited
-
-// --- UTILITIES ---
-
-/**
- * Shows a temporary notification popup.
- * @param {string} message 
- * @param {string} type 
- */
-function showNotification(message, type = 'success') {
-    let popup = document.querySelector('.notification-popup');
-    if (!popup) {
-        popup = document.createElement('div');
-        popup.className = 'notification-popup';
-        document.body.appendChild(popup);
+// New function to initialize the app (run on page load)
+function init() {
+    if (userId) {
+        // If userId is found, skip auth screen and go to main app
+        document.getElementById('auth').style.display = 'none';
+        document.getElementById('main').style.display = 'block';
+        loadWatched();
+        // Set default page view to Watched or Search
+        showPage('watched'); 
     }
-
-    popup.textContent = message;
-    popup.style.backgroundColor = type === 'error' ? '#D32F2F' : '#4CAF50';
-    popup.style.display = 'block';
-
-    setTimeout(() => {
-        popup.style.opacity = '0';
-        setTimeout(() => {
-            popup.style.display = 'none';
-            popup.style.opacity = '1';
-        }, 500);
-    }, 3000);
-}
-
-
-// --- API FUNCTIONS ---
-
-/**
- * Queries Anilist for anime based on a search string.
- * @param {string} query 
- * @param {string} language 
- * @returns {Promise<Array>}
- */
-async function searchAnime(query, language) {
-    if (!query) return [];
-
-    const graphqlQuery = `
-        query ($search: String, $language: String) {
-            Page(page: 1, perPage: 10) {
-                media(search: $search, type: ANIME, format_in: [TV, TV_SHORT, MOVIE, ONA, OVA], sort: POPULARITY_DESC) {
-                    id
-                    title {
-                        romaji
-                        english
-                    }
-                    coverImage {
-                        large
-                    }
-                    meanScore
-                    description(asHtml: true)
-                    genres
-                    episodes
-                    startDate { year month day }
-                    endDate { year month day }
-                    characters(role: MAIN, page: 1, perPage: 5) {
-                        nodes {
-                            name {
-                                full
-                            }
-                            image {
-                                medium
-                            }
-                            media(perPage: 1) {
-                                edges {
-                                    node {
-                                        title {
-                                            english
-                                        }
-                                    }
-                                    voiceActors(language: $language, sort: RELEVANCE) {
-                                        id
-                                        name {
-                                            full
-                                        }
-                                        language
-                                        image {
-                                            medium
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+    
+    // Set up event listeners 
+    document.getElementById('va-lang').addEventListener('change', renderWatchedList);
+    
+    // NEW: Add event listeners for the Notes modal buttons
+    document.getElementById('notes-save-btn').addEventListener('click', saveNotes);
+    document.getElementById('notes-close-btn').addEventListener('click', closeNotesModal);
+    
+    // Close modal if user clicks outside of it
+    document.getElementById('notes-modal').addEventListener('click', (event) => {
+        if (event.target === event.currentTarget) {
+            closeNotesModal();
         }
-    `;
+    });
+}
 
-    try {
-        const response = await fetch(ANILIST_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({
-                query: graphqlQuery,
-                variables: {
-                    search: query,
-                    language: language
-                }
-            })
-        });
+// -------------------
+// Debounce function
+// -------------------
+function debounce(func, delay) {
+    let timer;
+    return function(...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => func.apply(this, args), delay);
+    }
+}
 
-        const data = await response.json();
-        return data.data.Page.media;
+// -------------------
+// User auth functions
+// -------------------
+async function register(){
+    const username = document.getElementById('reg-username').value;
+    const password = document.getElementById('reg-password').value;
+    const res = await fetch('/register',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({username,password})
+    });
+    const data = await res.json();
+    if(data.success){
+        // Save the ID and start the app
+        userId = data.userId;
+        localStorage.setItem('animeTrackerUserId', userId);
+        document.getElementById('auth').style.display='none';
+        document.getElementById('main').style.display='block';
+        loadWatched();
+        showPage('watched'); // Show watched list after fresh login
+    } else alert(data.error);
+}
 
-    } catch (error) {
-        console.error('Anilist Search Error:', error);
-        showNotification('Failed to search Anilist.', 'error');
-        return [];
+async function login(){
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+    const res = await fetch('/login',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({username,password})
+    });
+    const data = await res.json();
+    if(data.success){
+        // Save the ID and start the app
+        userId = data.userId;
+        localStorage.setItem('animeTrackerUserId', userId);
+        document.getElementById('auth').style.display='none';
+        document.getElementById('main').style.display='block';
+        loadWatched();
+        showPage('watched'); // Show watched list after successful login
+    } else alert(data.error);
+}
+
+// -------------------
+// NEW NAVIGATION LOGIC
+// -------------------
+function showPage(pageId) {
+    // Hide all page containers
+    document.querySelectorAll('.page-content').forEach(page => {
+        page.style.display = 'none';
+    });
+    // Remove active class from all nav buttons
+    document.querySelectorAll('.navbar button').forEach(button => {
+        button.classList.remove('active');
+    });
+
+    // Show the selected page
+    const targetPage = document.getElementById(`page-${pageId}`);
+    if (targetPage) {
+        targetPage.style.display = 'block';
+        document.getElementById(`nav-${pageId}`).classList.add('active');
+    }
+
+    // Special handling for the watched list
+    if (pageId === 'watched') {
+        renderWatchedList(); 
     }
 }
 
 
-// --- USER DATA & LIST MANAGEMENT ---
-
-/**
- * Loads user data from local storage.
- * @returns {object|null}
- */
-function loadUserData() {
-    const userData = localStorage.getItem('animeTrackerUser');
-    if (userData) {
-        try {
-            return JSON.parse(userData);
-        } catch (e) {
-            console.error("Could not parse user data from localStorage", e);
-            return null;
-        }
-    }
-    return null;
-}
-
-/**
- * Saves the current user list and state to local storage.
- */
-function saveUserData() {
-    const userData = loadUserData();
-    if (userData) {
-        userData.list = userList;
-        // Get the current username stored in the session
-        const username = userData.username; 
-        if (username) {
-            localStorage.setItem(username, JSON.stringify(userData));
-        }
-        localStorage.setItem('animeTrackerUser', JSON.stringify(userData));
+// -------------------
+// NEW PAGINATION LOGIC
+// -------------------
+function changePage(delta) {
+    const newPage = currentPage + delta;
+    if (newPage >= 1 && newPage <= totalPages) {
+        currentPage = newPage;
+        renderWatchedList();
     }
 }
 
-/**
- * Initializes the app state based on local storage.
- */
-function initializeApp() {
-    const userData = loadUserData();
-    if (userData) {
-        isLoggedIn = true;
-        userList = userData.list || { watched: [], watchlist: [] };
-        
-        // Ensure list items have necessary detail fields
-        ['watched', 'watchlist'].forEach(listKey => {
-            userList[listKey] = userList[listKey].map(item => ({
-                ...item,
-                userRating: item.userRating || 0,
-                watchDate: item.watchDate || '',
-                userStatus: item.userStatus || 'Completed',
-                notes: item.notes || ''
-            }));
-        });
-        
-        showApp();
-        renderList();
-    } else {
-        showAuth();
-    }
-}
 
-/**
- * Adds an anime result to the user's list.
- * @param {object} anime The anime object from Anilist.
- */
-function addAnimeToList(anime) {
-    // Check if anime is already in either list
-    const exists = userList.watched.some(a => a.id === anime.id) ||
-                   userList.watchlist.some(a => a.id === anime.id);
+// -------------------
+// Debounced search input
+// -------------------
+const debouncedSearch = debounce(actualSearchAnime, 300);
+document.getElementById('anime-search').addEventListener('input', debouncedSearch);
 
-    if (exists) {
-        showNotification(`${anime.title.english || anime.title.romaji} is already in a list.`, 'error');
+// -------------------
+// Actual search function
+// -------------------
+async function actualSearchAnime() {
+    const q = document.getElementById('anime-search').value.trim();
+    const list = document.getElementById('search-results');
+
+    if(q === ""){
+        list.innerHTML = '';
         return;
     }
 
-    const listStatus = document.getElementById('add-to-list-status').value;
+    if(currentController) currentController.abort();
+    currentController = new AbortController();
+    const signal = currentController.signal;
 
-    const newAnime = {
-        id: anime.id,
-        title: anime.title,
-        coverImage: anime.coverImage,
-        meanScore: anime.meanScore,
-        description: anime.description,
-        episodes: anime.episodes,
-        startDate: anime.startDate,
-        endDate: anime.endDate,
-        characters: anime.characters,
+    const titleLang = document.getElementById('search-lang').value;
+    try {
+        const res = await fetch(`/search-anime?q=${encodeURIComponent(q)}&lang=${titleLang}`, { signal });
+        const data = await res.json();
+        list.innerHTML = '';
+        data.forEach(anime => {
+            const title = titleLang === 'english' && anime.title.english ? anime.title.english : anime.title.romaji;
+            const li = document.createElement('li');
+            li.innerText = `${title} (${anime.averageScore})`;
+            li.onclick = () => addAnime(anime);
+            list.appendChild(li);
+        });
+    } catch(err){
+        if(err.name !== 'AbortError') console.error("Search failed:", err);
+    }
+}
+
+// -------------------
+// Add anime to DB 
+// -------------------
+async function addAnime(anime){
+    if (!userId) {
+        alert("You must be logged in to add anime.");
+        return;
+    }
+    
+    const titleLang = document.getElementById('search-lang').value;
+    const animeTitle = titleLang==='english' && anime.title.english ? anime.title.english : anime.title.romaji;
+    const rating = anime.averageScore/10;
+    
+    // Client-side cleanup for description
+    let description = anime.description || '';
+
+    const characters = anime.characters.edges; // Data structure from AniList API
+    
+    // Image Saving: Robust Check for both lowercase and capitalized properties
+    const coverImage = anime.coverImage?.large || anime.CoverImage?.large || '';
+
+    try {
+        const res = await fetch('/add-anime',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({userId, animeId:anime.id, animeTitle, rating, description, characters, coverImage})
+        });
+        const data = await res.json();
         
-        // Add default user-specific data
-        userRating: 0,
-        watchDate: '',
-        userStatus: listStatus === 'watched' ? 'Completed' : 'Planning', // Default status based on list
-        notes: ''
-    };
+        if(data.success) {
+            loadWatched();
+            document.getElementById('search-results').innerHTML = ''; // Clear search results on success
+            document.getElementById('anime-search').value = '';
+        }
+        else alert(`Failed to add anime: ${data.error}`);
+    } catch(err){
+        console.error("Add anime failed:", err);
+    }
+}
 
-    if (listStatus === 'watched') {
-        userList.watched.unshift(newAnime);
-        currentView = 'watched';
+// -------------------
+// Remove anime
+// -------------------
+async function removeAnime(animeId){
+    const confirmed = confirm("Are you sure you want to remove this anime?");
+    if(!confirmed) return;
+
+    try {
+        const res = await fetch(`/remove-anime/${userId}/${animeId}`, { method:'DELETE' });
+        const data = await res.json();
+        if(data.success) loadWatched();
+        else alert(data.error);
+    } catch(err){
+        console.error("Remove anime failed:", err);
+    }
+}
+
+// -------------------
+// Load watched anime (MODIFIED - no longer renders directly)
+// -------------------
+async function loadWatched(){
+    if (!userId) return; 
+    try {
+        const res = await fetch(`/watched/${userId}`);
+        const data = await res.json();
+        watched.length=0;
+        if(data.success){
+            
+            data.data.forEach(a=>{
+                // FIX: Ensure JSON.parse handles null or undefined voice_actors gracefully
+                try {
+                    a.voice_actors_parsed = JSON.parse(a.voice_actors);
+                } catch(e){
+                    // Fallback for old/malformed/empty data
+                    a.voice_actors_parsed = { japanese: "", english: "" };
+                }
+                // NOTE: 'notes' column is now automatically included in the DB fetch
+                watched.push(a);
+            });
+
+            // If the watched page is currently visible, render it immediately
+            if (document.getElementById('page-watched').style.display !== 'none') {
+                renderWatchedList(); 
+            }
+        }
+    } catch(err){
+        console.error("Load watched failed:", err);
+    }
+}
+
+
+// -------------------
+// Read More/Less Toggle Function (Final version with scroll fix)
+// -------------------
+function toggleReadMore(event) {
+    const readMoreButton = event.target;
+    // Get the parent wrapper (.description-wrapper)
+    const descriptionWrapper = readMoreButton.closest('.description-wrapper'); 
+
+    if (!descriptionWrapper) return;
+
+    // 1. Toggle the 'expanded' class
+    descriptionWrapper.classList.toggle('expanded');
+
+    // 2. Change the button text
+    if (descriptionWrapper.classList.contains('expanded')) {
+        readMoreButton.textContent = 'Read Less';
     } else {
-        userList.watchlist.unshift(newAnime);
-        currentView = 'watchlist';
+        readMoreButton.textContent = 'Read More';
+    }
+
+    // 3. Force Grid Recalculation (Essential for preserving row alignment)
+    const gridContainer = document.getElementById('watched-list');
+    if (gridContainer) {
+        // --- FIX: Store Scroll Position to prevent screen jumping ---
+        const scrollY = window.scrollY; 
+        
+        // Temporarily hide, force browser reflow, then restore display
+        gridContainer.style.display = 'none'; 
+        void gridContainer.offsetWidth; // Force browser reflow/recalculation
+        gridContainer.style.display = 'grid'; 
+        
+        // --- FIX: Restore Scroll Position ---
+        window.scrollTo(0, scrollY);
+    }
+}
+
+// -------------------
+// Notes Modal Functions
+// -------------------
+let currentAnimeIdForNotes = null;
+
+function openNotesModal(animeId, currentNotes) {
+    currentAnimeIdForNotes = animeId;
+    const modal = document.getElementById('notes-modal');
+    const textarea = document.getElementById('notes-textarea');
+    
+    // Set current notes content
+    textarea.value = currentNotes || '';
+    modal.style.display = 'block';
+}
+
+function closeNotesModal() {
+    document.getElementById('notes-modal').style.display = 'none';
+    currentAnimeIdForNotes = null;
+}
+
+function saveNotes() {
+    if (currentAnimeIdForNotes) {
+        const notes = document.getElementById('notes-textarea').value;
+        // Call the new API function
+        updateNotes(currentAnimeIdForNotes, notes); 
+        closeNotesModal();
+    }
+}
+
+async function updateNotes(animeId, notes) {
+    if (!userId) {
+        alert("You must be logged in to save notes.");
+        return;
     }
     
-    saveUserData();
-    renderList();
-    showNotification(`${newAnime.title.english || newAnime.title.romaji} added to your ${listStatus}.`);
-    // Clear search results after adding
-    if (searchResultsList) searchResultsList.innerHTML = '';
-}
-
-/**
- * Removes an anime from the list.
- * @param {number} animeId 
- */
-function removeAnime(animeId) {
-    const targetList = userList[currentView];
-    const initialLength = targetList.length;
-    userList[currentView] = targetList.filter(a => a.id !== animeId);
-
-    if (userList[currentView].length < initialLength) {
-        saveUserData();
-        showNotification('Anime removed from list.');
+    try {
+        const res = await fetch('/update-notes', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, animeId, notes })
+        });
+        const data = await res.json();
         
-        // Recalculate pagination after removal
-        currentPage = Math.min(currentPage, Math.ceil(userList[currentView].length / ITEMS_PER_PAGE) || 1);
-        renderList();
-    }
-}
-
-/**
- * Saves the user details (rating, date, notes) for an anime.
- * @param {number} animeId 
- */
-function saveAnimeDetails() {
-    if (currentAnimeId === null) return;
-
-    const list = userList.watched.concat(userList.watchlist);
-    const anime = list.find(a => a.id === currentAnimeId);
-
-    if (anime) {
-        const initialStatus = anime.userStatus;
-        
-        anime.userRating = parseInt(detailRatingInput.value, 10) || 0;
-        anime.watchDate = detailDateInput.value;
-        anime.userStatus = detailStatusSelect.value;
-        anime.notes = notesTextarea.value;
-        
-        // Logic to move the item if the userStatus dictates a change
-        const isCurrentlyWatched = initialStatus === 'Completed' || ['Watching', 'Dropped'].includes(initialStatus);
-
-        if (anime.userStatus === 'Completed' || ['Watching', 'Dropped'].includes(anime.userStatus)) {
-            // Move from Watchlist to Watched List if status is now a "watched" status
-            if (!isCurrentlyWatched) {
-                userList.watchlist = userList.watchlist.filter(a => a.id !== currentAnimeId);
-                userList.watched.unshift(anime);
+        if (data.success) {
+            // Find the item in the local 'watched' array and update its notes
+            const item = watched.find(a => String(a.anime_id) === String(animeId));
+            if (item) {
+                item.notes = notes;
             }
-        } else if (anime.userStatus === 'Planning') {
-            // Move from Watched List to Watchlist if status is now 'Planning'
-            if (isCurrentlyWatched) {
-                userList.watched = userList.watched.filter(a => a.id !== currentAnimeId);
-                userList.watchlist.unshift(anime);
-            }
+            // Re-render the list to reflect the change (button text update)
+            renderWatchedList(); 
+        } else {
+            alert(`Failed to save notes: ${data.error}`);
         }
-        
-        saveUserData();
-        if (detailModal) detailModal.style.display = 'none';
-        
-        // Update the view based on the change
-        if (isCurrentlyWatched && anime.userStatus === 'Planning') {
-            currentView = 'watchlist';
-        } else if (!isCurrentlyWatched && (anime.userStatus === 'Completed' || ['Watching', 'Dropped'].includes(anime.userStatus))) {
-            currentView = 'watched';
-        }
-
-        renderList();
-        showNotification(`Details for ${anime.title.english || anime.title.romaji} saved.`);
+    } catch (err) {
+        console.error("Update notes API failed:", err);
     }
 }
 
-
-// --- RENDERING & UI ---
-
-/**
- * Hides authentication and shows the main app content.
- */
-function showApp() {
-    if (authDiv) authDiv.style.display = 'none';
-    if (mainDiv) mainDiv.style.display = 'block'; // CRITICAL CHANGE: Use mainDiv
-    
-    // Ensure Watched is the default active view
-    document.querySelectorAll('.navbar button').forEach(btn => btn.classList.remove('active'));
-    if (viewToggleButtons[currentView]) viewToggleButtons[currentView].classList.add('active');
-    
-    renderList();
-}
-
-/**
- * Hides app content and shows the authentication form.
- */
-function showAuth() {
-    if (mainDiv) mainDiv.style.display = 'none'; // CRITICAL CHANGE: Use mainDiv
-    if (authDiv) authDiv.style.display = 'block';
-    
-    // Check if authTitle exists before setting its textContent
-    if (authTitle) {
-        authTitle.textContent = 'Login';
-    }
-    
-    if (loginBtn) loginBtn.style.display = 'block';
-    if (registerBtn) registerBtn.style.display = 'none';
-    if (switchAuthBtn) switchAuthBtn.textContent = 'Need an account? Register';
-    
-    if (authForm) authForm.reset();
-}
-
-/**
- * Updates the visibility and active state of the main list containers.
- */
-function updateViewDisplay() {
-    // Hide all view pages
-    const pages = ['page-watched', 'page-watchlist', 'page-search', 'page-profile'];
-    pages.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-    });
-    
-    if (paginationControls) paginationControls.style.display = 'none';
-    
-    document.querySelectorAll('.navbar button').forEach(btn => btn.classList.remove('active'));
-    
-    // Show the current view page
-    const currentPageElement = document.getElementById(`page-${currentView}`);
-    if (currentPageElement) {
-        currentPageElement.style.display = 'block';
-    }
-
-    if (currentView === 'watched' || currentView === 'watchlist') {
-        if (paginationControls) paginationControls.style.display = 'flex';
-    }
-    
-    // Set active button
-    if (viewToggleButtons[currentView]) {
-        viewToggleButtons[currentView].classList.add('active');
-    }
-
-    if (currentView === 'profile') {
-        renderProfileStats();
-    }
-}
-
-
-/**
- * Renders the user's list (watched or watchlist) with pagination.
- */
-function renderList() {
-    updateViewDisplay();
-
-    if (currentView === 'profile' || currentView === 'search') return;
-
-    const list = userList[currentView];
-    const container = currentView === 'watched' ? watchedListContainer : watchlistContainer;
-    if (!container) return; // Prevent errors if container is null
-    
-    container.innerHTML = '';
-    
-    const totalItems = list.length;
-    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-    
-    // Boundary check for current page
+// -------------------
+// RENDER WATCHED LIST 
+// -------------------
+function renderWatchedList() {
+    // 1. Calculate Pagination Range
+    totalPages = Math.ceil(watched.length / ITEMS_PER_PAGE);
     if (currentPage > totalPages && totalPages > 0) {
         currentPage = totalPages;
     } else if (totalPages === 0) {
@@ -452,420 +366,171 @@ function renderList() {
 
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     const end = start + ITEMS_PER_PAGE;
-    const paginatedList = list.slice(start, end);
 
-    if (totalItems === 0) {
-        container.innerHTML = `<p style="text-align: center; color: var(--color-text-subtle); margin-top: 50px;">Your ${currentView} is empty. Use the search bar to add anime!</p>`;
-    } else {
-        paginatedList.forEach(anime => {
-            container.appendChild(createAnimeCard(anime));
-        });
-    }
-
-    renderPagination(totalItems, totalPages);
-}
-
-/**
- * Renders the pagination controls.
- * @param {number} totalItems 
- * @param {number} totalPages 
- */
-function renderPagination(totalItems, totalPages) {
-    if (totalItems <= ITEMS_PER_PAGE || !paginationControls) {
-        if (paginationControls) paginationControls.style.display = 'none';
-        return;
-    }
+    // Slice the watched array to get only the items for the current page
+    const animeToRender = watched.slice(start, end);
     
-    paginationControls.style.display = 'flex';
-    if (pageInfoSpan) pageInfoSpan.textContent = `Page ${currentPage} of ${totalPages}`;
-    if (prevPageBtn) prevPageBtn.disabled = currentPage === 1;
-    if (nextPageBtn) nextPageBtn.disabled = currentPage === totalPages;
-}
-
-
-/**
- * Creates the HTML element for an anime card.
- * @param {object} anime 
- * @returns {HTMLElement}
- */
-function createAnimeCard(anime) {
-    const li = document.createElement('li');
-    li.dataset.id = anime.id;
-
-    const title = anime.title.english || anime.title.romaji;
-    const episodes = anime.episodes ? `${anime.episodes} Episodes` : 'Unknown Episodes';
-    const rating = anime.meanScore ? `Anilist: ${anime.meanScore}%` : 'Anilist: N/A';
-    
-    // User data
-    const userRatingText = anime.userRating > 0 ? `Rating: ${anime.userRating}/10` : '';
-    const watchDateText = anime.watchDate ? `Date: ${anime.watchDate}` : '';
-    const userStatusText = `Status: ${anime.userStatus}`;
-
-    // Voice Actor rendering logic (simplified for card display)
-    const vaTagsHtml = anime.characters && anime.characters.nodes ? anime.characters.nodes.map(node => {
-        const va = node.media.edges[0]?.voiceActors[0];
-        if (va) {
-            // Check if VA is shared with other items in the watched list
-            const isHighlighted = userList.watched.some(watchedAnime => 
-                watchedAnime.id !== anime.id && 
-                watchedAnime.characters && 
-                watchedAnime.characters.nodes.some(wNode => 
-                    wNode.media.edges[0]?.voiceActors[0]?.id === va.id
-                )
-            );
-            const vaName = va.name.full;
-            const className = isHighlighted ? 'highlight' : '';
-            return `<span class="va" title="${vaName} (${va.language})"><span class="${className}">${vaName.split(' ')[0]}</span></span>`;
-        }
-        return '';
-    }).join('') : '';
-
-
-    // --- Description Toggle Setup ---
-    const descriptionHtml = anime.description || 'No description available.';
-    
-    // Card structure
-    li.innerHTML = `
-        <div class="anime-cover-container">
-            <img class="anime-cover" src="${anime.coverImage.large}" alt="${title} cover" onerror="this.onerror=null;this.src='https://via.placeholder.com/67x100?text=No+Image';">
-        </div>
-        <div class="anime-info">
-            <div style="flex-shrink: 0; width: 100%;">
-                <b>${title}</b>
-                <p>${rating} | ${episodes}</p>
-                <div class="date-info-container">
-                    ${userStatusText}
-                    ${userRatingText ? ` | ${userRatingText}` : ''}
-                    ${watchDateText ? ` | <b>${watchDateText}</b>` : ''}
-                </div>
-            </div>
-
-            <div class="description-wrapper">
-                <p class="anime-description-text">${descriptionHtml}</p>
-                <button class="read-more-btn" data-id="${anime.id}">Read More</button>
-            </div>
-            
-            <div class="va-tags-container">${vaTagsHtml}</div>
-
-            <div class="action-buttons">
-                <button class="notes-btn" data-id="${anime.id}">Details</button>
-                <button class="remove-btn" data-id="${anime.id}">Remove</button>
-            </div>
-        </div>
-    `;
-    
-    // Add event listener for the Read More button
-    const readMoreBtn = li.querySelector('.read-more-btn');
-    const descriptionWrapper = li.querySelector('.description-wrapper');
-    const descriptionText = li.querySelector('.anime-description-text');
-    
-    if (descriptionText && readMoreBtn && descriptionWrapper) {
-        // Check if description is too short to warrant a 'Read More' button
-        // Note: ClientHeight/ScrollHeight check can be tricky, relying on a simple check here.
-        if (descriptionText.scrollHeight <= descriptionText.clientHeight + 5) { 
-             readMoreBtn.style.display = 'none';
-        } else {
-            readMoreBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const isExpanded = descriptionWrapper.classList.toggle('expanded');
-                readMoreBtn.textContent = isExpanded ? 'Read Less' : 'Read More';
-            });
-        }
-    }
-
-    return li;
-}
-
-/**
- * Renders the profile statistics.
- */
-function renderProfileStats() {
-    if (!profileContentDiv) return;
-
-    const totalWatched = userList.watched.length;
-    const totalWatchlist = userList.watchlist.length;
-    
-    // Calculate total episodes watched
-    const totalEpisodes = userList.watched.reduce((sum, anime) => sum + (anime.episodes || 0), 0);
-    const userData = loadUserData();
-
-    // REMOVED: Average Score calculation and display line
-    
-    profileContentDiv.innerHTML = `
-        <div class="section-title">My Profile</div>
-        <p>User: <strong>${userData ? userData.username : 'N/A'}</strong></p>
-        <p>Total Anime Watched: <strong>${totalWatched}</strong></p>
-        <p>Anime in Watchlist: <strong>${totalWatchlist}</strong></p>
-        <p>Total Episodes Watched: <strong>${totalEpisodes}</strong></p>
-        <button id="logout-btn-profile">Logout</button>
-        <p style="color: #c62828; margin-top: 20px;">Warning: There is no 'Delete Account' functionality, but your data is stored securely locally.</p>
-    `;
-
-    // Attach logout listener to the profile button
-    const profileLogoutBtn = document.getElementById('logout-btn-profile');
-    if (profileLogoutBtn) {
-        profileLogoutBtn.addEventListener('click', logout);
-    }
-}
-
-
-// --- EVENT HANDLERS ---
-
-/**
- * Toggles between Login and Register views.
- */
-function toggleAuthMode(e) {
-    e.preventDefault();
-    
-    if (!authTitle || !loginBtn || !registerBtn || !switchAuthBtn || !authForm) return;
-
-    const isLogin = authTitle.textContent === 'Login';
-    authTitle.textContent = isLogin ? 'Register' : 'Login';
-    loginBtn.style.display = isLogin ? 'none' : 'block';
-    registerBtn.style.display = isLogin ? 'block' : 'none';
-    switchAuthBtn.textContent = isLogin ? 'Already have an account? Login' : 'Need an account? Register';
-    authForm.reset();
-}
-
-/**
- * Handles the login or registration attempt.
- */
-function handleAuth(e) {
-    e.preventDefault();
-    if (!authUsernameInput || !authPasswordInput || !registerBtn) return;
-
-    const username = authUsernameInput.value.trim();
-    const password = authPasswordInput.value.trim();
-    const isRegister = registerBtn.style.display === 'block';
-
-    if (!username || !password) {
-        showNotification('Please enter both username and password.', 'error');
-        return;
-    }
-    
-    if (isRegister) {
-        // Register logic
-        if (localStorage.getItem(username)) {
-            showNotification('Username already exists.', 'error');
-            return;
-        }
-        
-        const userData = {
-            username: username,
-            password: password,
-            list: { watched: [], watchlist: [] }
-        };
-        localStorage.setItem(username, JSON.stringify(userData));
-        localStorage.setItem('animeTrackerUser', JSON.stringify(userData));
-        initializeApp();
-        showNotification('Registration successful! Logged in.');
-
-    } else {
-        // Login logic
-        const storedData = localStorage.getItem(username);
-        if (storedData) {
-            const userData = JSON.parse(storedData);
-            if (userData.password === password) {
-                localStorage.setItem('animeTrackerUser', storedData);
-                initializeApp();
-                showNotification('Login successful!');
-            } else {
-                showNotification('Incorrect password.', 'error');
+    // 2. VA Count (Count across ALL watched items for highlighting accuracy)
+    const vaLang = document.getElementById('va-lang').value;
+    const vaCount = {};
+    watched.forEach(a => {
+        const vaString = a.voice_actors_parsed[vaLang] || "";
+        vaString.split('|').filter(Boolean).forEach(va => {
+            const vaName = va.split(': ')[1]?.trim();
+            if (vaName) {
+                vaCount[vaName] = (vaCount[vaName] || 0) + 1;
             }
-        } else {
-            showNotification('User not found. Please register.', 'error');
-        }
-    }
-}
+        });
+    });
 
-/**
- * Handles the user search input.
- */
-let searchTimeout;
-function handleSearchInput() {
-    clearTimeout(searchTimeout);
-    if (!animeSearchInput || !searchResultsList) return;
-    
-    // Clear search results and reset view when input is empty
-    if (!animeSearchInput.value.trim()) {
-        searchResultsList.innerHTML = '';
-        if (currentView === 'search') {
-             currentView = 'watched'; // Default back to watched list
-             renderList();
-        }
-        return;
-    }
-    
-    searchTimeout = setTimeout(async () => {
-        const query = animeSearchInput.value.trim();
-        const lang = document.getElementById('search-lang').value;
-        const results = await searchAnime(query, lang);
-        
-        currentView = 'search';
-        updateViewDisplay();
-        renderSearchResults(results);
-    }, 500);
-}
+    // 3. Render List
+    const list = document.getElementById('watched-list');
+    list.innerHTML = ''; 
 
-/**
- * Renders the search results from Anilist.
- * @param {Array} results 
- */
-function renderSearchResults(results) {
-    if (!searchResultsList) return;
-    searchResultsList.innerHTML = '';
-    
-    if (results.length === 0) {
-        searchResultsList.innerHTML = `<li style="text-align: center; color: var(--color-text-subtle);">No results found.</li>`;
-        return;
-    }
-
-    const allAnimeIds = new Set([...userList.watched.map(a => a.id), ...userList.watchlist.map(a => a.id)]);
-
-    results.forEach(anime => {
+    animeToRender.forEach(anime => {
+        // Rebuild the HTML structure for each anime using DOM methods
         const li = document.createElement('li');
-        const title = anime.title.english || anime.title.romaji;
-        li.textContent = title;
-        li.dataset.id = anime.id;
-        li.dataset.title = title;
-        
-        const isAdded = allAnimeIds.has(anime.id);
-        
-        if (isAdded) {
-            li.classList.add('highlight');
-            li.title = 'Already in your list';
-        } else {
-            li.addEventListener('click', () => {
-                addAnimeToList(anime);
-                if (animeSearchInput) animeSearchInput.value = ''; // Clear search input
-                searchResultsList.innerHTML = ''; // Clear results
-            });
+
+        // --- IMAGE DISPLAY FIX ---
+        const imageUrl = anime.coverImage || anime.CoverImage || anime.coverimage;
+        if(imageUrl && imageUrl.length > 10) { 
+            // 1. Create the container
+            const imageContainer = document.createElement('div');
+            imageContainer.className = 'anime-cover-container';
+            
+            // 2. Create the image
+            const img = document.createElement('img');
+            img.src = imageUrl;
+            img.alt = anime.anime_title;
+            img.className = 'anime-cover';
+            
+            // 3. Append image to container, container to list item
+            imageContainer.appendChild(img);
+            li.appendChild(imageContainer);
         }
-        searchResultsList.appendChild(li);
-    });
-}
+        // --- END IMAGE DISPLAY FIX ---
 
-/**
- * Logs out the user.
- */
-function logout() {
-    // Clear the session indicator (current user)
-    localStorage.removeItem('animeTrackerUser');
-    isLoggedIn = false;
-    userList = { watched: [], watchlist: [] };
-    currentView = 'watched';
-    
-    showNotification('Logged out successfully.', 'success');
-    // FORCE PAGE REFRESH TO CLEAR ALL SCRIPT STATE
-    location.reload(); 
-}
+        // Anime Info Container
+        const animeInfo = document.createElement('div');
+        animeInfo.className = 'anime-info';
+
+        // Title and Rating
+        const title = document.createElement('b');
+        title.innerHTML = `${anime.anime_title} - ${anime.rating.toFixed(2)}`;
+        animeInfo.appendChild(title);
 
 
-// --- INITIALIZATION & LISTENERS ---
+        // --- Description Wrapper ---
+        const descriptionWrapper = document.createElement('div');
+        descriptionWrapper.className = 'description-wrapper';
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Check if the critical authentication elements are present before proceeding
-    if (!authTitle || !loginBtn || !registerBtn || !switchAuthBtn || !mainDiv) {
-        console.error("CRITICAL ERROR: One or more critical elements are missing from index.html. Initialization may fail.");
-    }
-    
-    initializeApp();
+        // Description Text (Clips based on CSS max-height)
+        const descriptionText = document.createElement('i');
+        descriptionText.className = 'anime-description-text';
+        descriptionText.textContent = anime.description || 'No description available.';
+        descriptionWrapper.appendChild(descriptionText);
 
-    // Authentication Listeners
-    if (switchAuthBtn) switchAuthBtn.addEventListener('click', toggleAuthMode);
-    if (authForm) authForm.addEventListener('submit', handleAuth);
-    
-    // Main App Navigation Listeners
-    if (viewToggleButtons.watched) viewToggleButtons.watched.addEventListener('click', () => {
-        currentView = 'watched';
-        currentPage = 1;
-        renderList();
-    });
-    if (viewToggleButtons.watchlist) viewToggleButtons.watchlist.addEventListener('click', () => {
-        currentView = 'watchlist';
-        currentPage = 1;
-        renderList();
-    });
-    if (viewToggleButtons.profile) viewToggleButtons.profile.addEventListener('click', () => {
-        currentView = 'profile';
-        updateViewDisplay();
-    });
-    
-    // Search Listener
-    if (animeSearchInput) animeSearchInput.addEventListener('input', handleSearchInput);
-    
-    // List Action Listeners (Delegation)
-    [watchedListContainer, watchlistContainer].forEach(container => {
-        if (container) {
-            container.addEventListener('click', (e) => {
-                const button = e.target.closest('button');
-                if (button) {
-                    const animeId = parseInt(button.dataset.id, 10);
-                    if (button.classList.contains('remove-btn')) {
-                        if (confirm('Are you sure you want to remove this anime from your list?')) {
-                            removeAnime(animeId);
-                        }
-                    } else if (button.classList.contains('notes-btn')) {
-                        openDetailModal(animeId);
-                    }
+        // Read More Button
+        // Check if description is long enough
+        if ((anime.description?.length || 0) > 250) { 
+            const readMoreButton = document.createElement('button');
+            readMoreButton.className = 'read-more-btn';
+            readMoreButton.textContent = 'Read More';
+            // Attach the new toggle function
+            readMoreButton.addEventListener('click', toggleReadMore); 
+            descriptionWrapper.appendChild(readMoreButton);
+        }
+        
+        animeInfo.appendChild(descriptionWrapper);
+        // --- End Description Wrapper ---
+
+        // VA Tags Container
+        const vaTagsContainer = document.createElement('div');
+        vaTagsContainer.className = 'va-tags-container';
+        
+        // VA Display
+        const vaString = anime.voice_actors_parsed[vaLang] || "";
+        const vaList = vaString.split('|').filter(Boolean);
+        
+        // --- NEW LOGIC: RENDER VAs AND COUNT THEM ---
+        let actualVACount = 0;
+        
+        vaList.forEach(va=>{
+            // va is "Character1, Character2: VA Name"
+            const parts = va.split(': ');
+            const vaName = parts[1]?.trim() || '';
+            
+            if(vaName){
+                let vaHtml = va;
+                
+                // Check if the VA name is shared
+                if(vaCount[vaName]>1) {
+                    vaHtml = va.replace(vaName, `<span class="highlight">${vaName}</span>`);
                 }
-            });
-        }
-    });
-
-    // Pagination Listeners
-    if (prevPageBtn) prevPageBtn.addEventListener('click', () => {
-        if (currentPage > 1) {
-            currentPage--;
-            renderList();
-        }
-    });
-
-    if (nextPageBtn) nextPageBtn.addEventListener('click', () => {
-        const list = userList[currentView];
-        const totalPages = Math.ceil(list.length / ITEMS_PER_PAGE);
-        if (currentPage < totalPages) {
-            currentPage++;
-            renderList();
-        }
-    });
-
-    // Modal Listeners
-    if (detailCloseBtn) detailCloseBtn.addEventListener('click', () => {
-        if (detailModal) detailModal.style.display = 'none';
-    });
-    if (saveDetailBtn) saveDetailBtn.addEventListener('click', saveAnimeDetails);
-    
-    // Close modal on outside click
-    if (detailModal) {
-        window.addEventListener('click', (event) => {
-            // Check if the click target is the modal itself (the background)
-            if (event.target === detailModal) {
-                detailModal.style.display = 'none';
+                
+                const vaSpan = document.createElement('span');
+                vaSpan.className = 'va';
+                vaSpan.innerHTML = vaHtml;
+                vaTagsContainer.appendChild(vaSpan);
+                actualVACount++; // Count the successfully rendered VA tag
             }
         });
-    }
-});
+        animeInfo.appendChild(vaTagsContainer);
 
-/**
- * Opens the detail modal with data pre-filled.
- * @param {number} animeId 
- */
-function openDetailModal(animeId) {
-    if (!detailModal) return;
+        // --- DYNAMIC HEIGHT ADJUSTMENT ---
+        // If there are 2 or fewer VA tags, increase the description's visible height 
+        // to fill the empty space left by fewer VA tags.
+        if (actualVACount <= 2) {
+            // Overrides the default CSS max-height of 7em with 10em (about 3 more lines)
+            descriptionText.style.maxHeight = '10em'; 
+        }
 
-    const list = userList.watched.concat(userList.watchlist);
-    const anime = list.find(a => a.id === animeId);
-    
-    if (anime) {
-        currentAnimeId = animeId;
-        if (detailAnimeTitle) detailAnimeTitle.textContent = anime.title.english || anime.title.romaji;
+        // --- End Dynamic Height Adjustment ---
+
+        // --- Action Buttons Container ---
         
-        if (detailRatingInput) detailRatingInput.value = anime.userRating || 0;
-        if (detailDateInput) detailDateInput.value = anime.watchDate || '';
-        if (detailStatusSelect) detailStatusSelect.value = anime.userStatus || 'Completed';
-        if (notesTextarea) notesTextarea.value = anime.notes || '';
+        // 1. Remove Button (Created here, but appended to actionButtons)
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'remove-btn';
+        removeBtn.textContent = 'Remove';
+        removeBtn.addEventListener('click', () => removeAnime(anime.anime_id));
+        
+        // 2. Notes Button
+        const notesBtn = document.createElement('button');
+        notesBtn.className = 'notes-btn';
+        notesBtn.textContent = anime.notes && anime.notes.length > 0 ? 'Edit Notes' : 'Add Note';
+        notesBtn.addEventListener('click', () => {
+            openNotesModal(anime.anime_id, anime.notes);
+        });
 
-        detailModal.style.display = 'block';
-    }
+        // 3. Group buttons
+        const actionButtons = document.createElement('div');
+        actionButtons.className = 'action-buttons';
+        actionButtons.appendChild(notesBtn);
+        actionButtons.appendChild(removeBtn);
+
+        animeInfo.appendChild(actionButtons); // Append the group to the info container
+
+        // --- End Action Buttons Container ---
+
+        li.appendChild(animeInfo);
+        list.appendChild(li);
+    });
+
+    // 4. Update Pagination Controls
+    document.getElementById('page-info').textContent = `Page ${totalPages > 0 ? currentPage : 0} of ${totalPages}`;
+    document.getElementById('prev-page').disabled = currentPage === 1 || totalPages === 0;
+    document.getElementById('next-page').disabled = currentPage === totalPages || totalPages === 0;
 }
+
+
+// -------------------
+// Expose functions globally and start initialization
+// -------------------
+window.register = register;
+window.login = login;
+window.searchAnime = actualSearchAnime;
+window.removeAnime = removeAnime;
+window.showPage = showPage;
+window.changePage = changePage; 
+window.onload = init; // This is now the entry point
