@@ -14,6 +14,11 @@ function init() {
         // If userId is found, skip auth screen and go to main app
         document.getElementById('auth').style.display = 'none';
         document.getElementById('main').style.display = 'block';
+
+        // NEW: Show profile container and set placeholder username
+        document.getElementById('profile-container').style.display = 'block';
+        document.getElementById('profile-username').textContent = 'originiti'; 
+        
         loadWatched();
         // Set default page view to Watched or Search
         showPage('watched'); 
@@ -63,6 +68,11 @@ async function register(){
         localStorage.setItem('animeTrackerUserId', userId);
         document.getElementById('auth').style.display='none';
         document.getElementById('main').style.display='block';
+
+        // NEW: Show profile container and set placeholder username
+        document.getElementById('profile-container').style.display = 'block';
+        document.getElementById('profile-username').textContent = username; 
+
         loadWatched();
         showPage('watched'); // Show watched list after fresh login
     } else alert(data.error);
@@ -83,10 +93,45 @@ async function login(){
         localStorage.setItem('animeTrackerUserId', userId);
         document.getElementById('auth').style.display='none';
         document.getElementById('main').style.display='block';
+
+        // NEW: Show profile container and set placeholder username
+        document.getElementById('profile-container').style.display = 'block';
+        document.getElementById('profile-username').textContent = username; 
+        
         loadWatched();
         showPage('watched'); // Show watched list after successful login
     } else alert(data.error);
 }
+
+// -------------------
+// NEW PROFILE LOGIC
+// -------------------
+
+function toggleProfileDropdown() {
+    const dropdown = document.getElementById('profile-dropdown');
+    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+}
+
+function logout() {
+    // 1. Clear local storage
+    localStorage.removeItem('animeTrackerUserId');
+    userId = null;
+
+    // 2. Clear global data (optional but good practice)
+    watched.length = 0;
+
+    // 3. Reset UI
+    document.getElementById('main').style.display = 'none';
+    document.getElementById('auth').style.display = 'block';
+    document.getElementById('profile-container').style.display = 'none';
+    document.getElementById('profile-dropdown').style.display = 'none';
+
+    document.getElementById('login-username').value = '';
+    document.getElementById('login-password').value = '';
+
+    alert("Logged out successfully.");
+}
+
 
 // -------------------
 // NEW NAVIGATION LOGIC
@@ -533,4 +578,6 @@ window.searchAnime = actualSearchAnime;
 window.removeAnime = removeAnime;
 window.showPage = showPage;
 window.changePage = changePage; 
+window.toggleProfileDropdown = toggleProfileDropdown;
+window.logout = logout;
 window.onload = init; // This is now the entry point
