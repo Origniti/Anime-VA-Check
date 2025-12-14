@@ -36,10 +36,9 @@ pool.on('error', (err, client) => {
 const query = (text, params) => pool.query(text, params);
 
 // -------------------
-// 2. Database Initialization (Updated for Notes Column)
+// 2. Database Initialization (Updated for finished_date Column)
 // -------------------
 async function setupDatabase() {
-    // Check if the connection string is actually set
     if (!connectionString) {
         console.error("FATAL: DATABASE_URL environment variable is not set. Cannot connect to database.");
         process.exit(1);
@@ -59,21 +58,30 @@ async function setupDatabase() {
                 voice_actors TEXT, 
                 description TEXT, 
                 "coverImage" TEXT,
+                notes TEXT DEFAULT '',
                 UNIQUE (user_id, anime_id)
             )
         `);
         
-        // === FIX 1: Add the 'notes' column if it does not exist ===
+        // Add the 'notes' column if it does not exist
         try {
             await query("ALTER TABLE watched_anime ADD COLUMN notes TEXT DEFAULT ''");
-            console.log('Successfully added `notes` column to watched_anime table.');
         } catch (alterErr) {
-            // Error code '42701' means the column already exists. This is expected and safe to ignore.
             if (alterErr.code !== '42701') {
                 console.warn("Could not add `notes` column (may already exist):", alterErr.message);
             }
         }
-        // ==========================================================
+        
+        // === FIX 3: Add the 'finished_date' column if it does not exist ===
+        try {
+            await query("ALTER TABLE watched_anime ADD COLUMN finished_date DATE");
+            console.log('Successfully added `finished_date` column to watched_anime table.');
+        } catch (alterErr) {
+            if (alterErr.code !== '42701') {
+                console.warn("Could not add `finished_date` column (may already exist):", alterErr.message);
+            }
+        }
+        // ===================================================================
 
         console.log('Database tables ensured successfully (PostgreSQL).');
     } catch (err) {
@@ -84,8 +92,10 @@ async function setupDatabase() {
 setupDatabase(); 
 
 // -------------------
-// User registration
+// User registration, login, add, remove, search routes... (KEEP UNCHANGED)
 // -------------------
+// ... (Your existing registration, login, add-anime, remove-anime, search-anime routes go here)
+
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
     try {
@@ -101,9 +111,6 @@ app.post('/register', async (req, res) => {
     }
 });
 
-// -------------------
-// User login
-// -------------------
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     try {
@@ -126,29 +133,22 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// -------------------
-// Add watched anime
-// -------------------
 app.post('/add-anime', async (req, res) => {
     let { userId, animeId, animeTitle, rating, description, characters, coverImage } = req.body;
 
     const MAX_DESC_LENGTH = 800;
     
-    // Server-side sanitization and truncation
     if (description) {
         description = description.replace(/<[^>]*>/g, '').trim();
         description = description.length > MAX_DESC_LENGTH ? description.substring(0, MAX_DESC_LENGTH) + '...' : description;
     }
 
     try {
-        // Check for duplicate (Uses $1, $2)
         const duplicateResult = await query('SELECT id FROM watched_anime WHERE user_id=$1 AND anime_id=$2', [userId, animeId]);
         if (duplicateResult.rows.length > 0) {
             return res.json({ success: false, error: "Anime already added" });
         }
 
-        // --- START OF VOICE ACTOR FINAL FIX ---
-        
         const japaneseVAMap = new Map();
         const englishVAMap = new Map();
 
@@ -204,10 +204,6 @@ app.post('/add-anime', async (req, res) => {
         
         const voiceActors = JSON.stringify(vaData);
         
-        // --- END OF VOICE ACTOR FINAL FIX ---
-
-
-        // Insert new record (Uses $1 through $7, notes defaults to '' in DB)
         const insertResult = await query(
             'INSERT INTO watched_anime (user_id, anime_id, anime_title, rating, voice_actors, description, "coverImage") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
             [userId, animeId, animeTitle, rating, voiceActors, description, coverImage]
@@ -223,9 +219,6 @@ app.post('/add-anime', async (req, res) => {
     }
 });
 
-// -------------------
-// Remove anime
-// -------------------
 app.delete('/remove-anime/:userId/:animeId', async (req, res) => {
     const { userId, animeId } = req.params;
     try {
@@ -237,15 +230,10 @@ app.delete('/remove-anime/:userId/:animeId', async (req, res) => {
     }
 });
 
-// -------------------
-// Get watched anime for user (FIXED: Added ORDER BY id ASC)
-// -------------------
 app.get('/watched/:userId', async (req, res) => {
     const { userId } = req.params;
     try {
-        // === FIX 2: Added ORDER BY id ASC to ensure consistent order ===
         const result = await query('SELECT * FROM watched_anime WHERE user_id=$1 ORDER BY id ASC', [userId]);
-        // =============================================================
         res.json({ success: true, data: result.rows });
     } catch (err) {
         console.error("Get watched failed:", err);
@@ -253,60 +241,6 @@ app.get('/watched/:userId', async (req, res) => {
     }
 });
 
-// -------------------
-// 3. API Routes for Notes (NEW)
-// -------------------
-
-// GET /api/notes/:userId/:animeId - Fetch notes for a specific anime
-app.get('/api/notes/:userId/:animeId', async (req, res) => {
-    const { userId, animeId } = req.params;
-
-    try {
-        // Select only the notes column
-        const sql = 'SELECT notes FROM watched_anime WHERE user_id = $1 AND anime_id = $2';
-        const result = await query(sql, [userId, animeId]);
-
-        if (result.rows.length > 0) {
-            // Return the notes (or an empty string if null/default)
-            res.json({ success: true, notes: result.rows[0].notes || "" });
-        } else {
-            // If the anime is not found, return an empty string for notes
-            res.json({ success: true, notes: "" });
-        }
-    } catch (err) {
-        console.error("Database error fetching notes:", err);
-        res.status(500).json({ success: false, error: "Internal server error fetching notes." });
-    }
-});
-
-// PUT /api/notes - Save/Update notes for a specific anime
-app.put('/api/notes', async (req, res) => {
-    const { userId, animeId, notes } = req.body;
-
-    if (!userId || !animeId) {
-        return res.status(400).json({ success: false, error: "Missing user or anime ID." });
-    }
-
-    try {
-        // Use an UPDATE query to set the 'notes' field
-        const sql = 'UPDATE watched_anime SET notes = $1 WHERE user_id = $2 AND anime_id = $3';
-        const result = await query(sql, [notes, userId, animeId]);
-
-        // Check the number of rows updated
-        if (result.rowCount > 0) {
-            res.json({ success: true, message: "Notes saved successfully." });
-        } else {
-            res.status(404).json({ success: false, error: "Anime not found in watched list." });
-        }
-    } catch (err) {
-        console.error("Database error saving notes:", err);
-        res.status(500).json({ success: false, error: "Internal server error saving notes." });
-    }
-});
-
-// -------------------
-// Search anime from AniList API (No DB changes here)
-// -------------------
 app.get('/search-anime', async (req,res) => {
     const search = req.query.q;
     const lang = req.query.lang || 'romaji';
@@ -352,6 +286,78 @@ app.get('/search-anime', async (req,res) => {
     } catch(e){
         console.error("[SEARCH ERROR] AniList fetch failed:", e.message);
         res.json([]);
+    }
+});
+
+
+// -------------------
+// 3. API Routes for Notes (EXISTING)
+// -------------------
+
+app.get('/api/notes/:userId/:animeId', async (req, res) => {
+    const { userId, animeId } = req.params;
+
+    try {
+        const sql = 'SELECT notes FROM watched_anime WHERE user_id = $1 AND anime_id = $2';
+        const result = await query(sql, [userId, animeId]);
+
+        if (result.rows.length > 0) {
+            res.json({ success: true, notes: result.rows[0].notes || "" });
+        } else {
+            res.json({ success: true, notes: "" });
+        }
+    } catch (err) {
+        console.error("Database error fetching notes:", err);
+        res.status(500).json({ success: false, error: "Internal server error fetching notes." });
+    }
+});
+
+app.put('/api/notes', async (req, res) => {
+    const { userId, animeId, notes } = req.body;
+
+    if (!userId || !animeId) {
+        return res.status(400).json({ success: false, error: "Missing user or anime ID." });
+    }
+
+    try {
+        const sql = 'UPDATE watched_anime SET notes = $1 WHERE user_id = $2 AND anime_id = $3';
+        const result = await query(sql, [notes, userId, animeId]);
+
+        if (result.rowCount > 0) {
+            res.json({ success: true, message: "Notes saved successfully." });
+        } else {
+            res.status(404).json({ success: false, error: "Anime not found in watched list." });
+        }
+    } catch (err) {
+        console.error("Database error saving notes:", err);
+        res.status(500).json({ success: false, error: "Internal server error saving notes." });
+    }
+});
+
+
+// -------------------
+// 4. API Route for Finished Date (NEW)
+// -------------------
+app.put('/api/finished-date', async (req, res) => {
+    const { userId, animeId, date } = req.body;
+
+    if (!userId || !animeId) {
+        return res.status(400).json({ success: false, error: "Missing user or anime ID." });
+    }
+
+    try {
+        // The date can be a DATE string ('YYYY-MM-DD') or null if clearing the date.
+        const sql = 'UPDATE watched_anime SET finished_date = $1 WHERE user_id = $2 AND anime_id = $3';
+        const result = await query(sql, [date, userId, animeId]);
+
+        if (result.rowCount > 0) {
+            res.json({ success: true, message: "Finished date saved successfully." });
+        } else {
+            res.status(404).json({ success: false, error: "Anime not found in watched list." });
+        }
+    } catch (err) {
+        console.error("Database error saving finished date:", err);
+        res.status(500).json({ success: false, error: "Internal server error saving date." });
     }
 });
 
