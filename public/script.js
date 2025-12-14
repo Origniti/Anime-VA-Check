@@ -255,7 +255,7 @@ async function loadWatched(){
 
 
 // -------------------
-// Read More/Less Toggle Function (New Helper Function)
+// Read More/Less Toggle Function (Final version with scroll fix)
 // -------------------
 function toggleReadMore(event) {
     const readMoreButton = event.target;
@@ -277,16 +277,22 @@ function toggleReadMore(event) {
     // 3. Force Grid Recalculation (Essential for preserving row alignment)
     const gridContainer = document.getElementById('watched-list');
     if (gridContainer) {
+        // --- FIX: Store Scroll Position to prevent screen jumping ---
+        const scrollY = window.scrollY; 
+        
         // Temporarily hide, force browser reflow, then restore display
         gridContainer.style.display = 'none'; 
         void gridContainer.offsetWidth; // Force browser reflow/recalculation
         gridContainer.style.display = 'grid'; 
+        
+        // --- FIX: Restore Scroll Position ---
+        window.scrollTo(0, scrollY);
     }
 }
 
 
 // -------------------
-// RENDER WATCHED LIST (MODIFIED to use DOM methods for Read More feature)
+// RENDER WATCHED LIST 
 // -------------------
 function renderWatchedList() {
     // 1. Calculate Pagination Range
@@ -344,7 +350,7 @@ function renderWatchedList() {
         animeInfo.appendChild(title);
 
 
-        // --- Description Wrapper (NEW) ---
+        // --- Description Wrapper ---
         const descriptionWrapper = document.createElement('div');
         descriptionWrapper.className = 'description-wrapper';
 
@@ -355,8 +361,7 @@ function renderWatchedList() {
         descriptionWrapper.appendChild(descriptionText);
 
         // Read More Button
-        // Check if description is long enough (using the same threshold as the CSS clip)
-        // Note: Using character count is a proxy for visual height (CSS max-height: 7em)
+        // Check if description is long enough
         if ((anime.description?.length || 0) > 250) { 
             const readMoreButton = document.createElement('button');
             readMoreButton.className = 'read-more-btn';
