@@ -33,12 +33,14 @@
             </div>
 
             <div id="profile-container" style="display: none;">
-                <div class="profile-button" onclick="toggleProfileDropdown()">
-                    <button class="notification-icon" onclick="alert('Notifications clicked!')">
+                <div class="profile-button" id="profile-button-trigger">
+                    
+                    <button class="notification-icon" id="notification-trigger">
                         🔔
                     </button>
+                    
                     <div class="avatar-icon">
-                        </div>
+                    </div>
                     <span id="profile-username">user_name</span>
                     <span class="dropdown-arrow"></span>
                 </div>
@@ -46,6 +48,7 @@
                     <button onclick="logout()">Logout</button>
                 </div>
             </div>
+            
             <div id="page-search" class="page-content">
                 <h2>Search Anime</h2>
                 <div class="controls-bar">
