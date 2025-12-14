@@ -1,368 +1,270 @@
-import express from 'express';
-import bodyParser from 'body-parser';
-import { Pool } from 'pg'; 
-import bcrypt from 'bcrypt';
-import fetch from 'node-fetch';
-import path from 'path';
-import { fileURLToPath } from 'url';
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const fetch = require('node-fetch');
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
+// --- Configuration ---
 const app = express();
-const PORT = process.env.PORT || 3000; 
+const PORT = 3000;
+const MONGO_URI = 'mongodb://localhost:27017/anime-tracker'; // Replace with your MongoDB connection string
+const JWT_SECRET = 'your_super_secret_jwt_key'; // Replace with a strong, secure secret
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+// --- Middleware ---
+app.use(cors());
+app.use(express.json());
 
-// -------------------
-// 1. PostgreSQL Connection Setup
-// -------------------
-const connectionString = process.env.DATABASE_URL; 
+// --- Database Connection ---
+mongoose.connect(MONGO_URI)
+    .then(() => console.log('MongoDB connected'))
+    .catch(err => console.error('MongoDB connection error:', err));
 
-const pool = new Pool({
-    connectionString: connectionString,
-    ssl: {
-        rejectUnauthorized: false
-    }
+// --- Schemas and Models ---
+
+// 1. User Schema
+const UserSchema = new mongoose.Schema({
+    username: { type: String, required: true, unique: true },
+    password: { type: String, required: true }
 });
 
-pool.on('error', (err, client) => {
-    console.error('Unexpected error on idle client', err);
+// Hash password before saving
+UserSchema.pre('save', async function(next) {
+    if (this.isModified('password')) {
+        this.password = await bcrypt.hash(this.password, 10);
+    }
+    next();
 });
 
-// Helper function to simplify query execution
-const query = (text, params) => pool.query(text, params);
+const User = mongoose.model('User', UserSchema);
 
-// -------------------
-// 2. Database Initialization (Updated for finished_date Column)
-// -------------------
-async function setupDatabase() {
-    if (!connectionString) {
-        console.error("FATAL: DATABASE_URL environment variable is not set. Cannot connect to database.");
-        process.exit(1);
-    }
-    
-    try {
-        await query('CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username TEXT UNIQUE, password TEXT)');
-        
-        // Ensure the watched_anime table exists
-        await query(`
-            CREATE TABLE IF NOT EXISTS watched_anime (
-                id SERIAL PRIMARY KEY, 
-                user_id INTEGER REFERENCES users(id), 
-                anime_id INTEGER, 
-                anime_title TEXT, 
-                rating REAL, 
-                voice_actors TEXT, 
-                description TEXT, 
-                "coverImage" TEXT,
-                notes TEXT DEFAULT '',
-                UNIQUE (user_id, anime_id)
-            )
-        `);
-        
-        // Add the 'notes' column if it does not exist
-        try {
-            await query("ALTER TABLE watched_anime ADD COLUMN notes TEXT DEFAULT ''");
-        } catch (alterErr) {
-            if (alterErr.code !== '42701') {
-                console.warn("Could not add `notes` column (may already exist):", alterErr.message);
-            }
-        }
-        
-        // === FIX 3: Add the 'finished_date' column if it does not exist ===
-        try {
-            await query("ALTER TABLE watched_anime ADD COLUMN finished_date DATE");
-            console.log('Successfully added `finished_date` column to watched_anime table.');
-        } catch (alterErr) {
-            if (alterErr.code !== '42701') {
-                console.warn("Could not add `finished_date` column (may already exist):", alterErr.message);
-            }
-        }
-        // ===================================================================
+// 2. WatchedAnime Schema
+const WatchedAnimeSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    animeId: { type: Number, required: true }, // AniList ID
+    title: { type: String, required: true },
+    coverImage: { type: String },
+    description: { type: String },
+    vaInfo: [{
+        name: String,
+        vaName: String,
+        vaLanguage: String
+    }],
+    notes: { type: String, default: '' },
+    dateAdded: { type: Date, default: Date.now }
+});
 
-        console.log('Database tables ensured successfully (PostgreSQL).');
-    } catch (err) {
-        console.error("CRITICAL ERROR: Database setup failed:", err.message);
-        process.exit(1); 
-    }
-}
-setupDatabase(); 
+const WatchedAnime = mongoose.model('WatchedAnime', WatchedAnimeSchema);
 
-// -------------------
-// User registration, login, add, remove, search routes... (KEEP UNCHANGED)
-// -------------------
-// ... (Your existing registration, login, add-anime, remove-anime, search-anime routes go here)
+// --- JWT Middleware ---
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
 
+    if (token == null) return res.sendStatus(401); // Unauthorized
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) return res.sendStatus(403); // Forbidden
+        req.user = user;
+        next();
+    });
+};
+
+// --- API Routes ---
+
+// 1. Register
 app.post('/register', async (req, res) => {
-    const { username, password } = req.body;
     try {
-        const hash = await bcrypt.hash(password, 10);
-        const result = await query('INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id', [username, hash]);
-        res.json({ success: true, userId: result.rows[0].id });
-    } catch (err) {
-        if (err.code === '23505') {
-            return res.json({ success: false, error: 'Username already exists.' });
+        const { username, password } = req.body;
+        const user = new User({ username, password });
+        await user.save();
+        res.status(201).json({ message: 'User registered successfully.' });
+    } catch (error) {
+        if (error.code === 11000) {
+            return res.status(400).json({ message: 'Username already exists.' });
         }
-        console.error("Registration failed:", err);
-        res.json({ success: false, error: err.message });
+        res.status(500).json({ message: 'Error registering user.', error });
     }
 });
 
+// 2. Login
 app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
     try {
-        const result = await query('SELECT * FROM users WHERE username=$1', [username]);
-        const user = result.rows[0];
+        const { username, password } = req.body;
+        const user = await User.findOne({ username });
 
         if (!user) {
-            return res.json({ success: false, error: "User not found" });
+            return res.status(400).json({ message: 'Invalid credentials.' });
         }
 
-        const match = await bcrypt.compare(password, user.password);
-        if (match) {
-            res.json({ success: true, userId: user.id });
-        } else {
-            res.json({ success: false, error: "Incorrect password" });
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Invalid credentials.' });
         }
-    } catch (err) {
-        console.error("Login failed:", err);
-        res.json({ success: false, error: err.message });
+
+        const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '1h' });
+        res.json({ message: 'Login successful', token });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Server error during login.' });
     }
 });
 
-app.post('/add-anime', async (req, res) => {
-    let { userId, animeId, animeTitle, rating, description, characters, coverImage } = req.body;
-
-    const MAX_DESC_LENGTH = 800;
-    
-    if (description) {
-        description = description.replace(/<[^>]*>/g, '').trim();
-        description = description.length > MAX_DESC_LENGTH ? description.substring(0, MAX_DESC_LENGTH) + '...' : description;
+// 3. AniList Search Proxy
+app.get('/search-anime', async (req, res) => {
+    const query = req.query.query;
+    if (!query) {
+        return res.status(400).json({ message: 'Query parameter is required.' });
     }
 
-    try {
-        const duplicateResult = await query('SELECT id FROM watched_anime WHERE user_id=$1 AND anime_id=$2', [userId, animeId]);
-        if (duplicateResult.rows.length > 0) {
-            return res.json({ success: false, error: "Anime already added" });
-        }
-
-        const japaneseVAMap = new Map();
-        const englishVAMap = new Map();
-
-        if (characters && characters.length) {
-            characters.forEach(edge => {
-                const char = edge.node;
-                const charName = char.name?.full;
-                
-                const voiceActorsList = edge.voiceActors || [];
-
-                if (charName) {
-                    voiceActorsList.forEach(role => {
-                        const vaName = role.name?.full;
-                        const vaLanguage = role.language;
-
-                        if (vaName && vaLanguage) {
-                            const langUpper = vaLanguage.toUpperCase(); 
-
-                            if (langUpper === 'JAPANESE') {
-                                const currentCharacters = japaneseVAMap.get(vaName) || [];
-                                if (!currentCharacters.includes(charName)) {
-                                    currentCharacters.push(charName);
-                                    japaneseVAMap.set(vaName, currentCharacters);
-                                }
-                            }
-                            
-                            if (langUpper === 'ENGLISH') {
-                                const currentCharacters = englishVAMap.get(vaName) || [];
-                                if (!currentCharacters.includes(charName)) {
-                                    currentCharacters.push(charName);
-                                    englishVAMap.set(vaName, currentCharacters);
-                                }
+    const anilistQuery = `
+        query ($search: String) {
+            Page(perPage: 10) {
+                media(search: $search, type: ANIME, isAdult: false) {
+                    id
+                    title { romaji english }
+                    coverImage { large }
+                    description
+                    characters {
+                        nodes {
+                            name { full }
+                            voiceActors(language: JAPANESE, sort: [RELEVANCE, LANGUAGE]) {
+                                name { full }
+                                language
                             }
                         }
-                    });
+                    }
                 }
-            });
+            }
         }
-
-        const createVAString = (map) => {
-            return Array.from(map.entries())
-                .map(([vaName, charNames]) => {
-                    const charList = charNames.join(', ');
-                    return `${charList}: ${vaName}`;
-                })
-                .join('|'); 
-        };
-        
-        const vaData = {
-            japanese: createVAString(japaneseVAMap),
-            english: createVAString(englishVAMap)
-        };
-        
-        const voiceActors = JSON.stringify(vaData);
-        
-        const insertResult = await query(
-            'INSERT INTO watched_anime (user_id, anime_id, anime_title, rating, voice_actors, description, "coverImage") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
-            [userId, animeId, animeTitle, rating, voiceActors, description, coverImage]
-        );
-
-        res.json({ success: true, animeId: insertResult.rows[0].id });
-    } catch (err) {
-        if (err.code === '23505') {
-            return res.json({ success: false, error: "Anime already added" });
-        }
-        console.error("Add anime failed:", err);
-        res.json({ success: false, error: err.message });
-    }
-});
-
-app.delete('/remove-anime/:userId/:animeId', async (req, res) => {
-    const { userId, animeId } = req.params;
-    try {
-        await query('DELETE FROM watched_anime WHERE user_id=$1 AND anime_id=$2', [userId, animeId]);
-        res.json({ success: true });
-    } catch (err) {
-        console.error("Remove anime failed:", err);
-        res.json({ success: false, error: err.message });
-    }
-});
-
-app.get('/watched/:userId', async (req, res) => {
-    const { userId } = req.params;
-    try {
-        const result = await query('SELECT * FROM watched_anime WHERE user_id=$1 ORDER BY id ASC', [userId]);
-        res.json({ success: true, data: result.rows });
-    } catch (err) {
-        console.error("Get watched failed:", err);
-        res.json({ success: false, error: err.message });
-    }
-});
-
-app.get('/search-anime', async (req,res) => {
-    const search = req.query.q;
-    const lang = req.query.lang || 'romaji';
-    console.log(`[SEARCH] Query received: "${search}"`);
-
-    if(!search) {
-        return res.json([]);
-    }
-
-    const query = 
-    'query ($search: String) {' +
-    ' Page(perPage: 10) {' +
-    ' media(search: $search, type: ANIME) {' +
-    ' id' +
-    ' title { romaji english }' +
-    ' description' +
-    ' averageScore' +
-    ' coverImage { large }' +
-    ' characters(role: MAIN) {' +
-    ' edges {' +
-    ' node { name { full } }' +
-    ' voiceActors { name { full } language }' +
-    ' }' +
-    ' }' +
-    ' }' +
-    ' }' +
-    '}';
+    `;
 
     try {
         const response = await fetch('https://graphql.anilist.co', {
-            method:'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ query, variables:{search} })
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                query: anilistQuery,
+                variables: { search: query }
+            })
         });
 
-        if (!response.ok) {
-            console.error(`[SEARCH ERROR] HTTP Error! Status: ${response.status}`);
-            throw new Error(`HTTP Error: ${response.status}`);
-        }
-
         const data = await response.json();
-        res.json(data.data.Page.media);
-    } catch(e){
-        console.error("[SEARCH ERROR] AniList fetch failed:", e.message);
-        res.json([]);
-    }
-});
 
+        // Map the structure to what the client expects (data.data.Page.media)
+        if (data.data && data.data.Page && data.data.Page.media) {
+            // Further process the data to ensure characters/VAs are correctly included
+             const results = data.data.Page.media.map(anime => {
+                // AniList GraphQL allows multiple voice actors per character, 
+                // but the client only needs one (preferred Japanese).
+                const charactersWithVA = anime.characters.nodes.map(node => {
+                    // Try to find a Japanese VA, otherwise take the first available
+                    let va = node.voiceActors.find(v => v.language === 'JAPANESE') || node.voiceActors[0];
+                    return {
+                        name: node.name,
+                        voiceActors: va ? [{ name: va.name, language: va.language }] : []
+                    };
+                });
+                return { ...anime, characters: { nodes: charactersWithVA } };
+            });
 
-// -------------------
-// 3. API Routes for Notes (EXISTING)
-// -------------------
-
-app.get('/api/notes/:userId/:animeId', async (req, res) => {
-    const { userId, animeId } = req.params;
-
-    try {
-        const sql = 'SELECT notes FROM watched_anime WHERE user_id = $1 AND anime_id = $2';
-        const result = await query(sql, [userId, animeId]);
-
-        if (result.rows.length > 0) {
-            res.json({ success: true, notes: result.rows[0].notes || "" });
+            res.json({ results: data.data.Page.media });
         } else {
-            res.json({ success: true, notes: "" });
+            res.json({ results: [] });
         }
-    } catch (err) {
-        console.error("Database error fetching notes:", err);
-        res.status(500).json({ success: false, error: "Internal server error fetching notes." });
+
+    } catch (error) {
+        console.error('AniList API error:', error);
+        res.status(500).json({ message: 'Error fetching data from AniList.' });
     }
 });
 
-app.put('/api/notes', async (req, res) => {
-    const { userId, animeId, notes } = req.body;
 
-    if (!userId || !animeId) {
-        return res.status(400).json({ success: false, error: "Missing user or anime ID." });
-    }
-
+// 4. Add Watched Anime (Protected)
+app.post('/watched', authenticateToken, async (req, res) => {
     try {
-        const sql = 'UPDATE watched_anime SET notes = $1 WHERE user_id = $2 AND anime_id = $3';
-        const result = await query(sql, [notes, userId, animeId]);
+        const { animeId, title, coverImage, description, vaInfo } = req.body;
+        const userId = req.user.id;
 
-        if (result.rowCount > 0) {
-            res.json({ success: true, message: "Notes saved successfully." });
-        } else {
-            res.status(404).json({ success: false, error: "Anime not found in watched list." });
+        // Check if anime is already in the list
+        const existingAnime = await WatchedAnime.findOne({ userId, animeId });
+        if (existingAnime) {
+            return res.status(400).json({ message: 'This anime is already in your list.' });
         }
-    } catch (err) {
-        console.error("Database error saving notes:", err);
-        res.status(500).json({ success: false, error: "Internal server error saving notes." });
+
+        const newAnime = new WatchedAnime({
+            userId,
+            animeId,
+            title,
+            coverImage,
+            description,
+            vaInfo,
+            dateAdded: new Date()
+        });
+
+        await newAnime.save();
+        res.status(201).json({ message: `${title} added to list!` });
+
+    } catch (error) {
+        console.error('Error adding watched anime:', error);
+        res.status(500).json({ message: 'Error adding anime to list.' });
     }
 });
 
-
-// -------------------
-// 4. API Route for Finished Date (NEW)
-// -------------------
-app.put('/api/finished-date', async (req, res) => {
-    const { userId, animeId, date } = req.body;
-
-    if (!userId || !animeId) {
-        return res.status(400).json({ success: false, error: "Missing user or anime ID." });
-    }
-
+// 5. Get Watched List (Protected)
+app.get('/watched', authenticateToken, async (req, res) => {
     try {
-        // The date can be a DATE string ('YYYY-MM-DD') or null if clearing the date.
-        const sql = 'UPDATE watched_anime SET finished_date = $1 WHERE user_id = $2 AND anime_id = $3';
-        const result = await query(sql, [date, userId, animeId]);
-
-        if (result.rowCount > 0) {
-            res.json({ success: true, message: "Finished date saved successfully." });
-        } else {
-            res.status(404).json({ success: false, error: "Anime not found in watched list." });
-        }
-    } catch (err) {
-        console.error("Database error saving finished date:", err);
-        res.status(500).json({ success: false, error: "Internal server error saving date." });
+        const userId = req.user.id;
+        const list = await WatchedAnime.find({ userId }).sort({ dateAdded: -1 });
+        res.json(list);
+    } catch (error) {
+        res.status(500).json({ message: 'Error retrieving watched list.' });
     }
 });
 
+// 6. Delete Watched Anime (Protected)
+app.delete('/watched/:id', authenticateToken, async (req, res) => {
+    try {
+        const animeId = req.params.id;
+        const userId = req.user.id;
 
-// -------------------
-// Start server
-// -------------------
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+        const result = await WatchedAnime.findOneAndDelete({ _id: animeId, userId });
+
+        if (!result) {
+            return res.status(404).json({ message: 'Anime not found or unauthorized.' });
+        }
+
+        res.json({ message: `${result.title} removed from list.` });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting anime.' });
+    }
+});
+
+// 7. Update Notes (Protected)
+app.put('/watched/:id/notes', authenticateToken, async (req, res) => {
+    try {
+        const animeId = req.params.id;
+        const userId = req.user.id;
+        const { notes } = req.body;
+
+        const result = await WatchedAnime.findOneAndUpdate(
+            { _id: animeId, userId },
+            { notes: notes },
+            { new: true }
+        );
+
+        if (!result) {
+            return res.status(404).json({ message: 'Anime not found or unauthorized.' });
+        }
+
+        res.json({ message: 'Notes updated successfully.', notes: result.notes });
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating notes.' });
+    }
+});
+
+// --- Server Start ---
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
