@@ -187,10 +187,6 @@ async function addAnime(anime){
     // Image Saving: Robust Check for both lowercase and capitalized properties
     const coverImage = anime.coverImage?.large || anime.CoverImage?.large || '';
 
-    console.log("--- addAnime started ---");
-    console.log("Sending data:", {userId, animeId:anime.id, animeTitle, rating, description, characters: characters ? characters.length : 'N/A', coverImage}); 
-    console.log("Raw Anime Object:", anime);
-
     try {
         const res = await fetch('/add-anime',{
             method:'POST',
@@ -198,8 +194,6 @@ async function addAnime(anime){
             body:JSON.stringify({userId, animeId:anime.id, animeTitle, rating, description, characters, coverImage})
         });
         const data = await res.json();
-        
-        console.log("Server Response:", data);
         
         if(data.success) {
             loadWatched();
@@ -210,7 +204,6 @@ async function addAnime(anime){
     } catch(err){
         console.error("Add anime failed:", err);
     }
-    console.log("--- addAnime finished ---");
 }
 
 // -------------------
@@ -301,7 +294,7 @@ function toggleReadMore(event) {
 }
 
 // -------------------
-// Notes Modal Functions (NEW)
+// Notes Modal Functions
 // -------------------
 let currentAnimeIdForNotes = null;
 
@@ -459,6 +452,9 @@ function renderWatchedList() {
         const vaString = anime.voice_actors_parsed[vaLang] || "";
         const vaList = vaString.split('|').filter(Boolean);
         
+        // --- NEW LOGIC: RENDER VAs AND COUNT THEM ---
+        let actualVACount = 0;
+        
         vaList.forEach(va=>{
             // va is "Character1, Character2: VA Name"
             const parts = va.split(': ');
@@ -469,7 +465,6 @@ function renderWatchedList() {
                 
                 // Check if the VA name is shared
                 if(vaCount[vaName]>1) {
-                    // Wrap the VA name in a highlight span
                     vaHtml = va.replace(vaName, `<span class="highlight">${vaName}</span>`);
                 }
                 
@@ -477,11 +472,22 @@ function renderWatchedList() {
                 vaSpan.className = 'va';
                 vaSpan.innerHTML = vaHtml;
                 vaTagsContainer.appendChild(vaSpan);
+                actualVACount++; // Count the successfully rendered VA tag
             }
         });
         animeInfo.appendChild(vaTagsContainer);
 
-        // --- Action Buttons Container (NEW) ---
+        // --- DYNAMIC HEIGHT ADJUSTMENT ---
+        // If there are 2 or fewer VA tags, increase the description's visible height 
+        // to fill the empty space left by fewer VA tags.
+        if (actualVACount <= 2) {
+            // Overrides the default CSS max-height of 7em with 10em (about 3 more lines)
+            descriptionText.style.maxHeight = '10em'; 
+        }
+
+        // --- End Dynamic Height Adjustment ---
+
+        // --- Action Buttons Container ---
         
         // 1. Remove Button (Created here, but appended to actionButtons)
         const removeBtn = document.createElement('button');
@@ -489,7 +495,7 @@ function renderWatchedList() {
         removeBtn.textContent = 'Remove';
         removeBtn.addEventListener('click', () => removeAnime(anime.anime_id));
         
-        // 2. Notes Button (NEW)
+        // 2. Notes Button
         const notesBtn = document.createElement('button');
         notesBtn.className = 'notes-btn';
         notesBtn.textContent = anime.notes && anime.notes.length > 0 ? 'Edit Notes' : 'Add Note';
@@ -525,6 +531,6 @@ window.register = register;
 window.login = login;
 window.searchAnime = actualSearchAnime;
 window.removeAnime = removeAnime;
-window.showPage = showPage; // New export
-window.changePage = changePage; // New export
+window.showPage = showPage;
+window.changePage = changePage; 
 window.onload = init; // This is now the entry point
