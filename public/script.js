@@ -8,6 +8,45 @@ let currentPage = 1;
 let totalPages = 1;
 
 
+// -------------------
+// NEW PROFILE LOGIC (Moved to the top for clarity)
+// -------------------
+
+// CRITICAL FIX 1: Function to handle the notification click without triggering the profile dropdown
+function handleNotificationClick(event) {
+    // *** CRITICAL FIX: Stops the click event from propagating to the parent (.profile-button) ***
+    event.stopPropagation();
+    
+    console.log("Notification button was clicked. Profile dropdown toggle prevented.");
+    alert("Checking for new notifications!"); // Placeholder for your notification logic
+}
+
+// CRITICAL FIX 2: Standard function to toggle the profile dropdown
+function toggleProfileDropdown() {
+    const dropdown = document.getElementById('profile-dropdown');
+    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+}
+
+function logout() {
+    // 1. Clear local storage
+    localStorage.removeItem('animeTrackerUserId');
+    userId = null;
+
+    // 2. Clear global data (optional but good practice)
+    watched.length = 0;
+
+    // 3. Reset UI
+    document.getElementById('main').style.display = 'none';
+    document.getElementById('auth').style.display = 'block';
+    document.getElementById('profile-container').style.display = 'none';
+    document.getElementById('profile-dropdown').style.display = 'none';
+
+    document.getElementById('login-username').value = '';
+    document.getElementById('login-password').value = '';
+
+    alert("Logged out successfully.");
+}
+
 // New function to initialize the app (run on page load)
 function init() {
     if (userId) {
@@ -17,6 +56,8 @@ function init() {
 
         // NEW: Show profile container and set placeholder username
         document.getElementById('profile-container').style.display = 'block';
+        // Note: The actual username is not stored globally, so setting it from the login
+        // function is the correct approach. Keeping 'originiti' as fallback here.
         document.getElementById('profile-username').textContent = 'originiti'; 
         
         loadWatched();
@@ -24,7 +65,7 @@ function init() {
         showPage('watched'); 
     }
     
-    // Set up event listeners 
+    // Set up general event listeners 
     document.getElementById('va-lang').addEventListener('change', renderWatchedList);
     
     // NEW: Add event listeners for the Notes modal buttons
@@ -37,6 +78,30 @@ function init() {
             closeNotesModal();
         }
     });
+
+    // --- CRITICAL PROFILE/NOTIFICATION EVENT LISTENERS (Moved from window.onload) ---
+    const notificationButton = document.getElementById('notification-trigger');
+    const profileButton = document.getElementById('profile-button-trigger');
+
+    // Attach the notification handler with stopPropagation
+    if (notificationButton) {
+        notificationButton.addEventListener('click', handleNotificationClick);
+    }
+    
+    // Attach the profile handler to the container
+    if (profileButton) {
+        profileButton.addEventListener('click', toggleProfileDropdown);
+    }
+
+    // Optional: Close dropdown when clicking anywhere else on the page
+    document.addEventListener('click', (event) => {
+        const dropdown = document.getElementById('profile-dropdown');
+        if (dropdown && dropdown.style.display === 'block' && 
+            profileButton && !profileButton.contains(event.target) && !dropdown.contains(event.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+    // ---------------------------------------------------------------------------------
 }
 
 // -------------------
@@ -69,7 +134,7 @@ async function register(){
         document.getElementById('auth').style.display='none';
         document.getElementById('main').style.display='block';
 
-        // NEW: Show profile container and set placeholder username
+        // NEW: Show profile container and set username
         document.getElementById('profile-container').style.display = 'block';
         document.getElementById('profile-username').textContent = username; 
 
@@ -94,42 +159,13 @@ async function login(){
         document.getElementById('auth').style.display='none';
         document.getElementById('main').style.display='block';
 
-        // NEW: Show profile container and set placeholder username
+        // NEW: Show profile container and set username
         document.getElementById('profile-container').style.display = 'block';
         document.getElementById('profile-username').textContent = username; 
         
         loadWatched();
         showPage('watched'); // Show watched list after successful login
     } else alert(data.error);
-}
-
-// -------------------
-// NEW PROFILE LOGIC
-// -------------------
-
-function toggleProfileDropdown() {
-    const dropdown = document.getElementById('profile-dropdown');
-    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-}
-
-function logout() {
-    // 1. Clear local storage
-    localStorage.removeItem('animeTrackerUserId');
-    userId = null;
-
-    // 2. Clear global data (optional but good practice)
-    watched.length = 0;
-
-    // 3. Reset UI
-    document.getElementById('main').style.display = 'none';
-    document.getElementById('auth').style.display = 'block';
-    document.getElementById('profile-container').style.display = 'none';
-    document.getElementById('profile-dropdown').style.display = 'none';
-
-    document.getElementById('login-username').value = '';
-    document.getElementById('login-password').value = '';
-
-    alert("Logged out successfully.");
 }
 
 
@@ -176,7 +212,10 @@ function changePage(delta) {
 // Debounced search input
 // -------------------
 const debouncedSearch = debounce(actualSearchAnime, 300);
+// NOTE: Assuming your HTML still has the inline oninput="searchAnime()"
+// I recommend replacing that with this:
 document.getElementById('anime-search').addEventListener('input', debouncedSearch);
+
 
 // -------------------
 // Actual search function
@@ -574,10 +613,13 @@ function renderWatchedList() {
 // -------------------
 window.register = register;
 window.login = login;
-window.searchAnime = actualSearchAnime;
+window.searchAnime = actualSearchAnime; // Exposing the actual search function
 window.removeAnime = removeAnime;
 window.showPage = showPage;
 window.changePage = changePage; 
-window.toggleProfileDropdown = toggleProfileDropdown;
-window.logout = logout;
-window.onload = init; // This is now the entry point
+// Removed window.toggleProfileDropdown/window.logout since they are exposed via the DOMContentLoaded setup
+window.toggleProfileDropdown = toggleProfileDropdown; // Re-expose for clarity if needed, though event listener handles it
+window.logout = logout; 
+
+// Change entry point from window.onload to DOMContentLoaded for defer compatibility and better practice
+document.addEventListener('DOMContentLoaded', init);
