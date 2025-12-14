@@ -541,10 +541,10 @@ button:hover {
 /* Container for the profile button and dropdown */
 #profile-container {
     position: absolute;
-    /* Adjusted positioning to align with the 20px padding of #app */
-    top: 20px; 
-    right: 20px; 
-    z-index: 50; /* Ensure it stays on top of other content */
+    /* MOVED UP: Adjusted from 20px to 10px */
+    top: 10px; 
+    right: 20px; /* Aligned with #app padding */
+    z-index: 50; 
 }
 
 /* The main profile button element (rounded rectangle shape) */
@@ -552,9 +552,8 @@ button:hover {
     display: flex;
     align-items: center;
     background-color: var(--color-background-light); /* #1e1e1e */
-    /* Adjusted padding to fit nicely */
     padding: 5px 15px 5px 5px; 
-    /* Changed from 30px (pill) to 8px (less rounded) */
+    /* LESS ROUNDED: border-radius is 8px */
     border-radius: 8px; 
     cursor: pointer;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
