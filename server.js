@@ -36,7 +36,7 @@ pool.on('error', (err, client) => {
 const query = (text, params) => pool.query(text, params);
 
 // -------------------
-// 2. Database Initialization
+// 2. Database Initialization (Updated for notes column)
 // -------------------
 async function setupDatabase() {
     // Check if the connection string is actually set
@@ -49,7 +49,21 @@ async function setupDatabase() {
         await query('CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username TEXT UNIQUE, password TEXT)');
         
         // Note: PostgreSQL saves 'coverImage' as 'coverimage' (all lowercase) if not quoted.
-        await query('CREATE TABLE IF NOT EXISTS watched_anime (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), anime_id INTEGER, anime_title TEXT, rating REAL, voice_actors TEXT, description TEXT, coverImage TEXT)');
+        // We ensure 'notes' is present in the initial schema for new environments
+        await query('CREATE TABLE IF NOT EXISTS watched_anime (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), anime_id INTEGER, anime_title TEXT, rating REAL, voice_actors TEXT, description TEXT, coverImage TEXT, notes TEXT)');
+        
+
+        // === NEW DATABASE MIGRATION STEP: Add 'notes' column if it doesn't exist (for existing databases) ===
+        await query(`
+            DO $$ BEGIN
+                BEGIN
+                    ALTER TABLE watched_anime ADD COLUMN notes TEXT;
+                EXCEPTION
+                    WHEN duplicate_column THEN null;
+                END;
+            END $$;
+        `);
+        // =========================================================================
         
         console.log('Database tables ensured successfully (PostgreSQL).');
     } catch (err) {
@@ -115,6 +129,9 @@ app.post('/add-anime', async (req, res) => {
         description = description.replace(/<[^>]*>/g, '').trim();
         description = description.length > MAX_DESC_LENGTH ? description.substring(0, MAX_DESC_LENGTH) + '...' : description;
     }
+    
+    // Initialize notes as an empty string on creation
+    const initialNotes = ''; 
 
     try {
         // Check for duplicate (Uses $1, $2)
@@ -189,10 +206,10 @@ app.post('/add-anime', async (req, res) => {
         // --- END OF VOICE ACTOR FINAL FIX ---
 
 
-        // Insert new record (Uses $1 through $7)
+        // Insert new record (Uses $1 through $8 - now includes notes)
         const insertResult = await query(
-            'INSERT INTO watched_anime (user_id, anime_id, anime_title, rating, voice_actors, description, coverImage) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
-            [userId, animeId, animeTitle, rating, voiceActors, description, coverImage]
+            'INSERT INTO watched_anime (user_id, anime_id, anime_title, rating, voice_actors, description, coverImage, notes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id',
+            [userId, animeId, animeTitle, rating, voiceActors, description, coverImage, initialNotes]
         );
 
         res.json({ success: true, animeId: insertResult.rows[0].id });
@@ -216,6 +233,40 @@ app.delete('/remove-anime/:userId/:animeId', async (req, res) => {
         res.json({ success: false, error: err.message });
     }
 });
+
+// -------------------
+// Update anime notes (NEW ENDPOINT)
+// -------------------
+app.patch('/update-notes', async (req, res) => {
+    const { userId, animeId, notes } = req.body;
+    
+    if (!userId || !animeId) {
+        return res.json({ success: false, error: 'User ID and Anime ID are required.' });
+    }
+
+    // Basic sanitization and truncation for notes
+    const MAX_NOTES_LENGTH = 2000;
+    let sanitizedNotes = notes ? String(notes).replace(/<[^>]*>/g, '').trim() : '';
+    sanitizedNotes = sanitizedNotes.substring(0, MAX_NOTES_LENGTH);
+    
+    try {
+        // Use $1 (notes), $2 (userId), $3 (animeId)
+        const result = await query(
+            'UPDATE watched_anime SET notes = $1 WHERE user_id = $2 AND anime_id = $3 RETURNING id',
+            [sanitizedNotes, userId, animeId]
+        );
+
+        if (result.rowCount === 0) {
+            return res.json({ success: false, error: 'Anime record not found for this user.' });
+        }
+        
+        res.json({ success: true, message: 'Notes updated successfully.' });
+    } catch (err) {
+        console.error("Update notes failed:", err);
+        res.json({ success: false, error: err.message });
+    }
+});
+
 
 // -------------------
 // Get watched anime for user
