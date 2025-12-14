@@ -36,9 +36,10 @@ pool.on('error', (err, client) => {
 const query = (text, params) => pool.query(text, params);
 
 // -------------------
-// 2. Database Initialization (Updated for More Info columns)
+// 2. Database Initialization (Updated for notes column)
 // -------------------
 async function setupDatabase() {
+    // Check if the connection string is actually set
     if (!connectionString) {
         console.error("FATAL: DATABASE_URL environment variable is not set. Cannot connect to database.");
         process.exit(1);
@@ -47,44 +48,24 @@ async function setupDatabase() {
     try {
         await query('CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username TEXT UNIQUE, password TEXT)');
         
-        // Define the initial table structure if it doesn't exist
-        await query(`
-            CREATE TABLE IF NOT EXISTS watched_anime (
-                id SERIAL PRIMARY KEY, 
-                user_id INTEGER REFERENCES users(id), 
-                anime_id INTEGER, 
-                anime_title TEXT, 
-                rating REAL, 
-                voice_actors TEXT, 
-                description TEXT, 
-                "coverImage" TEXT, 
-                notes TEXT,
-                start_date DATE,
-                end_date DATE
-            )
-        `);
+        // Note: PostgreSQL saves 'coverImage' as 'coverimage' (all lowercase) if not quoted.
+        // We ensure 'notes' is present in the initial schema for new environments
+        await query('CREATE TABLE IF NOT EXISTS watched_anime (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), anime_id INTEGER, anime_title TEXT, rating REAL, voice_actors TEXT, description TEXT, coverImage TEXT, notes TEXT)');
         
-        // === DATABASE MIGRATION STEPS: Add new columns if they don't exist ===
-        const columns = [
-            { name: 'notes', type: 'TEXT' },
-            { name: 'rating', type: 'REAL' }, 
-            { name: 'start_date', type: 'DATE' },
-            { name: 'end_date', type: 'DATE' },
-        ];
 
-        for (const column of columns) {
-            await query(`
-                DO $$ BEGIN
-                    BEGIN
-                        ALTER TABLE watched_anime ADD COLUMN ${column.name} ${column.type};
-                    EXCEPTION
-                        WHEN duplicate_column THEN null;
-                    END;
-                END $$;
-            `);
-        }
+        // === NEW DATABASE MIGRATION STEP: Add 'notes' column if it doesn't exist (for existing databases) ===
+        await query(`
+            DO $$ BEGIN
+                BEGIN
+                    ALTER TABLE watched_anime ADD COLUMN notes TEXT;
+                EXCEPTION
+                    WHEN duplicate_column THEN null;
+                END;
+            END $$;
+        `);
+        // =========================================================================
         
-        console.log('Database tables ensured and migrated successfully (PostgreSQL).');
+        console.log('Database tables ensured successfully (PostgreSQL).');
     } catch (err) {
         console.error("CRITICAL ERROR: Database setup failed:", err.message);
         process.exit(1); 
@@ -143,23 +124,25 @@ app.post('/add-anime', async (req, res) => {
 
     const MAX_DESC_LENGTH = 800;
     
+    // Server-side sanitization and truncation
     if (description) {
         description = description.replace(/<[^>]*>/g, '').trim();
         description = description.length > MAX_DESC_LENGTH ? description.substring(0, MAX_DESC_LENGTH) + '...' : description;
     }
     
-    // Initialize notes, start/end dates as empty/null on creation
-    const initialNotes = '';
-    const initialStartDate = null;
-    const initialEndDate = null;
+    // Initialize notes as an empty string on creation
+    const initialNotes = ''; 
 
     try {
+        // Check for duplicate (Uses $1, $2)
         const duplicateResult = await query('SELECT id FROM watched_anime WHERE user_id=$1 AND anime_id=$2', [userId, animeId]);
         if (duplicateResult.rows.length > 0) {
             return res.json({ success: false, error: "Anime already added" });
         }
 
-        // --- VOICE ACTOR PROCESSING ---
+        // --- START OF VOICE ACTOR FINAL FIX: Iterating ALL VAs and Aggregating by Actor ---
+        
+        // Maps to hold unique VA names. The value will be an array of characters they voice.
         const japaneseVAMap = new Map();
         const englishVAMap = new Map();
 
@@ -167,6 +150,8 @@ app.post('/add-anime', async (req, res) => {
             characters.forEach(edge => {
                 const char = edge.node;
                 const charName = char.name?.full;
+                
+                // Get the array of all VAs for this character
                 const voiceActorsList = edge.voiceActors || [];
 
                 if (charName) {
@@ -175,9 +160,11 @@ app.post('/add-anime', async (req, res) => {
                         const vaLanguage = role.language;
 
                         if (vaName && vaLanguage) {
+                            // Ensure the language is always treated as uppercase for comparison
                             const langUpper = vaLanguage.toUpperCase(); 
 
                             if (langUpper === 'JAPANESE') {
+                                // Aggregation: If VA already exists, append unique character name to the array
                                 const currentCharacters = japaneseVAMap.get(vaName) || [];
                                 if (!currentCharacters.includes(charName)) {
                                     currentCharacters.push(charName);
@@ -186,6 +173,7 @@ app.post('/add-anime', async (req, res) => {
                             }
                             
                             if (langUpper === 'ENGLISH') {
+                                // Aggregation: If VA already exists, append unique character name to the array
                                 const currentCharacters = englishVAMap.get(vaName) || [];
                                 if (!currentCharacters.includes(charName)) {
                                     currentCharacters.push(charName);
@@ -198,13 +186,14 @@ app.post('/add-anime', async (req, res) => {
             });
         }
 
+        // Helper function to format the Map data into the final string format: "Character1, Character2: VA Name"
         const createVAString = (map) => {
             return Array.from(map.entries())
                 .map(([vaName, charNames]) => {
-                    const charList = charNames.join(', ');
+                    const charList = charNames.join(', '); // Join multiple character names with a comma
                     return `${charList}: ${vaName}`;
                 })
-                .join('|');
+                .join('|'); // Pipe-separate the final actor entries
         };
         
         const vaData = {
@@ -214,13 +203,13 @@ app.post('/add-anime', async (req, res) => {
         
         const voiceActors = JSON.stringify(vaData);
         
-        // --- END VOICE ACTOR PROCESSING ---
+        // --- END OF VOICE ACTOR FINAL FIX ---
 
 
-        // Insert new record (Uses $1 through $10 - includes notes, start_date, end_date)
+        // Insert new record (Uses $1 through $8 - now includes notes)
         const insertResult = await query(
-            'INSERT INTO watched_anime (user_id, anime_id, anime_title, rating, voice_actors, description, "coverImage", notes, start_date, end_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id',
-            [userId, animeId, animeTitle, rating, voiceActors, description, coverImage, initialNotes, initialStartDate, initialEndDate]
+            'INSERT INTO watched_anime (user_id, anime_id, anime_title, rating, voice_actors, description, coverImage, notes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id',
+            [userId, animeId, animeTitle, rating, voiceActors, description, coverImage, initialNotes]
         );
 
         res.json({ success: true, animeId: insertResult.rows[0].id });
@@ -236,6 +225,7 @@ app.post('/add-anime', async (req, res) => {
 app.delete('/remove-anime/:userId/:animeId', async (req, res) => {
     const { userId, animeId } = req.params;
     try {
+        // Uses $1, $2
         await query('DELETE FROM watched_anime WHERE user_id=$1 AND anime_id=$2', [userId, animeId]);
         res.json({ success: true });
     } catch (err) {
@@ -245,49 +235,35 @@ app.delete('/remove-anime/:userId/:animeId', async (req, res) => {
 });
 
 // -------------------
-// Update anime info (UPDATED ENDPOINT to handle all tracking fields)
+// Update anime notes (NEW ENDPOINT)
 // -------------------
-app.patch('/update-info', async (req, res) => {
-    const { 
-        userId, 
-        animeId, 
-        rating, 
-        notes, 
-        start_date, 
-        end_date 
-    } = req.body;
+app.patch('/update-notes', async (req, res) => {
+    const { userId, animeId, notes } = req.body;
     
     if (!userId || !animeId) {
-        return res.status(400).json({ success: false, error: 'User ID and Anime ID are required.' });
+        return res.json({ success: false, error: 'User ID and Anime ID are required.' });
     }
 
+    // Basic sanitization and truncation for notes
     const MAX_NOTES_LENGTH = 2000;
     let sanitizedNotes = notes ? String(notes).replace(/<[^>]*>/g, '').trim() : '';
     sanitizedNotes = sanitizedNotes.substring(0, MAX_NOTES_LENGTH);
-
-    // ⭐ FIX: Convert empty string dates to null for PostgreSQL (if client missed it)
-    const finalStartDate = start_date === '' ? null : start_date;
-    const finalEndDate = end_date === '' ? null : end_date;
     
     try {
+        // Use $1 (notes), $2 (userId), $3 (animeId)
         const result = await query(
-            `UPDATE watched_anime 
-             SET notes = $1, 
-                 rating = $2, 
-                 start_date = $3, 
-                 end_date = $4
-             WHERE user_id = $5 AND anime_id = $6 RETURNING id`,
-            [sanitizedNotes, rating, finalStartDate, finalEndDate, userId, animeId]
+            'UPDATE watched_anime SET notes = $1 WHERE user_id = $2 AND anime_id = $3 RETURNING id',
+            [sanitizedNotes, userId, animeId]
         );
 
         if (result.rowCount === 0) {
-            return res.status(404).json({ success: false, error: 'Anime record not found for this user.' });
+            return res.json({ success: false, error: 'Anime record not found for this user.' });
         }
         
-        res.json({ success: true, message: 'More info updated successfully.' });
+        res.json({ success: true, message: 'Notes updated successfully.' });
     } catch (err) {
-        console.error("Update info failed:", err);
-        res.status(500).json({ success: false, error: 'Internal server error during update.' });
+        console.error("Update notes failed:", err);
+        res.json({ success: false, error: err.message });
     }
 });
 
@@ -298,7 +274,7 @@ app.patch('/update-info', async (req, res) => {
 app.get('/watched/:userId', async (req, res) => {
     const { userId } = req.params;
     try {
-        // SELECT * ensures all columns, including new ones, are returned
+        // Uses $1
         const result = await query('SELECT * FROM watched_anime WHERE user_id=$1', [userId]);
         res.json({ success: true, data: result.rows });
     } catch (err) {
@@ -312,6 +288,7 @@ app.get('/watched/:userId', async (req, res) => {
 // -------------------
 app.get('/search-anime', async (req,res) => {
     const search = req.query.q;
+    const lang = req.query.lang || 'romaji';
     console.log(`[SEARCH] Query received: "${search}"`);
 
     if(!search) {
@@ -326,7 +303,7 @@ app.get('/search-anime', async (req,res) => {
     ' title { romaji english }' +
     ' description' +
     ' averageScore' +
-    ' coverImage { large }' + 
+    ' coverImage { large }' + // Note: This field may be cased differently in the response object
     ' characters(role: MAIN) {' +
     ' edges {' +
     ' node { name { full } }' +
