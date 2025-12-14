@@ -270,16 +270,16 @@ button:hover {
 
 /* --- CRITICAL FIX FOR CONSISTENT CARD HEIGHT --- */
 .anime-info {
-    flex-grow: 1; /* Allows this block to take up remaining vertical space */
-    text-align: center;
-    width: 100%;
-    padding: 0 5px;
-    position: relative; 
-    display: flex;
-    flex-direction: column;
-    /* This ensures the Remove button is always at the bottom edge */
-    justify-content: space-between; 
-    align-items: center;
+    flex-grow: 1;
+    text-align: center;
+    width: 100%;
+    padding: 0 5px 30px 5px; /* FIX: Added 30px bottom padding to fill the card */
+    position: relative; 
+    display: flex;
+    flex-direction: column;
+    /* This ensures the Remove button is always at the bottom edge */
+    justify-content: space-between; 
+    align-items: center;
 }
 
 /* Original Title (Bold text) */
