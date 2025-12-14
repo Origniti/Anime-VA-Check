@@ -1,12 +1,14 @@
 let userId = localStorage.getItem('animeTrackerUserId'); // Load userId from storage
-const watched = [];
-let currentController = null;
+const watched = []; // The main array holding all user-tracked anime
+let currentController = null; // For search query abortion
 
-// New Global Variables for Pagination
+// Global Variables for Pagination
 const ITEMS_PER_PAGE = 9;
 let currentPage = 1;
 let totalPages = 1;
 
+// Stores the currently focused anime when the detail modal is open
+let currentAnimeIdForDetails = null;
 
 // New function to initialize the app (run on page load)
 function init() {
@@ -15,23 +17,27 @@ function init() {
         document.getElementById('auth').style.display = 'none';
         document.getElementById('main').style.display = 'block';
         loadWatched();
-        // Set default page view to Watched or Search
-        showPage('watched'); 
+        showPage('watched'); // Set default page view to Watched
     }
     
     // Set up event listeners 
     document.getElementById('va-lang').addEventListener('change', renderWatchedList);
+    document.getElementById('sort-by').addEventListener('change', renderWatchedList); 
     
-    // NEW: Add event listeners for the Notes modal buttons
-    document.getElementById('notes-save-btn').addEventListener('click', saveNotes);
-    document.getElementById('notes-close-btn').addEventListener('click', closeNotesModal);
+    // Add event listeners for the Detail modal buttons
+    document.getElementById('detail-save-btn').addEventListener('click', saveDetailChanges);
+    document.getElementById('detail-close-btn').addEventListener('click', closeDetailModal);
     
     // Close modal if user clicks outside of it
-    document.getElementById('notes-modal').addEventListener('click', (event) => {
+    document.getElementById('anime-detail-modal').addEventListener('click', (event) => {
         if (event.target === event.currentTarget) {
-            closeNotesModal();
+            closeDetailModal();
         }
     });
+
+    // Set up pagination buttons
+    document.getElementById('prev-page').addEventListener('click', () => changePage(-1));
+    document.getElementById('next-page').addEventListener('click', () => changePage(1));
 }
 
 // -------------------
@@ -46,6 +52,23 @@ function debounce(func, delay) {
 }
 
 // -------------------
+// Notification System
+// -------------------
+function showNotification(message) {
+    const popup = document.getElementById('notification-pop-up');
+    popup.textContent = message;
+    popup.style.display = 'block';
+    
+    // Optional: Add a class for specific styling if needed
+    // popup.classList.add('success');
+    
+    setTimeout(() => {
+        popup.style.display = 'none';
+    }, 3000); // Hide after 3 seconds
+}
+
+
+// -------------------
 // User auth functions
 // -------------------
 async function register(){
@@ -58,13 +81,13 @@ async function register(){
     });
     const data = await res.json();
     if(data.success){
-        // Save the ID and start the app
         userId = data.userId;
         localStorage.setItem('animeTrackerUserId', userId);
+        // localStorage.setItem('animeTrackerUsername', username); // Optional: Store username
         document.getElementById('auth').style.display='none';
         document.getElementById('main').style.display='block';
         loadWatched();
-        showPage('watched'); // Show watched list after fresh login
+        showPage('watched');
     } else alert(data.error);
 }
 
@@ -78,18 +101,18 @@ async function login(){
     });
     const data = await res.json();
     if(data.success){
-        // Save the ID and start the app
         userId = data.userId;
         localStorage.setItem('animeTrackerUserId', userId);
+        // localStorage.setItem('animeTrackerUsername', username); // Optional: Store username
         document.getElementById('auth').style.display='none';
         document.getElementById('main').style.display='block';
         loadWatched();
-        showPage('watched'); // Show watched list after successful login
+        showPage('watched');
     } else alert(data.error);
 }
 
 // -------------------
-// NEW NAVIGATION LOGIC
+// NAVIGATION LOGIC
 // -------------------
 function showPage(pageId) {
     // Hide all page containers
@@ -108,24 +131,37 @@ function showPage(pageId) {
         document.getElementById(`nav-${pageId}`).classList.add('active');
     }
 
-    // Special handling for the watched list
-    if (pageId === 'watched') {
+    // Special handling for pages that need data refresh
+    if (pageId === 'watched' || pageId === 'watchlist') {
         renderWatchedList(); 
+    } else if (pageId === 'profile') {
+        loadProfile(); 
     }
 }
 
-
 // -------------------
-// NEW PAGINATION LOGIC
+// PAGINATION LOGIC
 // -------------------
 function changePage(delta) {
     const newPage = currentPage + delta;
+    // Determine which list is currently active
+    const listToUse = document.getElementById('page-watchlist').style.display !== 'none' ? 'watchlist' : 'watched';
+    
+    // Recalculate totalPages based on the currently filtered/sorted list
+    let listData = [...watched];
+    if (listToUse === 'watchlist') {
+        listData = listData.filter(a => !a.finish_date || a.status === 'Plan to Watch');
+    } else {
+        listData = listData.filter(a => a.finish_date || a.status === 'Completed');
+    }
+
+    totalPages = Math.ceil(listData.length / ITEMS_PER_PAGE);
+
     if (newPage >= 1 && newPage <= totalPages) {
         currentPage = newPage;
         renderWatchedList();
     }
 }
-
 
 // -------------------
 // Debounced search input
@@ -157,8 +193,14 @@ async function actualSearchAnime() {
         data.forEach(anime => {
             const title = titleLang === 'english' && anime.title.english ? anime.title.english : anime.title.romaji;
             const li = document.createElement('li');
-            li.innerText = `${title} (${anime.averageScore})`;
-            li.onclick = () => addAnime(anime);
+            li.innerText = `${title} (Score: ${anime.averageScore || 'N/A'})`;
+            
+            // Store all necessary data on the element itself for persistence
+            li.dataset.anime = JSON.stringify(anime);
+            li.onclick = (e) => { 
+                const animeData = JSON.parse(e.currentTarget.dataset.anime);
+                addAnime(animeData);
+            } 
             list.appendChild(li);
         });
     } catch(err){
@@ -177,15 +219,11 @@ async function addAnime(anime){
     
     const titleLang = document.getElementById('search-lang').value;
     const animeTitle = titleLang==='english' && anime.title.english ? anime.title.english : anime.title.romaji;
-    const rating = anime.averageScore/10;
+    const rating = (anime.averageScore || 0) / 10;
     
-    // Client-side cleanup for description
     let description = anime.description || '';
-
-    const characters = anime.characters.edges; // Data structure from AniList API
-    
-    // Image Saving: Robust Check for both lowercase and capitalized properties
-    const coverImage = anime.coverImage?.large || anime.CoverImage?.large || '';
+    const characters = anime.characters.edges;
+    const coverImage = anime.coverImage?.large || anime.CoverImage?.large || ''; // Handle potential casing issues
 
     try {
         const res = await fetch('/add-anime',{
@@ -196,9 +234,11 @@ async function addAnime(anime){
         const data = await res.json();
         
         if(data.success) {
-            loadWatched();
-            document.getElementById('search-results').innerHTML = ''; // Clear search results on success
-            document.getElementById('anime-search').value = '';
+            loadWatched(); // Refresh the local list
+            showNotification(`${animeTitle} added to your list!`);
+            
+            // CRITICAL: Do NOT clear the search-results or anime-search. 
+            // The search results persist, fulfilling the requirement.
         }
         else alert(`Failed to add anime: ${data.error}`);
     } catch(err){
@@ -216,7 +256,10 @@ async function removeAnime(animeId){
     try {
         const res = await fetch(`/remove-anime/${userId}/${animeId}`, { method:'DELETE' });
         const data = await res.json();
-        if(data.success) loadWatched();
+        if(data.success) {
+            loadWatched();
+            showNotification("Anime removed from list.");
+        }
         else alert(data.error);
     } catch(err){
         console.error("Remove anime failed:", err);
@@ -224,7 +267,7 @@ async function removeAnime(animeId){
 }
 
 // -------------------
-// Load watched anime (MODIFIED - no longer renders directly)
+// Load watched anime
 // -------------------
 async function loadWatched(){
     if (!userId) return; 
@@ -235,19 +278,19 @@ async function loadWatched(){
         if(data.success){
             
             data.data.forEach(a=>{
-                // FIX: Ensure JSON.parse handles null or undefined voice_actors gracefully
                 try {
-                    a.voice_actors_parsed = JSON.parse(a.voice_actors);
+                    // FIX: Ensure JSON.parse handles null or undefined voice_actors gracefully
+                    a.voice_actors_parsed = JSON.parse(a.voice_actors || '{}');
                 } catch(e){
-                    // Fallback for old/malformed/empty data
                     a.voice_actors_parsed = { japanese: "", english: "" };
                 }
-                // NOTE: 'notes' column is now automatically included in the DB fetch
+                // NOTE: 'notes', 'user_rating', 'start_date', 'finish_date' are assumed to be present from the DB fetch
                 watched.push(a);
             });
 
-            // If the watched page is currently visible, render it immediately
-            if (document.getElementById('page-watched').style.display !== 'none') {
+            // If a list page is currently visible, render it immediately
+            if (document.getElementById('page-watched').style.display !== 'none' ||
+                document.getElementById('page-watchlist').style.display !== 'none') {
                 renderWatchedList(); 
             }
         }
@@ -258,106 +301,195 @@ async function loadWatched(){
 
 
 // -------------------
-// Read More/Less Toggle Function (Final version with scroll fix)
+// Read More/Less Toggle Function
 // -------------------
 function toggleReadMore(event) {
     const readMoreButton = event.target;
-    // Get the parent wrapper (.description-wrapper)
     const descriptionWrapper = readMoreButton.closest('.description-wrapper'); 
 
     if (!descriptionWrapper) return;
 
-    // 1. Toggle the 'expanded' class
     descriptionWrapper.classList.toggle('expanded');
 
-    // 2. Change the button text
     if (descriptionWrapper.classList.contains('expanded')) {
         readMoreButton.textContent = 'Read Less';
     } else {
         readMoreButton.textContent = 'Read More';
     }
 
-    // 3. Force Grid Recalculation (Essential for preserving row alignment)
-    const gridContainer = document.getElementById('watched-list');
+    // Force Grid Recalculation (Critical for preserving row alignment)
+    const gridContainer = document.getElementById('watched-list') || document.getElementById('watchlist-items');
     if (gridContainer) {
-        // --- FIX: Store Scroll Position to prevent screen jumping ---
         const scrollY = window.scrollY; 
         
-        // Temporarily hide, force browser reflow, then restore display
-        gridContainer.style.display = 'none'; 
-        void gridContainer.offsetWidth; // Force browser reflow/recalculation
-        gridContainer.style.display = 'grid'; 
-        
-        // --- FIX: Restore Scroll Position ---
-        window.scrollTo(0, scrollY);
+        // Use requestAnimationFrame for smoother DOM manipulation
+        requestAnimationFrame(() => {
+            gridContainer.style.display = 'none'; 
+            void gridContainer.offsetWidth; // Force reflow
+            gridContainer.style.display = 'grid'; 
+            window.scrollTo(0, scrollY);
+        });
     }
 }
 
-// -------------------
-// Notes Modal Functions
-// -------------------
-let currentAnimeIdForNotes = null;
 
-function openNotesModal(animeId, currentNotes) {
-    currentAnimeIdForNotes = animeId;
-    const modal = document.getElementById('notes-modal');
-    const textarea = document.getElementById('notes-textarea');
+// -------------------
+// Detail Modal Functions (Rating, Dates, Notes)
+// -------------------
+function openDetailModal(anime) {
+    currentAnimeIdForDetails = anime.anime_id;
+    const modal = document.getElementById('anime-detail-modal');
     
-    // Set current notes content
-    textarea.value = currentNotes || '';
+    // Set data in the modal
+    document.getElementById('modal-anime-title').textContent = anime.anime_title;
+    document.getElementById('user-rating').value = anime.user_rating || '';
+    
+    // Format dates to YYYY-MM-DD for input[type=date]
+    document.getElementById('start-date').value = anime.start_date ? anime.start_date.split('T')[0] : ''; 
+    document.getElementById('finish-date').value = anime.finish_date ? anime.finish_date.split('T')[0] : '';
+    
+    document.getElementById('notes-textarea').value = anime.notes || '';
+    
     modal.style.display = 'block';
 }
 
-function closeNotesModal() {
-    document.getElementById('notes-modal').style.display = 'none';
-    currentAnimeIdForNotes = null;
+function closeDetailModal() {
+    document.getElementById('anime-detail-modal').style.display = 'none';
+    currentAnimeIdForDetails = null;
 }
 
-function saveNotes() {
-    if (currentAnimeIdForNotes) {
-        const notes = document.getElementById('notes-textarea').value;
-        // Call the new API function
-        updateNotes(currentAnimeIdForNotes, notes); 
-        closeNotesModal();
-    }
-}
+async function saveDetailChanges() {
+    if (!currentAnimeIdForDetails) return;
 
-async function updateNotes(animeId, notes) {
-    if (!userId) {
-        alert("You must be logged in to save notes.");
+    const userRating = document.getElementById('user-rating').value;
+    const startDate = document.getElementById('start-date').value || null;
+    const finishDate = document.getElementById('finish-date').value || null;
+    const notes = document.getElementById('notes-textarea').value;
+    
+    // Convert to number or null, basic validation
+    const parsedRating = userRating ? parseFloat(userRating) : null;
+
+    if (parsedRating !== null && (parsedRating < 1 || parsedRating > 10)) {
+        alert("Rating must be between 1 and 10.");
         return;
     }
-    
+
     try {
-        const res = await fetch('/update-notes', {
+        const res = await fetch('/update-details', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, animeId, notes })
+            body: JSON.stringify({ 
+                userId, 
+                animeId: currentAnimeIdForDetails, 
+                userRating: parsedRating, 
+                startDate, 
+                finishDate, 
+                notes 
+            })
         });
         const data = await res.json();
         
         if (data.success) {
             // Find the item in the local 'watched' array and update its notes
-            const item = watched.find(a => String(a.anime_id) === String(animeId));
+            const item = watched.find(a => String(a.anime_id) === String(currentAnimeIdForDetails));
             if (item) {
+                item.user_rating = parsedRating;
+                item.start_date = startDate;
+                item.finish_date = finishDate;
                 item.notes = notes;
+                // Optional: Update global rating if you want to allow user to modify it, but sticking to user_rating.
             }
-            // Re-render the list to reflect the change (button text update)
+            showNotification(`Details for ${item.anime_title} saved successfully!`);
             renderWatchedList(); 
         } else {
-            alert(`Failed to save notes: ${data.error}`);
+            alert(`Failed to save details: ${data.error}`);
         }
     } catch (err) {
-        console.error("Update notes API failed:", err);
+        console.error("Update details API failed:", err);
     }
+    closeDetailModal();
+}
+
+// -------------------
+// Sort Logic
+// -------------------
+function sortWatchedList(list) {
+    const sortBy = document.getElementById('sort-by').value;
+
+    list.sort((a, b) => {
+        switch (sortBy) {
+            case 'title':
+                return a.anime_title.localeCompare(b.anime_title);
+            case 'date_added_desc':
+                // Assuming you'd fetch the date_added from the DB if available, otherwise just use id as a proxy
+                return (b.id || 0) - (a.id || 0);
+            case 'user_rating_desc':
+                // Treat null/0 ratings as lowest priority
+                return (b.user_rating || 0) - (a.user_rating || 0);
+            case 'user_rating_asc':
+                return (a.user_rating || 0) - (b.user_rating || 0);
+            case 'finish_date_desc':
+                // Treat null/empty dates as lowest priority
+                return new Date(b.finish_date || 0) - new Date(a.finish_date || 0);
+            default:
+                return 0;
+        }
+    });
+    return list;
+}
+
+// -------------------
+// PROFILE and FRIEND SYSTEM Placeholders
+// -------------------
+function loadProfile() {
+    // Calculate and display simple stats
+    const totalWatched = watched.length;
+    const ratedAnime = watched.filter(a => a.user_rating && a.user_rating > 0);
+    const avgRating = ratedAnime.length > 0 
+        ? (ratedAnime.reduce((sum, a) => sum + a.user_rating, 0) / ratedAnime.length).toFixed(2) 
+        : 'N/A';
+        
+    document.getElementById('profile-username').textContent = localStorage.getItem('animeTrackerUsername') || 'User'; // You might need to set username on login
+    document.getElementById('stats-watched-count').textContent = totalWatched;
+    document.getElementById('stats-avg-rating').textContent = avgRating;
+    
+    // searchUsers and friend management functions would be added here
+}
+
+function searchUsers() {
+    const query = document.getElementById('friend-search-input').value;
+    if (query.length < 3) {
+        document.getElementById('user-search-results').innerHTML = '<li>Enter at least 3 characters.</li>';
+        return;
+    }
+    // API call to /search-users?q=query&currentUserId=userId
+    // renderUserSearchResults(data);
 }
 
 // -------------------
 // RENDER WATCHED LIST 
 // -------------------
 function renderWatchedList() {
-    // 1. Calculate Pagination Range
-    totalPages = Math.ceil(watched.length / ITEMS_PER_PAGE);
+    let listToRender = [...watched]; 
+    const isWatchlistPage = document.getElementById('page-watchlist').style.display !== 'none';
+    
+    // 1. Filtering for Watchlist vs. Watched
+    if (isWatchlistPage) {
+        // Filter for items without a finish date (Plan to Watch/Currently Watching)
+        listToRender = listToRender.filter(a => !a.finish_date);
+    } else {
+        // Filter for items with a finish date (Completed)
+        listToRender = listToRender.filter(a => a.finish_date);
+    }
+    
+    // 2. Sorting
+    listToRender = sortWatchedList(listToRender);
+    
+    // 3. Pagination Range
+    const targetListElement = document.getElementById(isWatchlistPage ? 'watchlist-items' : 'watched-list');
+
+    totalPages = Math.ceil(listToRender.length / ITEMS_PER_PAGE);
+    // Adjust current page if necessary (e.g., if filtering caused the current page to disappear)
     if (currentPage > totalPages && totalPages > 0) {
         currentPage = totalPages;
     } else if (totalPages === 0) {
@@ -367,13 +499,12 @@ function renderWatchedList() {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     const end = start + ITEMS_PER_PAGE;
 
-    // Slice the watched array to get only the items for the current page
-    const animeToRender = watched.slice(start, end);
+    const animeToRender = listToRender.slice(start, end);
     
-    // 2. VA Count (Count across ALL watched items for highlighting accuracy)
+    // 4. VA Count (Count across ALL filtered items for highlighting accuracy)
     const vaLang = document.getElementById('va-lang').value;
     const vaCount = {};
-    watched.forEach(a => {
+    listToRender.forEach(a => {
         const vaString = a.voice_actors_parsed[vaLang] || "";
         vaString.split('|').filter(Boolean).forEach(va => {
             const vaName = va.split(': ')[1]?.trim();
@@ -383,64 +514,50 @@ function renderWatchedList() {
         });
     });
 
-    // 3. Render List
-    const list = document.getElementById('watched-list');
-    list.innerHTML = ''; 
+    // 5. Render List
+    targetListElement.innerHTML = ''; 
 
     animeToRender.forEach(anime => {
-        // Rebuild the HTML structure for each anime using DOM methods
         const li = document.createElement('li');
 
-        // --- IMAGE DISPLAY FIX ---
+        // --- IMAGE DISPLAY ---
         const imageUrl = anime.coverImage || anime.CoverImage || anime.coverimage;
         if(imageUrl && imageUrl.length > 10) { 
-            // 1. Create the container
             const imageContainer = document.createElement('div');
             imageContainer.className = 'anime-cover-container';
-            
-            // 2. Create the image
             const img = document.createElement('img');
             img.src = imageUrl;
             img.alt = anime.anime_title;
             img.className = 'anime-cover';
-            
-            // 3. Append image to container, container to list item
             imageContainer.appendChild(img);
             li.appendChild(imageContainer);
         }
-        // --- END IMAGE DISPLAY FIX ---
+        // --- END IMAGE DISPLAY ---
 
-        // Anime Info Container
         const animeInfo = document.createElement('div');
         animeInfo.className = 'anime-info';
 
-        // Title and Rating
+        // Title and Rating Display
         const title = document.createElement('b');
-        title.innerHTML = `${anime.anime_title} - ${anime.rating.toFixed(2)}`;
+        const userRatingDisplay = anime.user_rating ? `⭐ ${anime.user_rating.toFixed(1)}` : 'Unrated';
+        title.innerHTML = `${anime.anime_title} - ${userRatingDisplay}`;
         animeInfo.appendChild(title);
-
 
         // --- Description Wrapper ---
         const descriptionWrapper = document.createElement('div');
         descriptionWrapper.className = 'description-wrapper';
-
-        // Description Text (Clips based on CSS max-height)
         const descriptionText = document.createElement('i');
         descriptionText.className = 'anime-description-text';
         descriptionText.textContent = anime.description || 'No description available.';
         descriptionWrapper.appendChild(descriptionText);
 
-        // Read More Button
-        // Check if description is long enough
         if ((anime.description?.length || 0) > 250) { 
             const readMoreButton = document.createElement('button');
             readMoreButton.className = 'read-more-btn';
             readMoreButton.textContent = 'Read More';
-            // Attach the new toggle function
-            readMoreButton.addEventListener('click', toggleReadMore); 
+            readMoreButton.addEventListener('click', toggleReadMore);
             descriptionWrapper.appendChild(readMoreButton);
         }
-        
         animeInfo.appendChild(descriptionWrapper);
         // --- End Description Wrapper ---
 
@@ -448,22 +565,17 @@ function renderWatchedList() {
         const vaTagsContainer = document.createElement('div');
         vaTagsContainer.className = 'va-tags-container';
         
-        // VA Display
         const vaString = anime.voice_actors_parsed[vaLang] || "";
         const vaList = vaString.split('|').filter(Boolean);
         
-        // --- NEW LOGIC: RENDER VAs AND COUNT THEM ---
         let actualVACount = 0;
         
         vaList.forEach(va=>{
-            // va is "Character1, Character2: VA Name"
             const parts = va.split(': ');
             const vaName = parts[1]?.trim() || '';
             
             if(vaName){
                 let vaHtml = va;
-                
-                // Check if the VA name is shared
                 if(vaCount[vaName]>1) {
                     vaHtml = va.replace(vaName, `<span class="highlight">${vaName}</span>`);
                 }
@@ -472,52 +584,41 @@ function renderWatchedList() {
                 vaSpan.className = 'va';
                 vaSpan.innerHTML = vaHtml;
                 vaTagsContainer.appendChild(vaSpan);
-                actualVACount++; // Count the successfully rendered VA tag
+                actualVACount++;
             }
         });
         animeInfo.appendChild(vaTagsContainer);
 
         // --- DYNAMIC HEIGHT ADJUSTMENT ---
-        // If there are 2 or fewer VA tags, increase the description's visible height 
-        // to fill the empty space left by fewer VA tags.
         if (actualVACount <= 2) {
-            // Overrides the default CSS max-height of 7em with 10em (about 3 more lines)
             descriptionText.style.maxHeight = '10em'; 
         }
 
-        // --- End Dynamic Height Adjustment ---
-
         // --- Action Buttons Container ---
-        
-        // 1. Remove Button (Created here, but appended to actionButtons)
         const removeBtn = document.createElement('button');
         removeBtn.className = 'remove-btn';
         removeBtn.textContent = 'Remove';
         removeBtn.addEventListener('click', () => removeAnime(anime.anime_id));
         
-        // 2. Notes Button
-        const notesBtn = document.createElement('button');
-        notesBtn.className = 'notes-btn';
-        notesBtn.textContent = anime.notes && anime.notes.length > 0 ? 'Edit Notes' : 'Add Note';
-        notesBtn.addEventListener('click', () => {
-            openNotesModal(anime.anime_id, anime.notes);
+        const detailsBtn = document.createElement('button');
+        detailsBtn.className = 'notes-btn'; // Reusing notes-btn style
+        detailsBtn.textContent = anime.notes && anime.notes.length > 0 ? 'Edit Details (📝)' : 'Add Details';
+        detailsBtn.addEventListener('click', () => {
+            openDetailModal(anime);
         });
 
-        // 3. Group buttons
         const actionButtons = document.createElement('div');
         actionButtons.className = 'action-buttons';
-        actionButtons.appendChild(notesBtn);
+        actionButtons.appendChild(detailsBtn);
         actionButtons.appendChild(removeBtn);
 
-        animeInfo.appendChild(actionButtons); // Append the group to the info container
-
-        // --- End Action Buttons Container ---
+        animeInfo.appendChild(actionButtons); 
 
         li.appendChild(animeInfo);
-        list.appendChild(li);
+        targetListElement.appendChild(li);
     });
 
-    // 4. Update Pagination Controls
+    // 6. Update Pagination Controls
     document.getElementById('page-info').textContent = `Page ${totalPages > 0 ? currentPage : 0} of ${totalPages}`;
     document.getElementById('prev-page').disabled = currentPage === 1 || totalPages === 0;
     document.getElementById('next-page').disabled = currentPage === totalPages || totalPages === 0;
@@ -529,8 +630,7 @@ function renderWatchedList() {
 // -------------------
 window.register = register;
 window.login = login;
-window.searchAnime = actualSearchAnime;
-window.removeAnime = removeAnime;
 window.showPage = showPage;
 window.changePage = changePage; 
-window.onload = init; // This is now the entry point
+window.searchUsers = searchUsers; // Expose friend search
+window.onload = init;
