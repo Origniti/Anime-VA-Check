@@ -3,6 +3,12 @@ let userId = localStorage.getItem('animeTrackerUserId'); // Load userId from sto
 const watched = [];
 let currentController = null;
 
+// New Global Variables for Pagination
+const ITEMS_PER_PAGE = 9;
+let currentPage = 1;
+let totalPages = 1;
+
+
 // New function to initialize the app (run on page load)
 function init() {
     if (userId) {
@@ -10,12 +16,13 @@ function init() {
         document.getElementById('auth').style.display = 'none';
         document.getElementById('main').style.display = 'block';
         loadWatched();
+        // Set default page view to Watched or Search
+        showPage('watched'); 
     }
     
-    // Set up event listeners (including the VA language toggle)
-    document.getElementById('va-lang').addEventListener('change', loadWatched);
-    
-    // NOTE: You will add new event listeners for page navigation here later.
+    // Set up event listeners 
+    document.getElementById('va-lang').addEventListener('change', renderWatchedList);
+    // NOTE: Navigation button listeners are handled directly in index.html (onclick="showPage(...)")
 }
 
 // -------------------
@@ -30,7 +37,7 @@ function debounce(func, delay) {
 }
 
 // -------------------
-// User auth functions (UPDATED to save userId to localStorage)
+// User auth functions
 // -------------------
 async function register(){
   const username = document.getElementById('reg-username').value;
@@ -48,6 +55,7 @@ async function register(){
       document.getElementById('auth').style.display='none';
       document.getElementById('main').style.display='block';
       loadWatched();
+      showPage('watched'); // Show watched list after fresh login
   } else alert(data.error);
 }
 
@@ -67,8 +75,48 @@ async function login(){
       document.getElementById('auth').style.display='none';
       document.getElementById('main').style.display='block';
       loadWatched();
+      showPage('watched'); // Show watched list after successful login
   } else alert(data.error);
 }
+
+// -------------------
+// NEW NAVIGATION LOGIC
+// -------------------
+function showPage(pageId) {
+    // Hide all page containers
+    document.querySelectorAll('.page-content').forEach(page => {
+        page.style.display = 'none';
+    });
+    // Remove active class from all nav buttons
+    document.querySelectorAll('.navbar button').forEach(button => {
+        button.classList.remove('active');
+    });
+
+    // Show the selected page
+    const targetPage = document.getElementById(`page-${pageId}`);
+    if (targetPage) {
+        targetPage.style.display = 'block';
+        document.getElementById(`nav-${pageId}`).classList.add('active');
+    }
+
+    // Special handling for the watched list
+    if (pageId === 'watched') {
+        renderWatchedList(); 
+    }
+}
+
+
+// -------------------
+// NEW PAGINATION LOGIC
+// -------------------
+function changePage(delta) {
+    const newPage = currentPage + delta;
+    if (newPage >= 1 && newPage <= totalPages) {
+        currentPage = newPage;
+        renderWatchedList();
+    }
+}
+
 
 // -------------------
 // Debounced search input
@@ -174,10 +222,10 @@ async function removeAnime(animeId){
 }
 
 // -------------------
-// Load watched anime
+// Load watched anime (MODIFIED - no longer renders directly)
 // -------------------
 async function loadWatched(){
-  if (!userId) return; // Prevent fetching if not logged in
+  if (!userId) return; 
   try {
     const res = await fetch(`/watched/${userId}`);
     const data = await res.json();
@@ -195,7 +243,10 @@ async function loadWatched(){
         watched.push(a);
       });
 
-      highlightSharedVAs();
+      // If the watched page is currently visible, render it immediately
+      if (document.getElementById('page-watched').style.display !== 'none') {
+          renderWatchedList(); 
+      }
     }
   } catch(err){
     console.error("Load watched failed:", err);
@@ -203,77 +254,93 @@ async function loadWatched(){
 }
 
 // -------------------
-// Highlight shared VAs
+// RENDER WATCHED LIST (OLD highlightSharedVAs, now renamed and modified for pagination)
 // -------------------
-function highlightSharedVAs(){
-  const vaLang = document.getElementById('va-lang').value;
-  const vaCount = {};
-  watched.forEach(a=>{
-    // Ensure the language property exists before trying to split it
-    const vaString = a.voice_actors_parsed[vaLang] || ""; 
-    vaString.split('|').filter(Boolean).forEach(va=>{
-      if(va){
-        // The string is "Char1, Char2: VA Name". Get the VA name only.
-        const vaName = va.split(': ')[1]?.trim(); 
-        if(vaName){
-          vaCount[vaName] = (vaCount[vaName]||0)+1;
-        }
-      }
-    });
-  });
+function renderWatchedList() {
+    // 1. Calculate Pagination Range
+    totalPages = Math.ceil(watched.length / ITEMS_PER_PAGE);
+    if (currentPage > totalPages && totalPages > 0) {
+        currentPage = totalPages;
+    } else if (totalPages === 0) {
+        currentPage = 1;
+    }
 
-  const list = document.getElementById('watched-list');
-  list.innerHTML = ''; // Clear list to rebuild with highlights
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
 
-  watched.forEach(anime => {
-    // Rebuild the HTML structure for each anime
-    const li = document.createElement('li');
-    let html = '';
+    // Slice the watched array to get only the items for the current page
+    const animeToRender = watched.slice(start, end);
+    
+    // 2. VA Count (Count across ALL watched items for highlighting accuracy)
+    const vaLang = document.getElementById('va-lang').value;
+    const vaCount = {};
+    watched.forEach(a => {
+        const vaString = a.voice_actors_parsed[vaLang] || "";
+        vaString.split('|').filter(Boolean).forEach(va => {
+            const vaName = va.split(': ')[1]?.trim();
+            if (vaName) {
+                vaCount[vaName] = (vaCount[vaName] || 0) + 1;
+            }
+        });
+    });
 
-    // Image Display: Robust check for the image URL when reading from DB.
-    const imageUrl = anime.coverImage || anime.CoverImage || anime.coverimage;
+    // 3. Render List
+    const list = document.getElementById('watched-list');
+    list.innerHTML = ''; 
 
-    // CRITICAL FIX: Ensure the string exists and has content before creating the tag
-    if(imageUrl && imageUrl.length > 10) { 
-      html += `<img src="${imageUrl}" alt="${anime.anime_title}" class="anime-cover">`;
-    }
-    
-    html += `<div class="anime-info">`;
-    html += `<b>${anime.anime_title}</b> - ${anime.rating.toFixed(2)}<br>${anime.description}<br><i>VAs:</i> `;
+    animeToRender.forEach(anime => {
+        // Rebuild the HTML structure for each anime
+        const li = document.createElement('li');
+        let html = '';
 
-    // VA Display: Ensure the language property exists before trying to split
-    const vaString = anime.voice_actors_parsed[vaLang] || "";
-    const vaList = vaString.split('|').filter(Boolean);
-    
-    vaList.forEach(va=>{
-        // va is "Character1, Character2: VA Name"
-        const parts = va.split(': ');
-        
-        // parts[0] is the character list, parts[1] is the VA name
-        const vaName = parts[1]?.trim() || '';
-        
-        if(vaName){
-          // The full string is used as the display HTML
-          let vaHtml = va;
-          
-          // Check if the VA name is shared
-          if(vaCount[vaName]>1) {
-            // Find the VA name within the full string and wrap it in a highlight span
-            // This ensures the aggregated list of characters stays outside the highlight.
-            vaHtml = va.replace(vaName, `<span class="highlight">${vaName}</span>`);
-          }
-          
-          html += `<span class="va">${vaHtml}</span> `;
-        }
-    });
+        // Image Display: Robust check for the image URL when reading from DB.
+        const imageUrl = anime.coverImage || anime.CoverImage || anime.coverimage;
 
-    html += `<br><button class="remove-btn" onclick="removeAnime(${anime.anime_id})">Remove</button>`;
-    html += `</div>`;
+        if(imageUrl && imageUrl.length > 10) { 
+          html += `<img src="${imageUrl}" alt="${anime.anime_title}" class="anime-cover">`;
+        }
+        
+        html += `<div class="anime-info">`;
+        html += `<b>${anime.anime_title}</b> - ${anime.rating.toFixed(2)}<br>${anime.description}<br><i>VAs:</i> `;
 
-    li.innerHTML = html;
-    list.appendChild(li);
-  });
+        // VA Display: Ensure the language property exists before trying to split
+        const vaString = anime.voice_actors_parsed[vaLang] || "";
+        const vaList = vaString.split('|').filter(Boolean);
+        
+        vaList.forEach(va=>{
+            // va is "Character1, Character2: VA Name"
+            const parts = va.split(': ');
+            
+            // parts[0] is the character list, parts[1] is the VA name
+            const vaName = parts[1]?.trim() || '';
+            
+            if(vaName){
+                // The full string is used as the display HTML
+                let vaHtml = va;
+                
+                // Check if the VA name is shared
+                if(vaCount[vaName]>1) {
+                    // Find the VA name within the full string and wrap it in a highlight span
+                    vaHtml = va.replace(vaName, `<span class="highlight">${vaName}</span>`);
+                }
+                
+                html += `<span class="va">${vaHtml}</span> `;
+            }
+        });
+
+        html += `<br><button class="remove-btn" onclick="removeAnime(${anime.anime_id})">Remove</button>`;
+        html += `</div>`;
+
+        li.innerHTML = html;
+        list.appendChild(li);
+    });
+
+    // 4. Update Pagination Controls
+    document.getElementById('page-info').textContent = `Page ${totalPages > 0 ? currentPage : 0} of ${totalPages}`;
+    document.getElementById('prev-page').disabled = currentPage === 1 || totalPages === 0;
+    document.getElementById('next-page').disabled = currentPage === totalPages || totalPages === 0;
 }
+
 
 // -------------------
 // Expose functions globally and start initialization
@@ -282,4 +349,6 @@ window.register = register;
 window.login = login;
 window.searchAnime = actualSearchAnime;
 window.removeAnime = removeAnime;
+window.showPage = showPage; // New export
+window.changePage = changePage; // New export
 window.onload = init; // This is now the entry point
