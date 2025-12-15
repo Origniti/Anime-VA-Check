@@ -15,6 +15,9 @@
     --color-accent-primary: #ff4081; /* Pink/Magenta for titles/buttons/links */
     --color-accent-main: #ff4081; /* Alias for primary accent */
     --color-accent-highlight: #ffc107; /* Yellow/Amber for shared VAs */
+
+    /* Fonts (REVERTED TO VERDANA) */
+    --font-family-main: Verdana, sans-serif;
 }
 
 body {
@@ -70,16 +73,15 @@ h2 {
 /* ------------------- */
 /* 2. Form and Controls */
 /* ------------------- */
-/* FIX: Explicitly target both types for consistent styling */
 input[type="text"], 
 input[type="password"], 
 select {
-    background-color: var(--color-background-input); /* Used alias */
+    background-color: var(--color-background-input); 
     color: var(--color-text-main);
     border: 1px solid var(--color-border);
     padding: 10px;
     border-radius: 6px;
-    margin: 5px 0 15px 0; /* Increased margin-bottom for separation */
+    margin: 5px 0 15px 0; 
     width: 100%;
     box-sizing: border-box;
 }
@@ -110,25 +112,24 @@ button:hover {
     margin-bottom: 15px;
 }
 
-/* General Controls Bar (Used for sorting/VA lang/Search in new page structure) */
-/* RENAMED: .controls-bar is now #list-controls for specific use in watched page */
+/* General Controls Bar (Used for sorting/VA lang/Search in watched page) */
 #list-controls {
     display: flex;
-    justify-content: flex-end; /* Align controls to the right by default */
+    justify-content: flex-end; 
     align-items: center;
     margin-bottom: 20px;
 }
-/* Re-applying styles to the renamed ID */
+
 #list-controls select {
     width: auto;
     min-width: 120px;
     margin-left: 5px;
-    margin-bottom: 0; /* Override general input margin */
+    margin-bottom: 0; 
 }
 
 #list-controls input[type="text"] {
-    width: 300px; /* Give search input a fixed size in the bar */
-    margin-right: auto; /* Push search input to the left */
+    width: 300px; 
+    margin-right: auto; 
     margin-bottom: 0;
 }
 
@@ -186,12 +187,12 @@ button:hover {
 }
 
 #watched-list-title {
-    margin: 0; /* Override general h2 margin */
+    margin: 0; 
     text-align: left;
     flex-grow: 1;
 }
 
-/* NEW: Style for the "Back to My List" button */
+/* NEW: Style for the "Back to My List" button (only visible when viewing a friend) */
 #back-to-my-list-btn {
     background-color: #555;
     margin-left: 10px;
@@ -212,9 +213,7 @@ button:hover {
     grid-template-columns: repeat(3, 1fr); 
     gap: 20px; 
     
-    /* Set a minimum height, allowing growth if "Read More" is used */
     grid-auto-rows: minmax(400px, auto); 
-    /* This ensures all columns start/end at the same vertical position */
     align-items: stretch; 
 }
 
@@ -224,7 +223,6 @@ button:hover {
     margin-bottom: 0; 
     border-radius: 10px;
     
-    /* Item stacking within the grid cell */
     display: flex;
     flex-direction: column; 
     align-items: center;
@@ -233,11 +231,11 @@ button:hover {
     border-left: 5px solid var(--color-accent-primary);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     transition: transform 0.2s;
-    height: 100%; /* Ensures uniform height in the grid row */
+    height: 100%; 
 }
 
 #watched-list li:hover {
-    transform: translateY(-2px); /* Slight lift on hover */
+    transform: translateY(-2px); 
 }
 
 /* --- IMAGE FIX CSS --- */
@@ -355,21 +353,19 @@ button:hover {
     font-weight: bold;
 }
 
-/* --- NEW: VA Highlight Clickable Style --- */
 .highlight.clickable {
     cursor: pointer;
     transition: background-color 0.15s, transform 0.1s; 
 }
 
 .highlight.clickable:hover {
-    background-color: #ffd740; /* Slightly lighter yellow/amber on hover */
+    background-color: #ffd740; 
     transform: scale(1.02);
 }
 
 .highlight.clickable.active-filter {
-    background-color: #ff9800; /* Orange/Darker Amber */
+    background-color: #ff9800; 
 }
-/* -------------------------------------- */
 
 
 /* ------------------- */
@@ -383,7 +379,7 @@ button:hover {
 }
 
 .navbar button {
-    position: relative; /* CRITICAL: Allows notification-indicator to be positioned relative to the button */
+    position: relative; 
     background-color: #555;
     color: white;
     padding: 10px 15px; 
@@ -403,12 +399,11 @@ button:hover {
     font-weight: bold;
 }
 
-/* NEW: Notification Indicator in Navbar */
 .notification-indicator {
     position: absolute;
     top: -5px;
     right: -5px;
-    background-color: #f44336; /* Red circle */
+    background-color: #f44336; 
     color: white;
     font-size: 10px;
     font-weight: bold;
@@ -445,15 +440,14 @@ button:hover {
 #page-info {
     margin: 0 15px;
     font-weight: bold;
-    display: inline-block; /* Ensures it stays in line with buttons */
+    display: inline-block; 
 }
 
 /* ------------------- */
-/* 5. Friend Management Styles (NEW SECTION) */
+/* 5. Friend Management Styles */
 /* ------------------- */
 
 .friend-section {
-    /* Using background-light alias */
     background-color: var(--color-background-card); 
     padding: 20px;
     border-radius: 8px;
@@ -468,12 +462,6 @@ button:hover {
     margin-bottom: 15px;
 }
 
-#friend-search-input {
-    /* Input styles are already handled globally, but ensuring margin here */
-    margin-bottom: 15px;
-}
-
-/* Used for search results, pending, and confirmed lists */
 .friend-list {
     list-style: none;
     padding: 0;
@@ -486,7 +474,7 @@ button:hover {
 .friend-list li {
     padding: 15px;
     border-radius: 6px;
-    background-color: #2c2c2c; /* Slightly darker than card background for contrast */
+    background-color: #2c2c2c; 
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -503,8 +491,8 @@ button:hover {
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.2s;
-    white-space: nowrap; /* Prevents wrapping on button text */
-    margin-left: 10px; /* Space between the username and the button(s) */
+    white-space: nowrap; 
+    margin-left: 10px; 
 }
 
 /* Default "Add Friend" color */
@@ -513,7 +501,7 @@ button:hover {
     color: #fff;
 }
 .add-friend-btn:hover {
-    background-color: var(--color-accent-highlight); /* Use highlight color for hover on ADD */
+    background-color: var(--color-accent-highlight); 
     color: #121212;
 }
 
@@ -574,12 +562,12 @@ button:hover {
     gap: 5px;
     width: 100%;
     justify-content: center;
-    margin-top: 10px; /* Space from VA tags */
+    margin-top: 10px; 
     flex-shrink: 0;
 }
 
 .notes-btn {
-    background-color: #00bcd4; /* Cyan/Teal color for Notes */
+    background-color: #00bcd4; 
     padding: 5px 10px;
     font-size: 0.9em;
     flex-grow: 1;
@@ -590,36 +578,36 @@ button:hover {
 }
 
 .remove-btn {
-    background-color: #c62828; /* Red for remove */
+    background-color: #c62828; 
     padding: 5px 10px;
     margin-top: 0; 
     margin-bottom: 0;
     font-size: 0.9em;
     flex-shrink: 0; 
-    flex-grow: 1; /* Match notes button width */
+    flex-grow: 1; 
 }
 
 /* Modal Backdrop */
 .modal {
     display: none; 
     position: fixed; 
-    z-index: 20; /* Above all other content */
+    z-index: 20; 
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,0.8); /* Dark semi-transparent background */
+    background-color: rgba(0,0,0,0.8); 
 }
 
 /* Modal Content Box */
 .modal-content {
     background-color: var(--color-background-light);
-    margin: 10% auto; /* 10% from the top and centered */
+    margin: 10% auto; 
     padding: 20px;
     border: 1px solid var(--color-border);
     border-radius: 8px;
-    width: 80%; /* Width on desktop */
+    width: 80%; 
     max-width: 600px;
     position: relative;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
@@ -671,7 +659,6 @@ button:hover {
 /* 7. Profile Button & Sidebar Styles */
 /* ------------------- */
 
-/* Container for the profile button */
 #profile-container {
     position: absolute;
     top: 15px; 
@@ -695,7 +682,6 @@ button:hover {
     background-color: #666;
 }
 
-/* 1. Notification Icon (Bell) */
 .notification-icon {
     background: transparent; 
     border: none; 
@@ -711,7 +697,6 @@ button:hover {
     background-color: transparent;
 }
 
-/* 2. Avatar Icon (Blank Gray Circle) */
 .avatar-icon {
     height: 18px; 
     width: 18px;
@@ -723,7 +708,6 @@ button:hover {
     flex-shrink: 0;
 }
 
-/* 3. Username Text */
 #profile-username {
     color: white; 
     font-weight: bold; 
@@ -732,7 +716,6 @@ button:hover {
     white-space: nowrap;
 }
 
-/* 4. Dropdown Arrow - Styled to be minimal */
 .dropdown-arrow::after {
     content: '\2304'; 
     color: white; 
@@ -741,7 +724,6 @@ button:hover {
     transition: transform 0.2s;
 }
 
-/* --- Profile Sidebar (NEW ELEMENT STYLES) --- */
 #profile-sidebar {
     display: block; 
     position: fixed;
@@ -754,14 +736,11 @@ button:hover {
     padding: 20px;
     box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
     z-index: 45; 
-
-    /* Initial hidden state: slide it off-screen to the right */
     transform: translateX(100%);
     transition: transform 0.3s ease-out;
     overflow-y: auto;
 }
 
-/* Active state: slide it into view */
 #profile-sidebar.active {
     transform: translateX(0);
 }
@@ -810,8 +789,6 @@ button:hover {
     font-style: italic;
 }
 
-
-/* --- Logout Button in Sidebar (Reusing #logout-btn) --- */
 #profile-sidebar #logout-btn {
     margin-top: 30px;
     width: 100%;
@@ -821,7 +798,6 @@ button:hover {
     background-color: #a01f1f;
 }
 
-/* --- REMOVE OLD DROPDOWN STYLES (Keep the ID for JS safety, but hide it) --- */
 #profile-dropdown {
     display: none !important; 
 }
@@ -831,7 +807,6 @@ button:hover {
 /* 8. Responsive Adjustments */
 /* ------------------- */
 @media (max-width: 950px) {
-    /* Change from 3 columns to 2 columns on medium screens */
     #watched-list.grid-container {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -843,34 +818,29 @@ button:hover {
         padding: 15px;
     }
     
-    /* Change from 2 columns to 1 column on small screens */
     #watched-list.grid-container {
         grid-template-columns: 1fr;
     }
     
-    /* Ensure full title/description is shown on mobile */
     .anime-description-text {
         max-height: none;
         overflow: visible;
     }
     
     .read-more-btn {
-        display: none; /* Hide button on mobile when full text is visible */
+        display: none; 
     }
 
     #watched-list li {
         text-align: left;
     }
     
-    /* Adjustments for the new image container on mobile */
     .anime-cover-container {
-        max-width: 120px; /* Constrain the size on mobile */
-        margin: 0 auto 10px auto; /* Center the container */
-        /* Recalculate padding based on 120px max-width and 2:3 ratio */
+        max-width: 120px; 
+        margin: 0 auto 10px auto; 
         padding-bottom: calc(120px * 3 / 2); 
     }
 
-    /* FIX: Targeted the ID instead of the old class for mobile controls */
     #list-controls {
         flex-direction: column;
         align-items: flex-start;
@@ -887,20 +857,17 @@ button:hover {
         margin: 20% auto;
     }
     
-    /* Ensure pagination controls are fully visible on mobile too */
     #pagination-controls {
-        padding-top: 20px; /* Reduced padding for mobile */
+        padding-top: 20px; 
     }
 
-    /* RESPONSIVE FIX: Sidebar should take up more space on smaller screens */
     #profile-sidebar {
-        width: 100%; /* Take up full width */
+        width: 100%; 
         max-width: 100%;
-        top: 0; /* Start from the top edge */
-        padding-top: 80px; /* Add padding to account for the header/navbar */
+        top: 0; 
+        padding-top: 80px; 
     }
     
-    /* Ensure the profile button is still visible and clickable */
     #profile-container {
         top: 15px; 
         right: 15px;
