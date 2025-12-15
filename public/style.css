@@ -1,26 +1,26 @@
 /*
  * ---------------------------------------
- * CYBERPUNK NEON-GLOW STYLE SHEET
+ * ORCHID AURA STYLE SHEET (Subtle Glow)
  * ---------------------------------------
- * Primary Accent: Electric Cyan/Blue (#00e0ff)
- * Secondary Accent: Neon Magenta/Fuchsia (#ff00ff)
+ * Primary Accent: Soft Orchid/Purple (#e91e63)
+ * Secondary Accent: Light Pink/Magenta (#ffc107)
  * Background: Deep Space Dark (#0a0a0f)
  */
 
 /* ------------------- */
-/* 1. Color Palette & Globals (Cyberpunk Neon) */
+/* 1. Color Palette & Globals (Orchid Aura) */
 /* ------------------- */
 :root {
     /* Base Colors */
     --color-background-dark: #0a0a0f; /* Near black, deep space */
     --color-background-light: #181820; /* Darker card background */
-    --color-text-main: #e0f7fa; /* Light cyan/white text */
-    --color-text-subtle: #80e0e0; /* Electric cyan for subtle text */
-    --color-border: #007788; /* Dark teal border */
+    --color-text-main: #f0f0f0; /* Near white text */
+    --color-text-subtle: #c299c2; /* Soft purple for subtle text */
+    --color-border: #4a148c; /* Deep purple border */
 
-    /* Accent Colors */
-    --color-accent-primary: #00e0ff; /* Electric Blue/Cyan (Primary Neon) */
-    --color-accent-highlight: #ff00ff; /* Neon Magenta/Fuchsia (Secondary Glow) */
+    /* Accent Colors (Orchid/Purple Theme) */
+    --color-accent-primary: #e91e63; /* Orchid/Fuchsia (Primary Aura) */
+    --color-accent-highlight: #ff6e40; /* Vibrant Orange (Secondary Highlight) */
 
     /* Fonts */
     --font-family-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -46,8 +46,8 @@ body {
     padding: 20px;
     background-color: var(--color-background-light); 
     border-radius: 12px;
-    /* Added subtle neon glow effect */
-    box-shadow: 0 0 30px rgba(0, 224, 255, 0.25), 0 0 10px rgba(0, 224, 255, 0.15); 
+    /* Subtler Aura Effect (reduced opacity and spread) */
+    box-shadow: 0 0 15px rgba(233, 30, 99, 0.15), 0 0 5px rgba(233, 30, 99, 0.1); 
     position: relative;
 }
 
@@ -57,9 +57,9 @@ body {
     text-align: center;
     margin-bottom: 30px;
     font-size: 2.5em;
-    letter-spacing: 4px;
-    /* Text Shadow for Neon Effect */
-    text-shadow: 0 0 8px rgba(0, 224, 255, 0.8), 0 0 15px rgba(0, 224, 255, 0.4); 
+    letter-spacing: 3px;
+    /* Reduced Text Aura */
+    text-shadow: 0 0 4px rgba(233, 30, 99, 0.6); 
 }
 
 /* New Section Title Style (For Register, Login, Page Titles) */
@@ -69,9 +69,9 @@ body {
     margin-top: 30px;
     margin-bottom: 20px;
     font-size: 2.2em;
-    letter-spacing: 3px;
-    /* Text Shadow for Neon Effect */
-    text-shadow: 0 0 6px rgba(0, 224, 255, 0.6), 0 0 10px rgba(0, 224, 255, 0.3);
+    letter-spacing: 2.5px;
+    /* Reduced Text Aura */
+    text-shadow: 0 0 3px rgba(233, 30, 99, 0.5);
 }
 
 h2 {
@@ -82,22 +82,21 @@ h2 {
 }
 
 /* ------------------- */
-/* 2. Form and Controls (Cyberpunk Neon) */
+/* 2. Form and Controls (Orchid Aura) */
 /* ------------------- */
-/* FIX: Explicitly target both types for consistent styling */
 input[type="text"], 
 input[type="password"], 
 select {
-    background-color: #0d0d14; /* Very dark input background */
+    background-color: #12121a; /* Very dark input background */
     color: var(--color-text-main);
     border: 1px solid var(--color-border);
     padding: 10px;
-    border-radius: 4px; /* Slightly sharper corners */
+    border-radius: 4px;
     margin: 5px 0 15px 0;
     width: 100%;
     box-sizing: border-box;
-    /* Subtle inner glow */
-    box-shadow: inset 0 0 5px rgba(0, 224, 255, 0.1); 
+    /* Subtler inner aura */
+    box-shadow: inset 0 0 3px rgba(233, 30, 99, 0.1); 
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -105,28 +104,28 @@ input[type="text"]:focus,
 input[type="password"]:focus,
 select:focus {
     border-color: var(--color-accent-primary);
-    /* Stronger neon glow on focus */
-    box-shadow: 0 0 8px var(--color-accent-primary); 
+    /* Soft aura on focus */
+    box-shadow: 0 0 6px var(--color-accent-primary); 
     outline: none;
 }
 
 button {
     background-color: var(--color-accent-primary);
-    color: var(--color-background-dark); /* Dark text on bright button */
+    color: var(--color-background-dark); 
     border: none;
     padding: 10px 15px;
     border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
     transition: background-color 0.2s, box-shadow 0.2s;
-    /* Button neon glow */
-    box-shadow: 0 0 10px rgba(0, 224, 255, 0.4); 
+    /* Subtle button aura */
+    box-shadow: 0 0 8px rgba(233, 30, 99, 0.3); 
 }
 
 button:hover {
-    background-color: #4df8ff; /* Lighter cyan on hover */
-    /* Stronger neon glow on hover */
-    box-shadow: 0 0 15px rgba(0, 224, 255, 0.7); 
+    background-color: #ff527b; /* Lighter orchid on hover */
+    /* Increased, but still soft, aura on hover */
+    box-shadow: 0 0 12px rgba(233, 30, 99, 0.5); 
 }
 
 /* Auth Section */
@@ -135,14 +134,14 @@ button:hover {
     border: 1px solid var(--color-border);
     border-radius: 8px;
     margin-bottom: 20px;
-    /* Subtle container glow */
-    box-shadow: 0 0 15px rgba(0, 224, 255, 0.1); 
+    /* Very subtle container glow */
+    box-shadow: 0 0 8px rgba(233, 30, 99, 0.05); 
 }
 #auth > div {
     margin-bottom: 15px;
 }
 
-/* Search and VA Language Controls Layout */
+/* Search and VA Language Controls Layout (Rest of 2. Form and Controls remains the same) */
 .controls-container {
     display: flex;
     justify-content: space-between;
@@ -151,10 +150,9 @@ button:hover {
     flex-wrap: wrap; 
 }
 
-/* General Controls Bar (Used for sorting/VA lang/Search in new page structure) */
 .controls-bar {
     display: flex;
-    justify-content: flex-end; /* Align controls to the right by default */
+    justify-content: flex-end; 
     align-items: center;
     margin-bottom: 20px;
 }
@@ -163,12 +161,12 @@ button:hover {
     width: auto;
     min-width: 120px;
     margin-left: 5px;
-    margin-bottom: 0; /* Override general input margin */
+    margin-bottom: 0;
 }
 
 .controls-bar input[type="text"] {
-    width: 300px; /* Give search input a fixed size in the bar */
-    margin-right: auto; /* Push search input to the left */
+    width: 300px; 
+    margin-right: auto; 
     margin-bottom: 0;
 }
 
@@ -189,7 +187,7 @@ button:hover {
     width: auto;
     min-width: 120px;
     margin-left: 5px;
-    margin-bottom: 0; /* Override general input margin */
+    margin-bottom: 0;
 }
 
 #anime-search {
@@ -215,7 +213,7 @@ button:hover {
     padding: 10px 15px;
     cursor: pointer;
     transition: background-color 0.15s;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid #282835;
 }
 
 #search-results li:last-child {
@@ -226,8 +224,9 @@ button:hover {
     background-color: #252530;
 }
 
+
 /* ------------------- */
-/* 3. Watched List (Card Layout) (Cyberpunk Neon) */
+/* 3. Watched List (Card Layout) (Orchid Aura) */
 /* ------------------- */
 #watched-list.grid-container {
     list-style: none;
@@ -247,23 +246,22 @@ button:hover {
     margin-bottom: 0; 
     border-radius: 8px;
     
-    /* Item stacking within the grid cell */
     display: flex;
     flex-direction: column; 
     align-items: center;
     text-align: center;
     
-    /* Neon border/shadow */
-    border: 1px solid rgba(0, 224, 255, 0.2); 
-    box-shadow: 0 0 10px rgba(0, 224, 255, 0.2), 0 0 5px rgba(0, 224, 255, 0.1);
+    /* Soft Aura border/shadow */
+    border: 1px solid rgba(233, 30, 99, 0.15); 
+    box-shadow: 0 0 8px rgba(233, 30, 99, 0.15);
     transition: transform 0.2s, box-shadow 0.2s;
     height: 100%;
 }
 
 #watched-list li:hover {
-    transform: translateY(-4px); /* Increased lift on hover */
-    /* Stronger neon glow on hover */
-    box-shadow: 0 0 20px rgba(0, 224, 255, 0.5), 0 0 10px rgba(0, 224, 255, 0.3);
+    transform: translateY(-2px); 
+    /* Increased, but soft, aura on hover */
+    box-shadow: 0 0 15px rgba(233, 30, 99, 0.4);
 }
 
 /* --- IMAGE FIX CSS --- */
@@ -273,7 +271,8 @@ button:hover {
     position: relative; 
     overflow: hidden;
     border-radius: 4px;
-    box-shadow: 0 0 8px rgba(255, 0, 255, 0.4); /* Highlight color glow for image */
+    /* Use secondary color for image frame aura */
+    box-shadow: 0 0 6px rgba(255, 110, 64, 0.4); 
     margin-bottom: 10px;
     flex-shrink: 0;
 }
@@ -313,16 +312,7 @@ button:hover {
     white-space: normal; 
     overflow: visible; 
     text-align: center;
-    text-shadow: 0 0 3px var(--color-accent-primary);
-}
-
-/* *** Description Wrapper for Read More (must contain text and button) *** */
-.description-wrapper {
-    width: 100%;
-    text-align: left;
-    flex-grow: 1;
-    position: relative;
-    padding-bottom: 5px; 
+    text-shadow: 0 0 2px rgba(233, 30, 99, 0.5); /* Soft text aura */
 }
 
 /* Description Text (Initial Clipping State) */
@@ -332,12 +322,9 @@ button:hover {
     display: block;
     margin-top: 5px;
     margin-bottom: 0; 
-    
-    /* --- FIXED CLIPPING HEIGHT FOR INITIAL VIEW (ABOUT 6-7 LINES) --- */
     max-height: 7em; 
     overflow: hidden; 
     width: 100%;
-    /* Smooth transition for expansion */
     transition: max-height 0.3s ease-out; 
 }
 
@@ -345,7 +332,7 @@ button:hover {
 .read-more-btn {
     background: none;
     border: none;
-    color: var(--color-accent-highlight); /* Secondary neon color */
+    color: var(--color-accent-highlight); /* Secondary accent color */
     cursor: pointer;
     padding: 0;
     margin-top: 5px;
@@ -357,7 +344,7 @@ button:hover {
 .read-more-btn:hover {
     text-decoration: underline;
     background: none;
-    text-shadow: 0 0 3px var(--color-accent-highlight);
+    text-shadow: 0 0 2px var(--color-accent-highlight);
 }
 
 /* Class added by JS when Read More is clicked */
@@ -393,8 +380,9 @@ button:hover {
     padding: 2px 4px;
     border-radius: 3px;
     font-weight: bold;
-    /* Added subtle secondary neon glow */
-    box-shadow: 0 0 8px rgba(255, 0, 255, 0.5);
+    text-shadow: none;
+    /* Subtle secondary aura */
+    box-shadow: 0 0 5px rgba(255, 110, 64, 0.4);
 }
 
 /* --- NEW: VA Highlight Clickable Style --- */
@@ -404,15 +392,15 @@ button:hover {
 }
 
 .highlight.clickable:hover {
-    background-color: #ff55ff; /* Lighter magenta on hover */
-    transform: scale(1.05);
-    box-shadow: 0 0 12px rgba(255, 0, 255, 0.8);
+    background-color: #ff8a65; /* Lighter orange on hover */
+    transform: scale(1.02);
+    box-shadow: 0 0 8px rgba(255, 110, 64, 0.6);
 }
 
 /* Style for when a filter is active */
 .highlight.clickable.active-filter {
-    background-color: #cc00cc; /* Darker Magenta */
-    box-shadow: 0 0 15px #cc00cc;
+    background-color: #f4511e; /* Darker Orange */
+    box-shadow: 0 0 10px #f4511e;
 }
 /* -------------------------------------- */
 
@@ -428,7 +416,7 @@ button:hover {
 }
 
 .navbar button {
-    background-color: #2c2c36; /* Darker than light background */
+    background-color: #2c2c36; 
     color: white;
     padding: 10px 15px; 
     margin: 0 5px;
@@ -436,19 +424,19 @@ button:hover {
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.2s, box-shadow 0.2s;
-    box-shadow: 0 0 5px rgba(0, 224, 255, 0.2);
+    box-shadow: 0 0 3px rgba(233, 30, 99, 0.1);
 }
 
 .navbar button:hover {
     background-color: #404050;
-    box-shadow: 0 0 10px rgba(0, 224, 255, 0.4);
+    box-shadow: 0 0 6px rgba(233, 30, 99, 0.2);
 }
 
 .navbar button.active {
     background-color: var(--color-accent-primary);
     color: var(--color-background-dark);
     font-weight: bold;
-    box-shadow: 0 0 15px var(--color-accent-primary);
+    box-shadow: 0 0 10px rgba(233, 30, 99, 0.5);
 }
 
 /* Styling for Pagination Controls */
@@ -467,7 +455,7 @@ button:hover {
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    box-shadow: 0 0 10px rgba(0, 224, 255, 0.4); 
+    box-shadow: 0 0 8px rgba(233, 30, 99, 0.3); 
 }
 
 #pagination-controls button:disabled {
@@ -484,7 +472,7 @@ button:hover {
 }
 
 /* ------------------- */
-/* 6. Notes Modal & Buttons (Cyberpunk Neon) */
+/* 6. Notes Modal & Buttons (Orchid Aura) */
 /* ------------------- */
 
 /* Grouping the Notes and Remove buttons */
@@ -498,21 +486,21 @@ button:hover {
 }
 
 .notes-btn {
-    background-color: #00bcd4; /* Teal color for Notes (Tech/Data feel) */
+    background-color: #7e57c2; /* Medium purple for Notes */
     color: var(--color-background-dark);
     padding: 5px 10px;
     font-size: 0.9em;
     flex-grow: 1;
-    box-shadow: 0 0 8px rgba(0, 188, 212, 0.4);
+    box-shadow: 0 0 6px rgba(126, 87, 194, 0.4);
 }
 
 .notes-btn:hover {
-    background-color: #00a0b2; 
-    box-shadow: 0 0 12px rgba(0, 188, 212, 0.8);
+    background-color: #673ab7; 
+    box-shadow: 0 0 10px rgba(126, 87, 194, 0.6);
 }
 
 .remove-btn {
-    background-color: var(--color-accent-highlight); /* Neon Magenta for remove */
+    background-color: var(--color-accent-highlight); /* Secondary accent (Orange) for remove */
     color: var(--color-background-dark);
     padding: 5px 10px;
     margin-top: 0; 
@@ -520,30 +508,17 @@ button:hover {
     font-size: 0.9em;
     flex-shrink: 0; 
     flex-grow: 1; 
-    box-shadow: 0 0 8px rgba(255, 0, 255, 0.4);
+    box-shadow: 0 0 6px rgba(255, 110, 64, 0.4);
 }
 
 .remove-btn:hover {
-    background-color: #cc00cc;
-    box-shadow: 0 0 12px rgba(255, 0, 255, 0.8);
-}
-
-/* Modal Backdrop */
-.modal {
-    display: none; 
-    position: fixed; 
-    z-index: 20;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.85); /* Darker backdrop */
+    background-color: #ff5e28;
+    box-shadow: 0 0 10px rgba(255, 110, 64, 0.6);
 }
 
 /* Modal Content Box */
 .modal-content {
-    background-color: #12121e; /* Darker than light background */
+    background-color: #12121e;
     margin: 10% auto;
     padding: 25px; 
     border: 2px solid var(--color-accent-primary);
@@ -551,13 +526,14 @@ button:hover {
     width: 80%;
     max-width: 600px;
     position: relative;
-    box-shadow: 0 0 30px rgba(0, 224, 255, 0.4); /* Stronger neon glow for modal */
+    /* Subtler modal aura */
+    box-shadow: 0 0 20px rgba(233, 30, 99, 0.3); 
 }
 
 .modal-content h3 {
     color: var(--color-accent-primary);
     margin-top: 0;
-    text-shadow: 0 0 5px var(--color-accent-primary);
+    text-shadow: 0 0 3px var(--color-accent-primary);
 }
 
 /* Close button */
@@ -567,7 +543,7 @@ button:hover {
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
-    text-shadow: 0 0 5px var(--color-accent-highlight);
+    text-shadow: 0 0 3px var(--color-accent-highlight);
 }
 
 .close-button:hover,
@@ -582,7 +558,7 @@ button:hover {
 #notes-textarea {
     width: 100%;
     min-height: 200px;
-    background-color: #0d0d14;
+    background-color: #12121a;
     color: var(--color-text-main);
     border: 1px solid var(--color-accent-primary);
     padding: 10px;
@@ -590,7 +566,7 @@ button:hover {
     margin: 10px 0 20px 0;
     box-sizing: border-box;
     resize: vertical;
-    box-shadow: inset 0 0 5px rgba(0, 224, 255, 0.3);
+    box-shadow: inset 0 0 3px rgba(233, 30, 99, 0.1);
 }
 
 /* Modal Save Button */
@@ -601,17 +577,8 @@ button:hover {
 }
 
 /* ------------------- */
-/* 7. Profile Button & Sidebar Styles (Cyberpunk Neon) */
+/* 7. Profile Button & Sidebar Styles (Orchid Aura) */
 /* ------------------- */
-
-/* Container for the profile button */
-#profile-container {
-    position: absolute;
-    top: 15px; 
-    right: 20px; 
-    z-index: 50; 
-    display: block; 
-}
 
 /* The main profile button element */
 .profile-button {
@@ -621,12 +588,12 @@ button:hover {
     padding: 10px 15px; 
     border-radius: 5px; 
     cursor: pointer;
-    box-shadow: 0 0 10px rgba(0, 224, 255, 0.3); 
+    box-shadow: 0 0 6px rgba(233, 30, 99, 0.2); 
     transition: background-color 0.2s, box-shadow 0.2s;
 }
 .profile-button:hover {
     background-color: #404050;
-    box-shadow: 0 0 15px rgba(0, 224, 255, 0.6);
+    box-shadow: 0 0 10px rgba(233, 30, 99, 0.3);
 }
 
 /* 1. Notification Icon (Bell) */
@@ -640,7 +607,7 @@ button:hover {
     flex-shrink: 0;
     height: auto;
     width: auto;
-    text-shadow: 0 0 5px var(--color-accent-highlight);
+    text-shadow: 0 0 3px var(--color-accent-highlight);
 }
 .notification-icon:hover {
     background-color: transparent;
@@ -650,30 +617,12 @@ button:hover {
 .avatar-icon {
     height: 18px; 
     width: 18px;
-    background: var(--color-accent-highlight); /* Secondary accent color */
+    background: var(--color-accent-highlight); 
     border-radius: 50%;
     margin-right: 5px; 
     border: none; 
-    box-shadow: 0 0 5px var(--color-accent-highlight);
+    box-shadow: 0 0 3px var(--color-accent-highlight);
     flex-shrink: 0;
-}
-
-/* 3. Username Text */
-#profile-username {
-    color: white;
-    font-weight: bold; 
-    font-size: 1em; 
-    margin-right: 8px; 
-    white-space: nowrap;
-}
-
-/* 4. Dropdown Arrow - Styled to be minimal */
-.dropdown-arrow::after {
-    content: '\2304'; 
-    color: white;
-    font-size: 0.8em; 
-    font-weight: bold;
-    transition: transform 0.2s;
 }
 
 /* --- Profile Sidebar (NEW ELEMENT STYLES) --- */
@@ -687,10 +636,10 @@ button:hover {
     background-color: #0f0f1a; 
     border-left: 3px solid var(--color-accent-primary);
     padding: 20px;
-    box-shadow: -5px 0 30px rgba(0, 224, 255, 0.6);
+    /* Soft sidebar aura */
+    box-shadow: -5px 0 20px rgba(233, 30, 99, 0.3); 
     z-index: 45;
 
-    /* Bouncier slide effect */
     transform: translateX(100%);
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
     overflow-y: auto;
@@ -706,24 +655,18 @@ button:hover {
     border-bottom: 1px solid var(--color-border);
     padding-bottom: 10px;
     margin-bottom: 20px;
-    text-shadow: 0 0 5px var(--color-accent-primary);
+    text-shadow: 0 0 3px var(--color-accent-primary);
 }
 
 /* --- Stats Display Styles --- */
-.stats-group {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 15px;
-}
-
 .stat-item {
     background-color: #181825;
     padding: 15px;
     border-radius: 5px;
     text-align: center;
     border: 1px solid var(--color-accent-primary);
-    /* Outline effect for the stats box */
-    box-shadow: inset 0 0 10px rgba(0, 224, 255, 0.2); 
+    /* Soft internal aura */
+    box-shadow: inset 0 0 5px rgba(233, 30, 99, 0.1); 
 }
 
 .stat-value {
@@ -732,7 +675,7 @@ button:hover {
     font-weight: bold;
     color: var(--color-accent-highlight); 
     margin-bottom: 5px;
-    text-shadow: 0 0 5px var(--color-accent-highlight);
+    text-shadow: 0 0 3px var(--color-accent-highlight);
     word-wrap: break-word;
 }
 
@@ -743,26 +686,17 @@ button:hover {
     letter-spacing: 1px;
 }
 
-.stats-message {
-    text-align: center;
-    color: var(--color-text-subtle);
-    margin-top: 50px;
-    font-style: italic;
-}
-
-
 /* --- Logout Button in Sidebar --- */
 #profile-sidebar #logout-btn {
     margin-top: 30px;
     width: 100%;
-    /* Use the secondary neon color for a distinct action */
     background-color: var(--color-accent-highlight); 
     color: var(--color-background-dark);
-    box-shadow: 0 0 10px var(--color-accent-highlight);
+    box-shadow: 0 0 8px rgba(255, 110, 64, 0.4);
 }
 #profile-sidebar #logout-btn:hover {
-    background-color: #cc00cc;
-    box-shadow: 0 0 15px #ff00ff;
+    background-color: #ff5e28;
+    box-shadow: 0 0 12px rgba(255, 110, 64, 0.6);
 }
 
 /* --- REMOVE OLD DROPDOWN STYLES (Keep the ID for JS safety, but hide it) --- */
