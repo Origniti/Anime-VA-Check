@@ -35,11 +35,49 @@ pool.on('error', (err, client) => {
 // Helper function to simplify query execution
 const query = (text, params) => pool.query(text, params);
 
+
 // -------------------
-// 2. Database Initialization (Updated for notes column)
+// HELPER FUNCTION: Get Relationship Status
+// Used by the search endpoint to determine button status on the frontend.
+// -------------------
+async function getRelationshipStatus(user1Id, user2Id) {
+    // 1. Check if already friends (in friends_list)
+    const minId = Math.min(user1Id, user2Id);
+    const maxId = Math.max(user1Id, user2Id);
+
+    const friendshipCheck = await pool.query(
+        'SELECT 1 FROM friends_list WHERE user_id_1 = $1 AND user_id_2 = $2',
+        [minId, maxId]
+    );
+    if (friendshipCheck.rows.length > 0) return 'friends';
+
+    // 2. Check for pending requests (in either direction)
+    const requestCheck = await pool.query(
+        `SELECT requester_id 
+         FROM friend_requests 
+         WHERE (requester_id = $1 AND recipient_id = $2) 
+         OR (requester_id = $2 AND recipient_id = $1) 
+         AND status = 'pending'`,
+        [user1Id, user2Id]
+    );
+    
+    if (requestCheck.rows.length > 0) {
+        // Check which user sent the request
+        if (requestCheck.rows[0].requester_id === user1Id) {
+            return 'request_sent';
+        } else {
+            return 'request_received';
+        }
+    }
+    
+    return 'none';
+}
+
+
+// -------------------
+// 2. Database Initialization (Updated for friend tables)
 // -------------------
 async function setupDatabase() {
-    // Check if the connection string is actually set
     if (!connectionString) {
         console.error("FATAL: DATABASE_URL environment variable is not set. Cannot connect to database.");
         process.exit(1);
@@ -48,12 +86,32 @@ async function setupDatabase() {
     try {
         await query('CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username TEXT UNIQUE, password TEXT)');
         
-        // Note: PostgreSQL saves 'coverImage' as 'coverimage' (all lowercase) if not quoted.
-        // We ensure 'notes' is present in the initial schema for new environments
+        // Main watched list table
         await query('CREATE TABLE IF NOT EXISTS watched_anime (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), anime_id INTEGER, anime_title TEXT, rating REAL, voice_actors TEXT, description TEXT, coverImage TEXT, notes TEXT)');
         
+        // Friend System Tables (Ensure they exist)
+        await query(`
+            CREATE TABLE IF NOT EXISTS friend_requests (
+                id SERIAL PRIMARY KEY,
+                requester_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+                recipient_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+                status VARCHAR(10) CHECK (status IN ('pending', 'accepted', 'rejected')) DEFAULT 'pending',
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT no_self_request CHECK (requester_id <> recipient_id),
+                CONSTRAINT unique_pending_request UNIQUE (requester_id, recipient_id)
+            );
+        `);
+        
+        await query(`
+            CREATE TABLE IF NOT EXISTS friends_list (
+                user_id_1 INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+                user_id_2 INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+                CONSTRAINT user_order CHECK (user_id_1 < user_id_2), 
+                PRIMARY KEY (user_id_1, user_id_2)
+            );
+        `);
 
-        // === NEW DATABASE MIGRATION STEP: Add 'notes' column if it doesn't exist (for existing databases) ===
+        // === EXISTING DATABASE MIGRATION STEP: Add 'notes' column if it doesn't exist ===
         await query(`
             DO $$ BEGIN
                 BEGIN
@@ -130,19 +188,16 @@ app.post('/add-anime', async (req, res) => {
         description = description.length > MAX_DESC_LENGTH ? description.substring(0, MAX_DESC_LENGTH) + '...' : description;
     }
     
-    // Initialize notes as an empty string on creation
     const initialNotes = ''; 
 
     try {
-        // Check for duplicate (Uses $1, $2)
+        // Check for duplicate
         const duplicateResult = await query('SELECT id FROM watched_anime WHERE user_id=$1 AND anime_id=$2', [userId, animeId]);
         if (duplicateResult.rows.length > 0) {
             return res.json({ success: false, error: "Anime already added" });
         }
 
-        // --- START OF VOICE ACTOR FINAL FIX: Iterating ALL VAs and Aggregating by Actor ---
-        
-        // Maps to hold unique VA names. The value will be an array of characters they voice.
+        // --- START OF VOICE ACTOR FIX ---
         const japaneseVAMap = new Map();
         const englishVAMap = new Map();
 
@@ -150,8 +205,6 @@ app.post('/add-anime', async (req, res) => {
             characters.forEach(edge => {
                 const char = edge.node;
                 const charName = char.name?.full;
-                
-                // Get the array of all VAs for this character
                 const voiceActorsList = edge.voiceActors || [];
 
                 if (charName) {
@@ -160,11 +213,9 @@ app.post('/add-anime', async (req, res) => {
                         const vaLanguage = role.language;
 
                         if (vaName && vaLanguage) {
-                            // Ensure the language is always treated as uppercase for comparison
                             const langUpper = vaLanguage.toUpperCase(); 
 
                             if (langUpper === 'JAPANESE') {
-                                // Aggregation: If VA already exists, append unique character name to the array
                                 const currentCharacters = japaneseVAMap.get(vaName) || [];
                                 if (!currentCharacters.includes(charName)) {
                                     currentCharacters.push(charName);
@@ -173,7 +224,6 @@ app.post('/add-anime', async (req, res) => {
                             }
                             
                             if (langUpper === 'ENGLISH') {
-                                // Aggregation: If VA already exists, append unique character name to the array
                                 const currentCharacters = englishVAMap.get(vaName) || [];
                                 if (!currentCharacters.includes(charName)) {
                                     currentCharacters.push(charName);
@@ -186,14 +236,13 @@ app.post('/add-anime', async (req, res) => {
             });
         }
 
-        // Helper function to format the Map data into the final string format: "Character1, Character2: VA Name"
         const createVAString = (map) => {
             return Array.from(map.entries())
                 .map(([vaName, charNames]) => {
-                    const charList = charNames.join(', '); // Join multiple character names with a comma
+                    const charList = charNames.join(', '); 
                     return `${charList}: ${vaName}`;
                 })
-                .join('|'); // Pipe-separate the final actor entries
+                .join('|'); 
         };
         
         const vaData = {
@@ -203,8 +252,7 @@ app.post('/add-anime', async (req, res) => {
         
         const voiceActors = JSON.stringify(vaData);
         
-        // --- END OF VOICE ACTOR FINAL FIX ---
-
+        // --- END OF VOICE ACTOR FIX ---
 
         // Insert new record (Uses $1 through $8 - now includes notes)
         const insertResult = await query(
@@ -225,7 +273,6 @@ app.post('/add-anime', async (req, res) => {
 app.delete('/remove-anime/:userId/:animeId', async (req, res) => {
     const { userId, animeId } = req.params;
     try {
-        // Uses $1, $2
         await query('DELETE FROM watched_anime WHERE user_id=$1 AND anime_id=$2', [userId, animeId]);
         res.json({ success: true });
     } catch (err) {
@@ -235,7 +282,7 @@ app.delete('/remove-anime/:userId/:animeId', async (req, res) => {
 });
 
 // -------------------
-// Update anime notes (NEW ENDPOINT)
+// Update anime notes
 // -------------------
 app.patch('/update-notes', async (req, res) => {
     const { userId, animeId, notes } = req.body;
@@ -244,13 +291,11 @@ app.patch('/update-notes', async (req, res) => {
         return res.json({ success: false, error: 'User ID and Anime ID are required.' });
     }
 
-    // Basic sanitization and truncation for notes
     const MAX_NOTES_LENGTH = 2000;
     let sanitizedNotes = notes ? String(notes).replace(/<[^>]*>/g, '').trim() : '';
     sanitizedNotes = sanitizedNotes.substring(0, MAX_NOTES_LENGTH);
     
     try {
-        // Use $1 (notes), $2 (userId), $3 (animeId)
         const result = await query(
             'UPDATE watched_anime SET notes = $1 WHERE user_id = $2 AND anime_id = $3 RETURNING id',
             [sanitizedNotes, userId, animeId]
@@ -274,7 +319,6 @@ app.patch('/update-notes', async (req, res) => {
 app.get('/watched/:userId', async (req, res) => {
     const { userId } = req.params;
     try {
-        // Uses $1
         const result = await query('SELECT * FROM watched_anime WHERE user_id=$1', [userId]);
         res.json({ success: true, data: result.rows });
     } catch (err) {
@@ -282,6 +326,176 @@ app.get('/watched/:userId', async (req, res) => {
         res.json({ success: false, error: err.message });
     }
 });
+
+
+// -----------------------------------------------------------
+// 8. NEW FRIEND SYSTEM ENDPOINTS
+// -----------------------------------------------------------
+
+// A. Search Users
+app.get('/api/users/search', async (req, res) => {
+    const { q, userId: currentUserIdStr } = req.query; 
+    const currentUserId = parseInt(currentUserIdStr);
+    
+    if (!q || q.length < 3 || isNaN(currentUserId)) {
+        return res.status(200).json({ users: [] });
+    }
+    
+    try {
+        // Find users matching the search term 'q' (case-insensitive)
+        const userSearchQuery = `
+            SELECT id, username 
+            FROM users 
+            WHERE username ILIKE $1 
+            AND id <> $2 
+            LIMIT 10;
+        `;
+        const searchResults = await pool.query(userSearchQuery, [`%${q}%`, currentUserId]);
+
+        const usersWithStatus = await Promise.all(searchResults.rows.map(async (user) => {
+            const status = await getRelationshipStatus(currentUserId, user.id);
+            return {
+                id: user.id,
+                username: user.username,
+                relationshipStatus: status
+            };
+        }));
+        
+        res.json({ success: true, users: usersWithStatus });
+    } catch (error) {
+        console.error('User search failed:', error);
+        res.status(500).json({ success: false, error: 'Server error during search.' });
+    }
+});
+
+// B. Send Friend Request
+app.post('/api/friends/request/:recipientId', async (req, res) => {
+    const requesterId = parseInt(req.body.userId); 
+    const recipientId = parseInt(req.params.recipientId);
+
+    if (isNaN(requesterId) || isNaN(recipientId) || requesterId === recipientId) {
+        return res.status(400).json({ success: false, error: 'Invalid user IDs or self-request.' });
+    }
+
+    try {
+        const status = await getRelationshipStatus(requesterId, recipientId);
+        
+        if (status !== 'none') {
+            let errorMsg = 'A relationship already exists or is pending.';
+            if (status === 'friends') errorMsg = 'You are already friends with this user.';
+            if (status === 'request_sent') errorMsg = 'You have already sent a pending request.';
+            if (status === 'request_received') errorMsg = 'This user has already sent you a request. Please check your pending list.';
+            return res.status(400).json({ success: false, error: errorMsg });
+        }
+
+        // Insert the new request
+        const insertQuery = `
+            INSERT INTO friend_requests (requester_id, recipient_id)
+            VALUES ($1, $2)
+            RETURNING id;
+        `;
+        await pool.query(insertQuery, [requesterId, recipientId]);
+        
+        res.json({ success: true, message: 'Friend request sent.' });
+
+    } catch (error) {
+        console.error('Send friend request failed:', error);
+        res.status(500).json({ success: false, error: 'Server error: Could not send request.' });
+    }
+});
+
+// C. Get Pending Requests (Requests RECEIVED by the user)
+app.get('/api/friends/pending/:userId', async (req, res) => {
+    const recipientId = parseInt(req.params.userId);
+
+    if (isNaN(recipientId)) {
+        return res.status(400).json({ success: false, error: 'Invalid User ID.' });
+    }
+
+    try {
+        const query = `
+            SELECT 
+                fr.id, 
+                fr.requester_id, 
+                u.username AS requester_username 
+            FROM friend_requests fr
+            JOIN users u ON fr.requester_id = u.id
+            WHERE fr.recipient_id = $1 
+            AND fr.status = 'pending';
+        `;
+        const result = await pool.query(query, [recipientId]);
+
+        res.json({ success: true, requests: result.rows });
+    } catch (error) {
+        console.error('Error fetching pending requests:', error);
+        res.status(500).json({ success: false, error: 'Server error fetching requests.' });
+    }
+});
+
+// D. Handle Friend Request (Accept/Reject)
+app.patch('/api/friends/request/:requestId', async (req, res) => {
+    const requestId = parseInt(req.params.requestId);
+    // userId is the authenticated user taking the action (must match the request recipient)
+    const { userId: currentUserIdStr, action } = req.body; 
+    const currentUserId = parseInt(currentUserIdStr);
+    const actionType = action.toLowerCase();
+    
+    if (isNaN(requestId) || isNaN(currentUserId) || (actionType !== 'accept' && actionType !== 'reject')) {
+        return res.status(400).json({ success: false, error: 'Invalid request ID, user ID, or action.' });
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN'); // Start transaction
+
+        // 1. Get the request details and verify the user is the recipient
+        const requestQuery = `
+            SELECT requester_id, recipient_id, status
+            FROM friend_requests
+            WHERE id = $1 AND recipient_id = $2 AND status = 'pending';
+        `;
+        const requestResult = await client.query(requestQuery, [requestId, currentUserId]);
+
+        if (requestResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ success: false, error: 'Pending request not found or you are not the recipient.' });
+        }
+        
+        const { requester_id, recipient_id } = requestResult.rows[0];
+
+        // 2. Update the request status
+        const updateRequestQuery = `
+            UPDATE friend_requests 
+            SET status = $1 
+            WHERE id = $2;
+        `;
+        await client.query(updateRequestQuery, [actionType, requestId]);
+
+        if (actionType === 'accept') {
+            // 3. If accepted, create a friendship entry in friends_list
+            const user1 = Math.min(requester_id, recipient_id);
+            const user2 = Math.max(requester_id, recipient_id);
+
+            const insertFriendshipQuery = `
+                INSERT INTO friends_list (user_id_1, user_id_2)
+                VALUES ($1, $2)
+                ON CONFLICT (user_id_1, user_id_2) DO NOTHING;
+            `;
+            await client.query(insertFriendshipQuery, [user1, user2]);
+        }
+        
+        await client.query('COMMIT'); // Commit transaction
+        res.json({ success: true, message: `Friend request ${actionType}ed.` });
+
+    } catch (error) {
+        await client.query('ROLLBACK'); // Rollback on error
+        console.error(`Error processing friend request ${actionType}:`, error);
+        res.status(500).json({ success: false, error: 'Server error processing request.' });
+    } finally {
+        client.release();
+    }
+});
+
 
 // -------------------
 // Search anime from AniList API (No DB changes here)
@@ -303,7 +517,7 @@ app.get('/search-anime', async (req,res) => {
     ' title { romaji english }' +
     ' description' +
     ' averageScore' +
-    ' coverImage { large }' + // Note: This field may be cased differently in the response object
+    ' coverImage { large }' + 
     ' characters(role: MAIN) {' +
     ' edges {' +
     ' node { name { full } }' +
