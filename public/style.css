@@ -2,7 +2,7 @@
  * ---------------------------------------
  * HIGH-TECH FROSTED GLASS THEME (Structural Fixes Applied)
  * ---------------------------------------
- * Primary Accent: Orchid (#DA70D6) - For action/focus
+ * Primary Accent: Orchid (#DA70D6) - For action/focus  <-- UPDATED
  * Secondary Accent: Silver Gray (#B0BEC5) - For subtle contrast
  * Background: Deep Navy/Black (#080E14)
  * Text: Pure White (#FFFFFF)
@@ -20,7 +20,7 @@
     --color-border: #1a3e5c; /* Darker blue border */
 
     /* Accent Colors */
-    --color-accent-primary: #DA70D6; /* Orchid (Action/Focus) */
+    --color-accent-primary: #DA70D6; /* Orchid (Action/Focus) <-- UPDATED */
     --color-accent-secondary: #B0BEC5; /* Silver Gray (Interface elements) */
 
     /* Fonts */
@@ -34,7 +34,8 @@ body {
     margin: 0;
     padding: 0;
     
-    background-image: radial-gradient(circle at center, rgba(0, 200, 255, 0.05) 0%, rgba(8, 14, 20, 1) 70%);
+    /* Background gradient updated to use the new color's values (218, 112, 214) */
+    background-image: radial-gradient(circle at center, rgba(218, 112, 214, 0.08) 0%, rgba(8, 14, 20, 1) 70%);
     background-size: cover;
     background-attachment: fixed;
 }
@@ -46,7 +47,8 @@ body {
     background-color: rgba(18, 18, 18, 0.4); 
     border-radius: 8px;
     border: 1px solid var(--color-border);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6), 0 0 10px rgba(0, 200, 255, 0.1); 
+    /* Shadow updated to use the new color's values (218, 112, 214) */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6), 0 0 10px rgba(218, 112, 214, 0.1); 
     position: relative;
     backdrop-filter: blur(5px);
 }
@@ -66,7 +68,8 @@ body {
     margin-bottom: 35px;
     font-size: 3em;
     letter-spacing: 4px;
-    text-shadow: 0 0 10px rgba(0, 200, 255, 0.8), 0 0 20px rgba(0, 200, 255, 0.4);
+    /* Text shadow updated to use the new color's values (218, 112, 214) */
+    text-shadow: 0 0 10px rgba(218, 112, 214, 0.8), 0 0 20px rgba(218, 112, 214, 0.4);
 }
 
 /* Section Title Style */
@@ -91,27 +94,13 @@ h2 {
 /* ------------------- */
 /* 2. Form and Controls (High-Tech) */
 /* ------------------- */
-input[type="text"], 
-input[type="password"], 
-select {
-    background-color: rgba(26, 46, 62, 0.5); 
-    color: var(--color-text-main);
-    border: 1px solid var(--color-border);
-    padding: 12px;
-    border-radius: 4px;
-    margin: 5px 0 15px 0;
-    width: 100%;
-    box-sizing: border-box;
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3); 
-    transition: border-color 0.2s, background-color 0.2s;
-}
-
 input[type="text"]:focus,
 input[type="password"]:focus,
 select:focus {
     border-color: var(--color-accent-primary);
     background-color: rgba(30, 50, 70, 0.7);
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3), 0 0 8px rgba(0, 200, 255, 0.8); 
+    /* Box shadow updated to use the new color's values (218, 112, 214) */
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3), 0 0 8px rgba(218, 112, 214, 0.8); 
     outline: none;
 }
 
@@ -126,12 +115,15 @@ button {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     transition: background-color 0.2s, box-shadow 0.2s;
-    box-shadow: 0 0 10px rgba(0, 200, 255, 0.5);
+    /* Box shadow updated to use the new color's values (218, 112, 214) */
+    box-shadow: 0 0 10px rgba(218, 112, 214, 0.5);
 }
 
 button:hover {
-    background-color: #55E8FF; 
-    box-shadow: 0 0 15px rgba(0, 200, 255, 0.9);
+    /* Adjusted hover color for a slightly lighter/more vibrant Orchid */
+    background-color: #F780F3; 
+    /* Box shadow updated to use the new color's values (218, 112, 214) */
+    box-shadow: 0 0 15px rgba(218, 112, 214, 0.9);
 }
 
 /* Auth Section */
@@ -140,13 +132,14 @@ button:hover {
     border: 1px solid var(--color-accent-primary);
     border-radius: 6px;
     margin-bottom: 25px;
-    box-shadow: 0 0 10px rgba(0, 200, 255, 0.3); 
+    /* Box shadow updated to use the new color's values (218, 112, 214) */
+    box-shadow: 0 0 10px rgba(218, 112, 214, 0.3); 
 }
 #auth > div {
     margin-bottom: 15px;
 }
 
-/* Controls Layout */
+/* Controls Layout (No change) */
 .controls-container {
     display: flex;
     justify-content: space-between;
@@ -198,7 +191,8 @@ button:hover {
 }
 
 #search-results li:hover {
-    background-color: rgba(0, 200, 255, 0.1);
+    /* Hover color updated to use the new color's values (218, 112, 214) */
+    background-color: rgba(218, 112, 214, 0.1);
     color: var(--color-accent-primary);
 }
 
@@ -231,7 +225,8 @@ button:hover {
     align-items: center;
     text-align: center;
     
-    border: 1px solid rgba(0, 200, 255, 0.3); 
+    /* Border updated to use the new color's values (218, 112, 214) */
+    border: 1px solid rgba(218, 112, 214, 0.3); 
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
     height: 100%;
@@ -239,7 +234,8 @@ button:hover {
 
 #watched-list li:hover {
     transform: translateY(-5px); 
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 200, 255, 0.6);
+    /* Shadow updated to use the new color's values (218, 112, 214) */
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(218, 112, 214, 0.6);
     border-color: var(--color-accent-primary); 
 }
 
@@ -288,10 +284,11 @@ button:hover {
     white-space: normal; 
     overflow: visible; 
     text-align: center;
-    text-shadow: 0 0 5px rgba(0, 200, 255, 0.5);
+    /* Text shadow updated to use the new color's values (218, 112, 214) */
+    text-shadow: 0 0 5px rgba(218, 112, 214, 0.5);
 }
 
-/* Description Text */
+/* Description Text (No change) */
 .anime-description-text {
     color: var(--color-text-subtle);
     font-style: normal;
@@ -305,7 +302,7 @@ button:hover {
     text-align: left;
 }
 
-/* Style for the Read More button/link */
+/* Style for the Read More button/link (No change) */
 .read-more-btn {
     background: none;
     border: none;
@@ -324,13 +321,13 @@ button:hover {
     color: var(--color-accent-primary);
 }
 
-/* Class added by JS when Read More is clicked */
+/* Class added by JS when Read More is clicked (No change) */
 .expanded .anime-description-text {
     max-height: 1000px;
     overflow: visible;
 }
 
-/* VA Tags Container */
+/* VA Tags Container (No change) */
 .va-tags-container {
     margin-top: 10px;
     flex-shrink: 0; 
@@ -340,7 +337,7 @@ button:hover {
     padding-top: 5px;
 }
 
-/* VA Tags */
+/* VA Tags (No change) */
 .va {
     display: inline-block;
     background-color: rgba(26, 46, 62, 0.8);
@@ -349,7 +346,8 @@ button:hover {
     margin: 3px; 
     border-radius: 3px;
     font-size: 0.8em; 
-    border: 1px solid rgba(0, 200, 255, 0.2);
+    /* Border updated to use the new color's values (218, 112, 214) */
+    border: 1px solid rgba(218, 112, 214, 0.2);
 }
 
 /* Shared VA Highlight */
@@ -359,7 +357,8 @@ button:hover {
     padding: 2px 4px;
     border-radius: 3px;
     font-weight: bold;
-    box-shadow: 0 0 8px rgba(0, 200, 255, 0.7);
+    /* Box shadow updated to use the new color's values (218, 112, 214) */
+    box-shadow: 0 0 8px rgba(218, 112, 214, 0.7);
 }
 
 /* --- VA Highlight Clickable Style --- */
@@ -369,15 +368,19 @@ button:hover {
 }
 
 .highlight.clickable:hover {
-    background-color: #55E8FF; 
+    /* Hover color updated for consistency */
+    background-color: #F780F3; 
     transform: scale(1.05);
-    box-shadow: 0 0 12px rgba(0, 200, 255, 1.0); 
+    /* Box shadow updated to use the new color's values (218, 112, 214) */
+    box-shadow: 0 0 12px rgba(218, 112, 214, 1.0); 
 }
 
 /* Style for when a filter is active */
 .highlight.clickable.active-filter {
-    background-color: #0088b3; 
-    box-shadow: 0 0 15px #0088b3;
+    /* Darker shade of Orchid for active filter */
+    background-color: #B457B1; 
+    /* Box shadow updated to use the new color's values (218, 112, 214) */
+    box-shadow: 0 0 15px #B457B1;
 }
 /* -------------------------------------- */
 
@@ -404,7 +407,8 @@ button:hover {
 }
 
 .navbar button:hover {
-    background-color: rgba(0, 200, 255, 0.1);
+    /* Hover color updated to use the new color's values (218, 112, 214) */
+    background-color: rgba(218, 112, 214, 0.1);
     color: var(--color-accent-primary);
     border-color: var(--color-accent-primary);
 }
@@ -414,7 +418,8 @@ button:hover {
     color: var(--color-background-dark);
     font-weight: bold;
     border-color: var(--color-accent-primary);
-    box-shadow: 0 0 10px rgba(0, 200, 255, 0.8);
+    /* Box shadow updated to use the new color's values (218, 112, 214) */
+    box-shadow: 0 0 10px rgba(218, 112, 214, 0.8);
 }
 
 /* Styling for Pagination Controls */
@@ -428,7 +433,8 @@ button:hover {
 
 #pagination-controls button {
     padding: 10px 18px;
-    box-shadow: 0 0 10px rgba(0, 200, 255, 0.6); 
+    /* Box shadow updated to use the new color's values (218, 112, 214) */
+    box-shadow: 0 0 10px rgba(218, 112, 214, 0.6); 
 }
 
 #pagination-controls button:disabled {
@@ -449,7 +455,7 @@ button:hover {
 /* 6. Notes Modal & Buttons (Fixed Positioning) */
 /* ------------------- */
 
-/* Grouping the Notes and Remove buttons */
+/* Grouping the Notes and Remove buttons (No change) */
 .action-buttons {
     display: flex;
     gap: 10px;
@@ -488,7 +494,7 @@ button:hover {
     box-shadow: 0 0 12px rgba(211, 47, 47, 0.9);
 }
 
-/* --- NEW: Modal Overlay (Full-screen, hidden by default) --- */
+/* --- NEW: Modal Overlay (Full-screen, hidden by default) (No change) --- */
 .modal {
     display: none; /* Hidden by default - JS toggles to 'flex' */
     position: fixed;
@@ -504,7 +510,7 @@ button:hover {
     justify-content: center; /* Center horizontally */
 }
 
-/* Modal Content Box (Centered by the new .modal flex container) */
+/* Modal Content Box */
 .modal-content {
     background-color: rgba(26, 46, 62, 0.95);
     backdrop-filter: blur(15px);
@@ -515,7 +521,8 @@ button:hover {
     width: 80%;
     max-width: 600px;
     position: relative;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 200, 255, 0.7); 
+    /* Box shadow updated to use the new color's values (218, 112, 214) */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(218, 112, 214, 0.7); 
     animation: fadeIn 0.3s ease-out; /* Optional fade in */
 }
 
@@ -527,10 +534,11 @@ button:hover {
 .modal-content h3 {
     color: var(--color-accent-primary);
     margin-top: 0;
-    text-shadow: 0 0 5px rgba(0, 200, 255, 0.5);
+    /* Text shadow updated to use the new color's values (218, 112, 214) */
+    text-shadow: 0 0 5px rgba(218, 112, 214, 0.5);
 }
 
-/* Close button */
+/* Close button (No change) */
 .close-button {
     color: var(--color-accent-secondary);
     position: absolute; /* Positioned relative to .modal-content */
@@ -561,10 +569,11 @@ button:hover {
     margin: 10px 0 20px 0;
     box-sizing: border-box;
     resize: vertical;
-    box-shadow: inset 0 0 5px rgba(0, 200, 255, 0.3);
+    /* Box shadow updated to use the new color's values (218, 112, 214) */
+    box-shadow: inset 0 0 5px rgba(218, 112, 214, 0.3);
 }
 
-/* Modal Save Button */
+/* Modal Save Button (No change) */
 .modal-content button {
     width: 100%;
     padding: 12px;
@@ -575,7 +584,7 @@ button:hover {
 /* 7. Profile Button & Sidebar Styles (Hidden by Default) */
 /* ------------------- */
 
-/* The main profile button element */
+/* The main profile button element (No change) */
 .profile-button {
     display: flex;
     align-items: center;
@@ -588,10 +597,11 @@ button:hover {
 }
 .profile-button:hover {
     background-color: rgba(30, 50, 70, 0.9);
-    box-shadow: 0 4px 12px rgba(0, 200, 255, 0.4);
+    /* Box shadow updated to use the new color's values (218, 112, 214) */
+    box-shadow: 0 4px 12px rgba(218, 112, 214, 0.4);
 }
 
-/* 1. Notification Icon (Bell) */
+/* 1. Notification Icon (Bell) (No change) */
 .notification-icon {
     background: transparent; 
     border: none; 
@@ -605,7 +615,7 @@ button:hover {
     color: var(--color-accent-primary);
 }
 
-/* 2. Avatar Icon (Blank Circle) */
+/* 2. Avatar Icon (Blank Circle) (No change) */
 .avatar-icon {
     height: 20px; 
     width: 20px;
@@ -628,7 +638,8 @@ button:hover {
     backdrop-filter: blur(10px);
     border-left: 2px solid var(--color-accent-primary);
     padding: 25px;
-    box-shadow: -5px 0 20px rgba(0, 200, 255, 0.6); 
+    /* Box shadow updated to use the new color's values (218, 112, 214) */
+    box-shadow: -5px 0 20px rgba(218, 112, 214, 0.6); 
     z-index: 45; /* Below the modal, but above all content */
 
     /* KEY CHANGE: Start off-screen */
@@ -637,7 +648,7 @@ button:hover {
     overflow-y: auto;
 }
 
-/* Active state: slide it into view (JS adds this class) */
+/* Active state: slide it into view (JS adds this class) (No change) */
 #profile-sidebar.active {
     transform: translateX(0);
 }
@@ -647,17 +658,19 @@ button:hover {
     border-bottom: 1px solid var(--color-border);
     padding-bottom: 10px;
     margin-bottom: 25px;
-    text-shadow: 0 0 5px rgba(0, 200, 255, 0.5);
+    /* Text shadow updated to use the new color's values (218, 112, 214) */
+    text-shadow: 0 0 5px rgba(218, 112, 214, 0.5);
 }
 
-/* --- Stats Display Styles --- */
+/* --- Stats Display Styles (No change to background color, only accent color for text/shadow) --- */
 .stat-item {
     background-color: rgba(18, 40, 60, 0.6);
     padding: 18px;
     border-radius: 4px;
     text-align: center;
     border: 1px solid var(--color-accent-secondary);
-    box-shadow: inset 0 0 8px rgba(0, 200, 255, 0.1); 
+    /* Box shadow updated to use the new color's values (218, 112, 214) */
+    box-shadow: inset 0 0 8px rgba(218, 112, 214, 0.1); 
 }
 
 .stat-value {
@@ -666,7 +679,8 @@ button:hover {
     font-weight: bold;
     color: var(--color-accent-primary); 
     margin-bottom: 5px;
-    text-shadow: 0 0 5px rgba(0, 200, 255, 0.5);
+    /* Text shadow updated to use the new color's values (218, 112, 214) */
+    text-shadow: 0 0 5px rgba(218, 112, 214, 0.5);
     word-wrap: break-word;
 }
 
@@ -677,7 +691,7 @@ button:hover {
     letter-spacing: 1px;
 }
 
-/* --- Logout Button in Sidebar --- */
+/* --- Logout Button in Sidebar (No change) --- */
 #profile-sidebar #logout-btn {
     margin-top: 30px;
     width: 100%;
@@ -690,7 +704,7 @@ button:hover {
     box-shadow: 0 0 15px rgba(211, 47, 47, 0.9);
 }
 
-/* --- REMOVE OLD DROPDOWN STYLES (Keep the ID for JS safety, but hide it) --- */
+/* --- REMOVE OLD DROPDOWN STYLES (No change) --- */
 #profile-dropdown {
     display: none !important; 
 }
