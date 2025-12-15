@@ -36,7 +36,7 @@ body {
     
     /* UPDATED BACKGROUND: Subtle Grid Pattern */
     background-image: linear-gradient(rgba(218, 112, 214, 0.02) 1px, transparent 1px), 
-                      linear-gradient(90deg, rgba(218, 112, 214, 0.02) 1px, transparent 1px);
+                        linear-gradient(90deg, rgba(218, 112, 214, 0.02) 1px, transparent 1px);
     background-size: 50px 50px;
     background-attachment: fixed;
 }
@@ -209,6 +209,35 @@ button:hover {
 /* 3. Watched List (Card Layout) (Frosted Glass) */
 /* ------------------- */
 
+/* --- NEW: Container for the Back Button and the Title --- */
+#friend-list-header-row {
+    display: flex;
+    align-items: center; /* Vertically align button and text */
+    gap: 30px; /* Space between the button and the title text */
+    padding: 20px 0;
+    margin-bottom: 20px;
+}
+
+/* 3.1. Profile Specific Header Style */
+.profile-list-header {
+    /* Ensures the text lines up neatly with the adjacent back button */
+    color: var(--color-text-main); /* Pure White text */
+    font-size: 2.2em; /* Prominent size for a secondary header */
+    font-weight: 500;
+    letter-spacing: 1px;
+    margin: 0; /* Important: Removes default h-tag margins */
+}
+
+/* Highlight the specific username within the header */
+.profile-list-header .username-highlight {
+    color: var(--color-accent-primary); /* Orchid color */
+    font-weight: bold;
+    font-size: 1.1em; /* Makes the username slightly larger than the rest of the title */
+    text-shadow: 0 0 5px rgba(218, 112, 214, 0.6); /* Subtle Orchid glow */
+    margin-right: 5px; 
+}
+
+
 /* === UPDATED LIST CONTROLS LAYOUT AND STYLE === */
 #list-controls {
     display: grid;
@@ -243,7 +272,7 @@ button:hover {
     -moz-appearance: none;
     appearance: none;
     padding-right: 30px; /* Space for the custom arrow */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23B0BEC5' width='18px' height='18px'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23B0BEC5' width='18px' height='18px'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3Csvg%3E");
     background-repeat: no-repeat;
     background-position: right 10px center;
     cursor: pointer;
