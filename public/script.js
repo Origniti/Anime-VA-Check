@@ -10,6 +10,7 @@ var username = null;
 var watched = []; // Stores the current user's (your) permanent list data
 var currentViewedList = []; // Stores the list data currently being rendered (yours or a friend's)
 var currentViewedUserId = null; // Stores the ID of the user whose list is currently being rendered
+var vaCounts = {}; // NEW: Stores counts of all VAs in the current user's list (for filtering/highlighting)
 var friendRequests = [];
 // Stores pending requests for the current user
 var friendsList = []; // Stores confirmed friends
@@ -137,6 +138,9 @@ function setupMainAppListeners() {
 
     // VA Language Selector
     document.getElementById('va-lang')?.addEventListener('change', function() {
+        if (String(currentViewedUserId) === String(userId)) {
+            getVoiceActorCounts(); // Recalculate counts when language changes
+        }
         // Use renderWatchedList without arguments to use the current state
         renderWatchedList();
     });
@@ -406,6 +410,31 @@ function parseVoiceActors(vaString) {
 }
 
 /**
+ * Calculates the occurrence count for every voice actor in the user's list.
+ * Updates the global vaCounts object.
+ */
+function getVoiceActorCounts() {
+    vaCounts = {}; // Reset counts
+    // Uses the language selected in the UI
+    var vaLang = document.getElementById('va-lang')?.value || 'japanese';
+
+    watched.forEach(function(anime) {
+        var vaString = anime.voice_actors_parsed[vaLang] || "";
+        var vaList = vaString.split('|');
+        vaList.forEach(function(vaEntry) {
+            var vaNameMatch = vaEntry.match(/: (.*)$/);
+            // Use the VA name, handling both 'Char Name: VA Name' and just 'VA Name' formats
+            var vaName = vaNameMatch ? vaNameMatch[1].trim() : vaEntry.trim();
+
+            if (vaName) {
+                vaCounts[vaName] = (vaCounts[vaName] || 0) + 1;
+            }
+        });
+    });
+}
+
+
+/**
  * Fetches the watched list for a given user ID and updates the display.
  */
 async function fetchWatchedAnime(targetUserId) {
@@ -433,7 +462,8 @@ async function fetchWatchedAnime(targetUserId) {
             if (isCurrentUser) {
                 watched = listData; // Update permanent user list
                 sortWatchedList(currentSort); // Sort the permanent list
-                calculateAndRenderStats();
+                getVoiceActorCounts(); // NEW CALL: Calculate VA counts
+                calculateAndRenderStats(); 
                 // When refreshing the user's own list, reset filters/page
                 activeVAFilter = null;
                 currentPage = 1;
@@ -559,10 +589,24 @@ function renderWatchedList() {
             var vaName = parts.length > 1 
 ? parts[1].trim() : parts[0].trim();
             
-            var highlightClass = (isCurrentUser && vaName === activeVAFilter) ? ' highlight active-filter' : '';
-            var clickableClass = isCurrentUser ? ' clickable' : '';
+            var classes = [];
+            
+            if (isCurrentUser) {
+                // 1. Check if the VA appears more than once (count > 1) to be clickable/highlighted
+                if (vaCounts[vaName] > 1) {
+                    classes.push('clickable');
+                }
+                // 2. Check if the VA is the currently active filter
+                if (vaName === activeVAFilter) {
+                    classes.push('active-filter');
+                }
+            }
+            
+            // The inner span already has the base 'highlight' class, we only add extras
+            var finalClasses = classes.join(' ');
 
-            return '<span class="va"><span class="highlight' + clickableClass + highlightClass + '" data-va-name="' + vaName + '">' + vaName + '</span> (' + charNames + ')</span>';
+
+            return '<span class="va"><span class="highlight ' + finalClasses + '" data-va-name="' + vaName + '">' + vaName + '</span> (' + charNames + ')</span>';
         }).join('');
 
         var displayDescription = anime.description || 'No description \navailable.';
@@ -627,7 +671,7 @@ function escapeHtml(text) {
     return text
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
+        .replace(/</g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 }
@@ -647,6 +691,7 @@ e.target.closest('.description-wrapper');
     });
 
     // VA Filter Listener
+    // Note: Only VAs that appear more than once get the 'clickable' class
     container.querySelectorAll('.highlight.clickable').forEach(function(vaTag) {
         vaTag.addEventListener('click', function(e) {
             var vaName = e.target.dataset.vaName;
@@ -689,6 +734,7 @@ async function handleRemoveAnime(e) {
             // Also update the current view list if it's the user's own list
             if (String(currentViewedUserId) === String(userId)) {
                 currentViewedList = watched; 
+                getVoiceActorCounts(); // Recalculate VA counts after removal
             }
             renderWatchedList();
             calculateAndRenderStats();
@@ -817,26 +863,14 @@ function calculateAndRenderStats() {
 totalRating / ratedAnime.length : 0;
 
     // --- 3. Top Voice Actor ---
-    var vaCount = {};
+    // Recalculate counts to ensure the language selection is honored
+    getVoiceActorCounts(); 
     var vaLang = document.getElementById('va-lang')?.value || 'japanese';
-    
-    watched.forEach(function(anime) {
-        var vaString = anime.voice_actors_parsed[vaLang] || "";
-        var vaList = vaString.split('|');
-        vaList.forEach(function(vaEntry) {
-            var vaNameMatch = vaEntry.match(/: (.*)$/);
-            var vaName = vaNameMatch ? vaNameMatch[1].trim() : vaEntry.trim();
 
-            if (vaName) {
-         
-                vaCount[vaName] = (vaCount[vaName] || 0) + 1;
-            }
-        });
-    });
     var topVA = { name: 'N/A', count: 0 };
-    for (var name in vaCount) {
-        if (vaCount[name] > topVA.count) {
-            topVA = { name: name, count: vaCount[name] };
+    for (var name in vaCounts) {
+        if (vaCounts[name] > topVA.count) {
+            topVA = { name: name, count: vaCounts[name] };
         }
     }
     
