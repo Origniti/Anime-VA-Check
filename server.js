@@ -38,7 +38,6 @@ const query = (text, params) => pool.query(text, params);
 
 // -------------------
 // HELPER FUNCTION: Get Relationship Status
-// Used by the search endpoint to determine button status on the frontend.
 // -------------------
 async function getRelationshipStatus(user1Id, user2Id) {
     // 1. Check if already friends (in friends_list)
@@ -75,7 +74,7 @@ async function getRelationshipStatus(user1Id, user2Id) {
 
 
 // -------------------
-// 2. Database Initialization (Updated for friend tables)
+// 2. Database Initialization
 // -------------------
 async function setupDatabase() {
     if (!connectionString) {
@@ -89,7 +88,7 @@ async function setupDatabase() {
         // Main watched list table
         await query('CREATE TABLE IF NOT EXISTS watched_anime (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), anime_id INTEGER, anime_title TEXT, rating REAL, voice_actors TEXT, description TEXT, coverImage TEXT, notes TEXT)');
         
-        // Friend System Tables (Ensure they exist)
+        // Friend System Tables
         await query(`
             CREATE TABLE IF NOT EXISTS friend_requests (
                 id SERIAL PRIMARY KEY,
@@ -432,19 +431,24 @@ app.get('/api/friends/pending/:userId', async (req, res) => {
     }
 });
 
-// D. Handle Friend Request (Accept/Reject) - **FIXED WITH LOGGING**
+// D. Handle Friend Request (Accept/Reject) - **FIXED**
 app.patch('/api/friends/request/:requestId', async (req, res) => {
     const requestId = parseInt(req.params.requestId);
     // userId is the authenticated user taking the action (must match the request recipient)
     const { userId: currentUserIdStr, action } = req.body; 
     const currentUserId = parseInt(currentUserIdStr);
-    const actionType = action.toLowerCase();
     
-    // START DEBUG LOG
-    console.log(`[REQUEST ACTION] ID: ${requestId}, User: ${currentUserId}, Action: ${actionType}`);
-    // END DEBUG LOG
+    // FIX: Map the action input ('accept' or 'reject') to the database status ('accepted' or 'rejected')
+    let dbStatus = action.toLowerCase(); 
+    if (dbStatus === 'accept') {
+        dbStatus = 'accepted'; // Correct status for the DB
+    } else if (dbStatus === 'reject') {
+        dbStatus = 'rejected'; // Correct status for the DB
+    }
 
-    if (isNaN(requestId) || isNaN(currentUserId) || (actionType !== 'accept' && actionType !== 'reject')) {
+    console.log(`[REQUEST ACTION] ID: ${requestId}, User: ${currentUserId}, DB Status: ${dbStatus}`);
+
+    if (isNaN(requestId) || isNaN(currentUserId) || (dbStatus !== 'accepted' && dbStatus !== 'rejected')) {
         return res.status(400).json({ success: false, error: 'Invalid request ID, user ID, or action.' });
     }
 
@@ -460,16 +464,13 @@ app.patch('/api/friends/request/:requestId', async (req, res) => {
         `;
         const requestResult = await client.query(requestQuery, [requestId, currentUserId]);
         
-        // This check is the first possible failure point if the request ID or user ID is wrong.
         if (requestResult.rows.length === 0) {
             await client.query('ROLLBACK');
             return res.status(404).json({ success: false, error: 'Pending request not found or you are not the recipient.' });
         }
         
         const { requester_id, recipient_id } = requestResult.rows[0];
-        // START DEBUG LOG
         console.log(`[REQUEST FOUND] Requester: ${requester_id}, Recipient: ${recipient_id}`);
-        // END DEBUG LOG
 
         // 2. Update the request status
         const updateRequestQuery = `
@@ -477,15 +478,13 @@ app.patch('/api/friends/request/:requestId', async (req, res) => {
             SET status = $1 
             WHERE id = $2;
         `;
-        await client.query(updateRequestQuery, [actionType, requestId]);
+        await client.query(updateRequestQuery, [dbStatus, requestId]);
 
-        if (actionType === 'accept') {
+        if (dbStatus === 'accepted') { 
             // 3. If accepted, create a friendship entry in friends_list
             const user1 = Math.min(requester_id, recipient_id);
             const user2 = Math.max(requester_id, recipient_id);
-            // START DEBUG LOG
             console.log(`[FRIENDSHIP INSERT] Inserting pair: (${user1}, ${user2})`);
-            // END DEBUG LOG
 
             const insertFriendshipQuery = `
                 INSERT INTO friends_list (user_id_1, user_id_2)
@@ -496,12 +495,11 @@ app.patch('/api/friends/request/:requestId', async (req, res) => {
         }
         
         await client.query('COMMIT'); // Commit transaction
-        res.json({ success: true, message: `Friend request ${actionType}ed.` });
+        res.json({ success: true, message: `Friend request ${dbStatus}!` });
 
     } catch (error) {
         await client.query('ROLLBACK'); // Rollback on error
-        // CRITICAL: This line will print the exact database error in your Render logs
-        console.error(`CRITICAL DB ERROR processing friend request ${actionType}:`, error); 
+        console.error(`CRITICAL DB ERROR processing friend request ${dbStatus}:`, error); 
         res.status(500).json({ success: false, error: 'Server error processing request.' });
     } finally {
         client.release();
@@ -510,7 +508,7 @@ app.patch('/api/friends/request/:requestId', async (req, res) => {
 
 
 // -------------------
-// Search anime from AniList API (No DB changes here)
+// Search anime from AniList API
 // -------------------
 app.get('/search-anime', async (req,res) => {
     const search = req.query.q;
