@@ -10,7 +10,7 @@ var username = null;
 var watched = []; // Stores the current user's (your) permanent list data
 var currentViewedList = []; // Stores the list data currently being rendered (yours or a friend's)
 var currentViewedUserId = null; // Stores the ID of the user whose list is currently being rendered
-var vaCounts = {}; // NEW: Stores counts of all VAs in the current user's list (for filtering/highlighting)
+var vaCounts = {}; // Stores counts of all VAs in the current user's list (for filtering/highlighting)
 var friendRequests = [];
 // Stores pending requests for the current user
 var friendsList = []; // Stores confirmed friends
@@ -592,21 +592,26 @@ function renderWatchedList() {
             var classes = [];
             
             if (isCurrentUser) {
-                // 1. Check if the VA appears more than once (count > 1) to be clickable/highlighted
+                // 1. Check if the VA appears more than once (count > 1) to be highlighted and clickable
                 if (vaCounts[vaName] > 1) {
-                    classes.push('clickable');
+                    classes.push('highlight'); // Add the highlight style
+                    classes.push('clickable'); // Add the click listener
                 }
+                
                 // 2. Check if the VA is the currently active filter
                 if (vaName === activeVAFilter) {
+                    // The active filter should always be highlighted, even if its count is 1
+                    if (!classes.includes('highlight')) {
+                        classes.push('highlight');
+                    }
                     classes.push('active-filter');
                 }
             }
-            
-            // The inner span already has the base 'highlight' class, we only add extras
+
             var finalClasses = classes.join(' ');
 
-
-            return '<span class="va"><span class="highlight ' + finalClasses + '" data-va-name="' + vaName + '">' + vaName + '</span> (' + charNames + ')</span>';
+            // The inner span now only uses the computed classes. The hardcoded 'highlight' is removed.
+            return '<span class="va"><span class="' + finalClasses + '" data-va-name="' + vaName + '">' + vaName + '</span> (' + charNames + ')</span>';
         }).join('');
 
         var displayDescription = anime.description || 'No description \navailable.';
@@ -671,7 +676,7 @@ function escapeHtml(text) {
     return text
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
-        .replace(/</g, "&gt;")
+        .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 }
@@ -692,7 +697,7 @@ e.target.closest('.description-wrapper');
 
     // VA Filter Listener
     // Note: Only VAs that appear more than once get the 'clickable' class
-    container.querySelectorAll('.highlight.clickable').forEach(function(vaTag) {
+    container.querySelectorAll('.clickable').forEach(function(vaTag) {
         vaTag.addEventListener('click', function(e) {
             var vaName = e.target.dataset.vaName;
             
