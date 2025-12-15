@@ -58,6 +58,7 @@
             <div class="navbar">
                 <button data-view="watched" class="active">My Watched List</button>
                 <button data-view="search">Search & Add Anime</button>
+                <button data-view="find-friends">Find Friends</button> 
             </div>
 
             <div id="page-watched" class="sub-view active">
@@ -98,7 +99,21 @@
                 <ul id="search-results">
                     </ul>
             </div>
-        </div>
+            
+            <div id="page-find-friends" class="sub-view" style="display:none;">
+                <h2 style="text-align: left;">Find New Friends</h2>
+                <input type="text" id="friend-search-input" placeholder="Search for users by username..." style="width: 100%; margin-bottom: 20px;">
+                
+                <ul id="friend-search-results" class="grid-container" style="grid-template-columns: 1fr; gap: 10px;">
+                    <li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">Start typing a username to search for friends.</li>
+                </ul>
+
+                <h2 style="text-align: left; margin-top: 40px;">Pending Requests</h2>
+                <ul id="pending-requests-list" class="grid-container" style="grid-template-columns: 1fr; gap: 10px;">
+                    <li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">No pending requests.</li>
+                </ul>
+            </div>
+            </div>
         
     </div>
 
