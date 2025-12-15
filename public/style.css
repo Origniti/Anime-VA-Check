@@ -1,14 +1,15 @@
 /*
  * ---------------------------------------
- * VIBRANT ORCHID POP STYLE SHEET (Eye-Catching)
+ * VIBRANT ORCHID / DEEP TEAL POP STYLE SHEET
  * ---------------------------------------
  * Primary Accent: Vibrant Orchid/Fuchsia (#E91E63) - HIGH GLOW
- * Secondary Accent: Electric Yellow (#FFE000) - High Contrast
+ * Secondary Accent (Functional): Electric Yellow (#FFE000) - ONLY for VA Highlights
+ * Tertiary Accent (Interface): Deep Teal/Cyan (#00BCD4) - For Modal/Profile/Stats
  * Background: Deep Space Dark (#0a0a0f)
  */
 
 /* ------------------- */
-/* 1. Color Palette & Globals (Vibrant Orchid Pop) */
+/* 1. Color Palette & Globals (Orchid/Deep Teal Pop) */
 /* ------------------- */
 :root {
     /* Base Colors */
@@ -18,9 +19,12 @@
     --color-text-subtle: #c299c2; /* Soft purple for subtle text */
     --color-border: #4a148c; /* Deep purple border */
 
-    /* Accent Colors (Orchid Theme - Brighter Glow) */
+    /* Accent Colors */
     --color-accent-primary: #e91e63; /* Orchid/Fuchsia (Primary Pop) */
-    --color-accent-highlight: #ffe000; /* Electric Yellow (High Contrast) */
+    
+    /* SECONDARY ACCENTS */
+    --color-accent-highlight-functional: #ffe000; /* Electric Yellow (VA Highlights ONLY) */
+    --color-accent-tertiary-interface: #00bcd4; /* Deep Teal/Cyan (Interface elements) */
 
     /* Fonts */
     --font-family-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -82,7 +86,7 @@ h2 {
 }
 
 /* ------------------- */
-/* 2. Form and Controls (Vibrant Orchid Pop) */
+/* 2. Form and Controls (Orchid Pop) */
 /* ------------------- */
 input[type="text"], 
 input[type="password"], 
@@ -226,7 +230,7 @@ button:hover {
 
 
 /* ------------------- */
-/* 3. Watched List (Card Layout) (Vibrant Orchid Pop) */
+/* 3. Watched List (Card Layout) (Orchid Pop) */
 /* ------------------- */
 #watched-list.grid-container {
     list-style: none;
@@ -271,8 +275,8 @@ button:hover {
     position: relative; 
     overflow: hidden;
     border-radius: 4px;
-    /* Use secondary color for image frame aura */
-    box-shadow: 0 0 10px rgba(255, 224, 0, 0.6); 
+    /* Use Tertiary/Interface color for image frame aura */
+    box-shadow: 0 0 10px rgba(0, 188, 212, 0.6); 
     margin-bottom: 10px;
     flex-shrink: 0;
 }
@@ -332,7 +336,8 @@ button:hover {
 .read-more-btn {
     background: none;
     border: none;
-    color: var(--color-accent-highlight); /* Secondary accent color */
+    /* Use Tertiary/Interface color for read more text */
+    color: var(--color-accent-tertiary-interface); 
     cursor: pointer;
     padding: 0;
     margin-top: 5px;
@@ -344,7 +349,7 @@ button:hover {
 .read-more-btn:hover {
     text-decoration: underline;
     background: none;
-    text-shadow: 0 0 3px var(--color-accent-highlight);
+    text-shadow: 0 0 3px var(--color-accent-tertiary-interface);
 }
 
 /* Class added by JS when Read More is clicked */
@@ -375,13 +380,14 @@ button:hover {
 
 /* Shared VA Highlight */
 .highlight {
-    background-color: var(--color-accent-highlight);
+    /* *** THIS RETAINS THE YELLOW FOR VA HIGHLIGHTS *** */
+    background-color: var(--color-accent-highlight-functional); 
     color: var(--color-background-dark);
     padding: 2px 4px;
     border-radius: 3px;
     font-weight: bold;
     text-shadow: none;
-    /* Secondary Pop */
+    /* Yellow Pop */
     box-shadow: 0 0 8px rgba(255, 224, 0, 0.6);
 }
 
@@ -472,7 +478,7 @@ button:hover {
 }
 
 /* ------------------- */
-/* 6. Notes Modal & Buttons (Vibrant Orchid Pop) */
+/* 6. Notes Modal & Buttons (Orchid/Teal Pop) */
 /* ------------------- */
 
 /* Grouping the Notes and Remove buttons */
@@ -486,21 +492,22 @@ button:hover {
 }
 
 .notes-btn {
-    background-color: #7e57c2; /* Medium purple for Notes */
+    background-color: var(--color-accent-tertiary-interface); /* Teal color for Notes */
     color: var(--color-background-dark);
     padding: 5px 10px;
     font-size: 0.9em;
     flex-grow: 1;
-    box-shadow: 0 0 8px rgba(126, 87, 194, 0.5);
+    box-shadow: 0 0 8px rgba(0, 188, 212, 0.5);
 }
 
 .notes-btn:hover {
-    background-color: #673ab7; 
-    box-shadow: 0 0 12px rgba(126, 87, 194, 0.8);
+    background-color: #0097a7; 
+    box-shadow: 0 0 12px rgba(0, 188, 212, 0.8);
 }
 
 .remove-btn {
-    background-color: var(--color-accent-highlight); /* Secondary accent (Yellow) for remove */
+    /* *** THIS RETAINS THE YELLOW FOR THE REMOVE BUTTON, matching the functional VA highlight *** */
+    background-color: var(--color-accent-highlight-functional); 
     color: var(--color-background-dark);
     padding: 5px 10px;
     margin-top: 0; 
@@ -538,12 +545,13 @@ button:hover {
 
 /* Close button */
 .close-button {
-    color: var(--color-accent-highlight);
+    /* Using Tertiary/Interface color */
+    color: var(--color-accent-tertiary-interface); 
     float: right;
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
-    text-shadow: 0 0 5px var(--color-accent-highlight);
+    text-shadow: 0 0 5px var(--color-accent-tertiary-interface);
 }
 
 .close-button:hover,
@@ -577,7 +585,7 @@ button:hover {
 }
 
 /* ------------------- */
-/* 7. Profile Button & Sidebar Styles (Vibrant Orchid Pop) */
+/* 7. Profile Button & Sidebar Styles (Orchid/Teal Pop) */
 /* ------------------- */
 
 /* The main profile button element */
@@ -600,14 +608,15 @@ button:hover {
 .notification-icon {
     background: transparent; 
     border: none; 
-    color: var(--color-accent-highlight); 
+    /* Using Tertiary/Interface color */
+    color: var(--color-accent-tertiary-interface); 
     padding: 0;
     margin-right: 5px; 
     font-size: 1em; 
     flex-shrink: 0;
     height: auto;
     width: auto;
-    text-shadow: 0 0 5px var(--color-accent-highlight);
+    text-shadow: 0 0 5px var(--color-accent-tertiary-interface);
 }
 .notification-icon:hover {
     background-color: transparent;
@@ -617,11 +626,12 @@ button:hover {
 .avatar-icon {
     height: 18px; 
     width: 18px;
-    background: var(--color-accent-highlight); 
+    /* Using Tertiary/Interface color */
+    background: var(--color-accent-tertiary-interface); 
     border-radius: 50%;
     margin-right: 5px; 
     border: none; 
-    box-shadow: 0 0 5px var(--color-accent-highlight);
+    box-shadow: 0 0 5px var(--color-accent-tertiary-interface);
     flex-shrink: 0;
 }
 
@@ -673,9 +683,10 @@ button:hover {
     display: block;
     font-size: 1.6em;
     font-weight: bold;
-    color: var(--color-accent-highlight); 
+    /* Using Tertiary/Interface color */
+    color: var(--color-accent-tertiary-interface); 
     margin-bottom: 5px;
-    text-shadow: 0 0 5px var(--color-accent-highlight);
+    text-shadow: 0 0 5px var(--color-accent-tertiary-interface);
     word-wrap: break-word;
 }
 
@@ -690,13 +701,14 @@ button:hover {
 #profile-sidebar #logout-btn {
     margin-top: 30px;
     width: 100%;
-    background-color: var(--color-accent-highlight); 
+    /* Using Tertiary/Interface color */
+    background-color: var(--color-accent-tertiary-interface); 
     color: var(--color-background-dark);
-    box-shadow: 0 0 10px rgba(255, 224, 0, 0.6);
+    box-shadow: 0 0 10px rgba(0, 188, 212, 0.6);
 }
 #profile-sidebar #logout-btn:hover {
-    background-color: #ffc107;
-    box-shadow: 0 0 15px rgba(255, 224, 0, 0.8);
+    background-color: #0097a7;
+    box-shadow: 0 0 15px rgba(0, 188, 212, 0.8);
 }
 
 /* --- REMOVE OLD DROPDOWN STYLES (Keep the ID for JS safety, but hide it) --- */
