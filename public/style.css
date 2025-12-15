@@ -1,6 +1,6 @@
 /*
  * ---------------------------------------
- * HIGH-TECH FROSTED GLASS THEME
+ * HIGH-TECH FROSTED GLASS THEME (Structural Fixes Applied)
  * ---------------------------------------
  * Primary Accent: Icy Blue/Cyan (#00C8FF) - For action/focus
  * Secondary Accent: Silver Gray (#B0BEC5) - For subtle contrast
@@ -34,7 +34,6 @@ body {
     margin: 0;
     padding: 0;
     
-    /* Subtle background glow/texture for high-tech feel */
     background-image: radial-gradient(circle at center, rgba(0, 200, 255, 0.05) 0%, rgba(8, 14, 20, 1) 70%);
     background-size: cover;
     background-attachment: fixed;
@@ -44,14 +43,20 @@ body {
     max-width: 1200px;
     margin: 50px auto;
     padding: 30px;
-    background-color: rgba(18, 18, 18, 0.4); /* Dark semi-transparent layer */
+    background-color: rgba(18, 18, 18, 0.4); 
     border-radius: 8px;
-    /* Sharp, defined border and subtle box shadow */
     border: 1px solid var(--color-border);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6), 0 0 10px rgba(0, 200, 255, 0.1); 
     position: relative;
-    /* Enable Frosted Glass for deeper effects later */
     backdrop-filter: blur(5px);
+}
+
+/* --- NEW: Profile Button Container --- */
+#profile-container {
+    position: absolute;
+    top: 30px; /* Aligned with top padding of #app */
+    right: 30px; /* Aligned with right padding of #app */
+    z-index: 10;
 }
 
 /* Main Application Title */
@@ -61,7 +66,6 @@ body {
     margin-bottom: 35px;
     font-size: 3em;
     letter-spacing: 4px;
-    /* Electric glow for the main title */
     text-shadow: 0 0 10px rgba(0, 200, 255, 0.8), 0 0 20px rgba(0, 200, 255, 0.4);
 }
 
@@ -73,7 +77,6 @@ body {
     margin-bottom: 25px;
     font-size: 2.5em;
     letter-spacing: 1px;
-    /* Clean line separator */
     border-bottom: 2px solid var(--color-accent-primary);
     padding-bottom: 10px;
 }
@@ -91,7 +94,7 @@ h2 {
 input[type="text"], 
 input[type="password"], 
 select {
-    background-color: rgba(26, 46, 62, 0.5); /* Semi-transparent blue input */
+    background-color: rgba(26, 46, 62, 0.5); 
     color: var(--color-text-main);
     border: 1px solid var(--color-border);
     padding: 12px;
@@ -123,12 +126,11 @@ button {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     transition: background-color 0.2s, box-shadow 0.2s;
-    /* Button Glow */
     box-shadow: 0 0 10px rgba(0, 200, 255, 0.5);
 }
 
 button:hover {
-    background-color: #55E8FF; /* Lighter cyan on hover */
+    background-color: #55E8FF; 
     box-shadow: 0 0 15px rgba(0, 200, 255, 0.9);
 }
 
@@ -157,6 +159,22 @@ button:hover {
     justify-content: flex-end; 
     align-items: center;
     margin-bottom: 20px;
+}
+.controls-bar select {
+    width: auto;
+    min-width: 120px;
+    margin-left: 5px;
+    margin-bottom: 0;
+}
+.controls-bar input[type="text"] {
+    width: 300px; 
+    margin-right: auto; 
+    margin-bottom: 0;
+}
+.controls-container label,
+.controls-bar label {
+    color: var(--color-text-subtle);
+    margin-right: 5px;
 }
 
 /* Search Results Dropdown */
@@ -201,7 +219,6 @@ button:hover {
 }
 
 #watched-list li {
-    /* Frosted Glass Effect */
     background-color: rgba(255, 255, 255, 0.1); 
     backdrop-filter: blur(10px); 
     
@@ -214,7 +231,6 @@ button:hover {
     align-items: center;
     text-align: center;
     
-    /* Accent border and glow */
     border: 1px solid rgba(0, 200, 255, 0.3); 
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
@@ -223,7 +239,6 @@ button:hover {
 
 #watched-list li:hover {
     transform: translateY(-5px); 
-    /* Stronger shadow and glow on hover */
     box-shadow: 0 15px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 200, 255, 0.6);
     border-color: var(--color-accent-primary); 
 }
@@ -235,7 +250,6 @@ button:hover {
     position: relative; 
     overflow: hidden;
     border-radius: 4px;
-    /* Image frame uses a subtle silver gray */
     box-shadow: 0 0 8px rgba(176, 190, 197, 0.5); 
     margin-bottom: 15px;
     flex-shrink: 0;
@@ -274,7 +288,6 @@ button:hover {
     white-space: normal; 
     overflow: visible; 
     text-align: center;
-    /* Subtle text glow */
     text-shadow: 0 0 5px rgba(0, 200, 255, 0.5);
 }
 
@@ -433,7 +446,7 @@ button:hover {
 }
 
 /* ------------------- */
-/* 6. Notes Modal & Buttons (High-Tech) */
+/* 6. Notes Modal & Buttons (Fixed Positioning) */
 /* ------------------- */
 
 /* Grouping the Notes and Remove buttons */
@@ -461,7 +474,7 @@ button:hover {
 }
 
 .remove-btn {
-    background-color: #d32f2f; /* Standard Red for remove action */
+    background-color: #d32f2f; 
     color: var(--color-text-main);
     padding: 10px 15px;
     font-size: 0.9em;
@@ -475,11 +488,27 @@ button:hover {
     box-shadow: 0 0 12px rgba(211, 47, 47, 0.9);
 }
 
-/* Modal Content Box */
+/* --- NEW: Modal Overlay (Full-screen, hidden by default) --- */
+.modal {
+    display: none; /* Hidden by default - JS toggles to 'flex' */
+    position: fixed;
+    z-index: 50; /* Above all content */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.7); /* Dark semi-transparent background */
+    backdrop-filter: blur(4px); /* Subtle blur on background content */
+    align-items: center; /* Center vertically */
+    justify-content: center; /* Center horizontally */
+}
+
+/* Modal Content Box (Centered by the new .modal flex container) */
 .modal-content {
     background-color: rgba(26, 46, 62, 0.95);
     backdrop-filter: blur(15px);
-    margin: 10% auto;
+    margin: auto; /* Not needed due to flex, but good fallback */
     padding: 30px; 
     border: 2px solid var(--color-accent-primary);
     border-radius: 8px;
@@ -487,6 +516,12 @@ button:hover {
     max-width: 600px;
     position: relative;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 200, 255, 0.7); 
+    animation: fadeIn 0.3s ease-out; /* Optional fade in */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
 }
 
 .modal-content h3 {
@@ -498,7 +533,9 @@ button:hover {
 /* Close button */
 .close-button {
     color: var(--color-accent-secondary);
-    float: right;
+    position: absolute; /* Positioned relative to .modal-content */
+    top: 10px;
+    right: 15px;
     font-size: 32px;
     font-weight: bold;
     cursor: pointer;
@@ -535,7 +572,7 @@ button:hover {
 }
 
 /* ------------------- */
-/* 7. Profile Button & Sidebar Styles (High-Tech) */
+/* 7. Profile Button & Sidebar Styles (Hidden by Default) */
 /* ------------------- */
 
 /* The main profile button element */
@@ -579,7 +616,7 @@ button:hover {
     box-shadow: none;
 }
 
-/* --- Profile Sidebar --- */
+/* --- Profile Sidebar (HIDDEN BY DEFAULT) --- */
 #profile-sidebar {
     display: block;
     position: fixed;
@@ -592,14 +629,15 @@ button:hover {
     border-left: 2px solid var(--color-accent-primary);
     padding: 25px;
     box-shadow: -5px 0 20px rgba(0, 200, 255, 0.6); 
-    z-index: 45;
+    z-index: 45; /* Below the modal, but above all content */
 
+    /* KEY CHANGE: Start off-screen */
     transform: translateX(100%);
     transition: transform 0.3s ease-out; 
     overflow-y: auto;
 }
 
-/* Active state: slide it into view */
+/* Active state: slide it into view (JS adds this class) */
 #profile-sidebar.active {
     transform: translateX(0);
 }
@@ -707,6 +745,12 @@ button:hover {
         margin: 20% auto;
     }
     
+    /* Ensure profile button stays visible */
+    #profile-container {
+        top: 15px; 
+        right: 15px;
+    }
+
     #profile-sidebar {
         width: 100%; 
         max-width: 100%;
