@@ -434,16 +434,15 @@ app.get('/api/friends/pending/:userId', async (req, res) => {
 // D. Handle Friend Request (Accept/Reject) - **FIXED**
 app.patch('/api/friends/request/:requestId', async (req, res) => {
     const requestId = parseInt(req.params.requestId);
-    // userId is the authenticated user taking the action (must match the request recipient)
     const { userId: currentUserIdStr, action } = req.body; 
     const currentUserId = parseInt(currentUserIdStr);
     
     // FIX: Map the action input ('accept' or 'reject') to the database status ('accepted' or 'rejected')
     let dbStatus = action.toLowerCase(); 
     if (dbStatus === 'accept') {
-        dbStatus = 'accepted'; // Correct status for the DB
+        dbStatus = 'accepted'; 
     } else if (dbStatus === 'reject') {
-        dbStatus = 'rejected'; // Correct status for the DB
+        dbStatus = 'rejected'; 
     }
 
     console.log(`[REQUEST ACTION] ID: ${requestId}, User: ${currentUserId}, DB Status: ${dbStatus}`);
@@ -506,6 +505,39 @@ app.patch('/api/friends/request/:requestId', async (req, res) => {
     }
 });
 
+// E. Get List of Confirmed Friends (NEW)
+app.get('/api/friends/:userId', async (req, res) => {
+    const currentUserId = parseInt(req.params.userId);
+
+    if (isNaN(currentUserId)) {
+        return res.status(400).json({ success: false, error: 'Invalid User ID.' });
+    }
+
+    try {
+        // Query both user_id_1 and user_id_2 columns, treating the other user as the "friend"
+        const query = `
+            SELECT 
+                CASE
+                    WHEN fl.user_id_1 = $1 THEN fl.user_id_2
+                    ELSE fl.user_id_1
+                END AS friend_id,
+                u.username AS friend_username
+            FROM friends_list fl
+            JOIN users u 
+                ON u.id = CASE
+                            WHEN fl.user_id_1 = $1 THEN fl.user_id_2
+                            ELSE fl.user_id_1
+                        END
+            WHERE fl.user_id_1 = $1 OR fl.user_id_2 = $1;
+        `;
+        const result = await pool.query(query, [currentUserId]);
+
+        res.json({ success: true, friends: result.rows });
+    } catch (error) {
+        console.error('Error fetching friends list:', error);
+        res.status(500).json({ success: false, error: 'Server error fetching friends.' });
+    }
+});
 
 // -------------------
 // Search anime from AniList API
