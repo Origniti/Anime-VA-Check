@@ -12,6 +12,8 @@ let currentPage = 1;
 const itemsPerPage = 6;
 let activeVAFilter = null;
 let currentSort = 'recent';
+// Define a placeholder image path
+const PLACEHOLDER_IMAGE = '/placeholder.png'; 
 
 // NEW: Get the sidebar container
 const profileSidebar = document.getElementById('profile-sidebar'); 
@@ -278,10 +280,11 @@ async function handleSearch(e) {
 
     if (data && data.length) {
         data.forEach(anime => {
+            const coverUrl = anime.coverImage?.large || PLACEHOLDER_IMAGE; // Defensive check for search result
             const li = document.createElement('li');
             li.dataset.anime = JSON.stringify(anime);
             li.innerHTML = `
-                <img src="${anime.coverImage.large}" style="width: 30px; height: 45px; vertical-align: middle; margin-right: 10px; border-radius: 3px;">
+                <img src="${coverUrl}" style="width: 30px; height: 45px; vertical-align: middle; margin-right: 10px; border-radius: 3px;">
                 <strong>${anime.title.romaji || anime.title.english}</strong> (Score: ${anime.averageScore || 'N/A'})
             `;
             searchResultsEl.appendChild(li);
@@ -309,6 +312,9 @@ async function handleAddAnime(e) {
         alert("Invalid rating. Anime not added.");
         return;
     }
+    
+    // Defensive check before sending to server
+    const coverImageURL = animeData.coverImage?.large || ''; 
 
     try {
         const res = await fetch('/add-anime', {
@@ -320,7 +326,7 @@ async function handleAddAnime(e) {
                 animeTitle: animeTitle,
                 rating: rating / 10, // Store as 1-10 scale
                 description: animeData.description,
-                coverImage: animeData.coverImage.large,
+                coverImage: coverImageURL, // Use the checked URL
                 characters: animeData.characters ? animeData.characters.edges : []
             })
         });
@@ -486,12 +492,15 @@ function renderWatchedList() {
         const displayDescription = anime.description || 'No description available.';
         const isClipped = displayDescription.length > 200; // Heuristic based on max-height: 7em in CSS
         
+        // CRITICAL FIX: Ensure coverImage is not null/undefined/empty string
+        const coverImageUrl = anime.coverimage || anime.coverImage || PLACEHOLDER_IMAGE; 
+
         const listItem = document.createElement('li');
         listItem.dataset.id = anime.id;
         listItem.dataset.animeId = anime.anime_id;
         listItem.innerHTML = `
             <div class="anime-cover-container">
-                <img src="${anime.coverImage}" alt="${anime.anime_title} cover" class="anime-cover">
+                <img src="${coverImageUrl}" onerror="this.onerror=null; this.src='${PLACEHOLDER_IMAGE}'" alt="${anime.anime_title} cover" class="anime-cover">
             </div>
             <div class="anime-info">
                 <div>
@@ -669,7 +678,7 @@ async function handleSaveNotes() {
             // Update the local 'watched' array and re-render the list
             const index = watched.findIndex(a => a.anime_id === parseInt(currentAnimeId));
             if (index !== -1) {
-                // Store the notes escaped for the dataset attribute
+                // Store the notes for the notes button's dataset
                 watched[index].notes = notes; 
                 // We re-render the list to update the notes button's dataset.notes attribute
                 renderWatchedList();
