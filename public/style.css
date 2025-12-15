@@ -2,7 +2,7 @@
  * ---------------------------------------
  * HIGH-TECH FROSTED GLASS THEME (Structural Fixes Applied)
  * ---------------------------------------
- * Primary Accent: Orchid (##DA70D6) - For action/focus
+ * Primary Accent: Orchid (#DA70D6) - For action/focus
  * Secondary Accent: Silver Gray (#B0BEC5) - For subtle contrast
  * Background: Deep Navy/Black (#080E14)
  * Text: Pure White (#FFFFFF)
@@ -20,7 +20,7 @@
     --color-border: #1a3e5c; /* Darker blue border */
 
     /* Accent Colors */
-    --color-accent-primary: ##DA70D6; /* Orchid (Action/Focus) */
+    --color-accent-primary: #DA70D6; /* Orchid (Action/Focus) */
     --color-accent-secondary: #B0BEC5; /* Silver Gray (Interface elements) */
 
     /* Fonts */
