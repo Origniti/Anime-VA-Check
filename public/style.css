@@ -34,7 +34,7 @@ body {
     margin: 0;
     padding: 0;
     
-    /* === UPDATED BACKGROUND: Darker, simpler background pattern === */
+    /* UPDATED BACKGROUND: Subtle Grid Pattern */
     background-image: linear-gradient(rgba(218, 112, 214, 0.02) 1px, transparent 1px), 
                       linear-gradient(90deg, rgba(218, 112, 214, 0.02) 1px, transparent 1px);
     background-size: 50px 50px;
@@ -179,7 +179,7 @@ button:hover {
     margin-right: 5px;
 }
 
-/* Search Results Dropdown (No Change) */
+/* Search Results Dropdown */
 #search-results {
     list-style: none;
     padding: 0;
@@ -288,7 +288,7 @@ button:hover {
     border-color: var(--color-accent-primary); 
 }
 
-/* --- IMAGE FIX CSS (No Change) --- */
+/* --- IMAGE FIX CSS --- */
 .anime-cover-container {
     width: 100%;
     padding-bottom: 150%; 
@@ -676,7 +676,7 @@ button:hover {
     box-shadow: -5px 0 20px rgba(218, 112, 214, 0.6); 
     z-index: 45; 
 
-    /* KEY CHANGE: Start off-screen */
+    /* KEY: Start off-screen */
     transform: translateX(100%);
     transition: transform 0.3s ease-out; 
     overflow-y: auto;
@@ -740,6 +740,119 @@ button:hover {
     display: none !important; 
 }
 
+/* ------------------- */
+/* 8. Friends Section Styles (Modern and Clean) */
+/* ------------------- */
+
+#page-find-friends {
+    padding: 20px 0;
+}
+
+/* 9. Grid Layout for Friend Sections */
+.friend-section-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two columns for sections on large screens */
+    gap: 30px;
+    margin-top: 20px;
+}
+
+/* Base style for each search/list section */
+.friend-section {
+    background-color: rgba(255, 255, 255, 0.05); /* Lighter frosted glass background */
+    backdrop-filter: blur(8px);
+    padding: 25px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.friend-section h2 {
+    text-align: left;
+    color: var(--color-accent-secondary);
+    font-size: 1.3em;
+    border-bottom: 2px solid rgba(218, 112, 214, 0.3); /* Subtle Orchid underline */
+    padding-bottom: 10px;
+    margin-top: 0;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+}
+
+/* 10. User Search Input */
+#friend-search-input {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+/* 11. Friend Lists (Search Results, Pending, Confirmed) */
+.friend-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Space between list items */
+}
+
+/* Styling for individual user cards in the lists */
+.friend-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    border-radius: 4px;
+    background-color: rgba(18, 18, 18, 0.7); /* Darker background for list items */
+    border: 1px solid rgba(218, 112, 214, 0.1);
+    transition: background-color 0.2s, border-color 0.2s;
+    font-size: 1.0em;
+}
+
+.friend-list li:hover {
+    background-color: rgba(26, 46, 62, 0.8);
+    border-color: var(--color-accent-primary);
+}
+
+/* User name styling */
+.friend-list .username {
+    font-weight: bold;
+    color: var(--color-text-main);
+    flex-grow: 1; /* Allows it to push actions to the right */
+}
+
+/* 12. Friend Action Buttons (Send, Accept, Remove) */
+.friend-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.friend-actions button {
+    padding: 6px 12px;
+    font-size: 0.85em;
+    font-weight: 500;
+    text-transform: capitalize; /* Don't force uppercase */
+    box-shadow: none; /* Remove heavy glow for small buttons */
+    transition: all 0.2s;
+}
+
+/* Specific colors for actions */
+.friend-actions .send-btn, 
+.friend-actions .accept-btn {
+    background-color: #4CAF50; /* Green for positive action */
+    color: white;
+}
+.friend-actions .send-btn:hover,
+.friend-actions .accept-btn:hover {
+    background-color: #66BB6A;
+}
+
+.friend-actions .remove-btn, 
+.friend-actions .decline-btn {
+    background-color: #D32F2F; /* Red for negative action */
+    color: white;
+}
+.friend-actions .remove-btn:hover,
+.friend-actions .decline-btn:hover {
+    background-color: #E57373;
+}
 
 /* ------------------- */
 /* 5. Responsive Adjustments (Updated for new controls layout) */
@@ -756,6 +869,11 @@ button:hover {
     #list-search {
         /* Search spans both columns */
         grid-column: 1 / span 2; 
+    }
+    
+    .friend-section-container {
+        /* Stack sections vertically on smaller screens */
+        grid-template-columns: 1fr; 
     }
 }
 
