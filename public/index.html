@@ -12,7 +12,7 @@
         
         <div id="profile-container">
             <button class="profile-button">
-                <span class="notification-icon">🔔</span>
+                <span class="notification-icon" style="display: none;">🔔</span> 
                 <span class="avatar-icon"></span>
                 <span id="profile-username">User</span>
                 <span class="dropdown-arrow"></span>
@@ -29,7 +29,7 @@
                     Log Out
                 </button>
             </div>
-            </div>
+        </div>
 
         <div id="auth" class="view active">
             <h1 class="section-title">Welcome to Anime Tracker</h1>
@@ -58,13 +58,19 @@
             <div class="navbar">
                 <button data-view="watched" class="active">My Watched List</button>
                 <button data-view="search">Search & Add Anime</button>
-                <button data-view="find-friends">Find Friends</button> 
+                <button data-view="find-friends">
+                    Friends 
+                    <span id="friend-notification-count" class="notification-indicator" style="display: none;">0</span>
+                </button> 
             </div>
 
             <div id="page-watched" class="sub-view active">
-                <h2 style="text-align: left;">Your Anime</h2>
+                
+                <div id="watched-list-header" style="display: flex; align-items: center; margin-bottom: 20px;">
+                    <h2 id="watched-list-title" style="text-align: left; margin: 0;">Your Anime</h2>
+                </div>
 
-                <div class="controls-bar">
+                <div id="list-controls">
                     <input type="text" id="list-search" placeholder="Search titles or VA names in your list...">
                     
                     <label for="sort-by">Sort By:</label>
@@ -83,7 +89,7 @@
                 </div>
                 
                 <ul id="watched-list" class="grid-container">
-                    </ul>
+                </ul>
 
                 <div id="pagination-controls">
                     <button id="prev-page" disabled>&lt; Previous</button>
@@ -97,23 +103,34 @@
                 <input type="text" id="anime-search" placeholder="Search for anime title...">
                 
                 <ul id="search-results">
-                    </ul>
+                </ul>
             </div>
             
             <div id="page-find-friends" class="sub-view" style="display:none;">
-                <h2 style="text-align: left;">Find New Friends</h2>
-                <input type="text" id="friend-search-input" placeholder="Search for users by username..." style="width: 100%; margin-bottom: 20px;">
                 
-                <ul id="friend-search-results" class="grid-container" style="grid-template-columns: 1fr; gap: 10px;">
-                    <li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">Start typing a username to search for friends.</li>
-                </ul>
+                <section class="friend-section">
+                    <h2>🤝 Find Users</h2>
+                    <input type="text" id="friend-search-input" placeholder="Search by username..." style="width: 100%; margin-bottom: 15px;">
+                    <ul id="friend-search-results" class="friend-list" style="grid-template-columns: 1fr; gap: 10px;">
+                        <li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">Start typing a username to search for friends.</li>
+                    </ul>
+                </section>
 
-                <h2 style="text-align: left; margin-top: 40px;">Pending Requests</h2>
-                <ul id="pending-requests-list" class="grid-container" style="grid-template-columns: 1fr; gap: 10px;">
-                    <li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">No pending requests.</li>
-                </ul>
+                <section class="friend-section">
+                    <h2>📬 Pending Requests</h2>
+                    <ul id="pending-requests-list" class="friend-list" style="grid-template-columns: 1fr; gap: 10px;">
+                        <li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">No pending friend requests.</li>
+                    </ul>
+                </section>
+
+                <section class="friend-section">
+                    <h2>⭐ Confirmed Friends</h2>
+                    <ul id="confirmed-friends-list" class="friend-list" style="grid-template-columns: 1fr; gap: 10px;">
+                        <li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">You have no confirmed friends.</li>
+                    </ul>
+                </section>
             </div>
-            </div>
+        </div>
         
     </div>
 
@@ -126,6 +143,6 @@
         </div>
     </div>
 
-    <script src="script.js" type="module"></script>
+    <script src="script.js"></script>
 </body>
 </html>
