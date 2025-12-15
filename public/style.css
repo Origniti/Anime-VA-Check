@@ -1,17 +1,26 @@
+/*
+ * ---------------------------------------
+ * CYBERPUNK NEON-GLOW STYLE SHEET
+ * ---------------------------------------
+ * Primary Accent: Electric Cyan/Blue (#00e0ff)
+ * Secondary Accent: Neon Magenta/Fuchsia (#ff00ff)
+ * Background: Deep Space Dark (#0a0a0f)
+ */
+
 /* ------------------- */
-/* 1. Color Palette & Globals */
+/* 1. Color Palette & Globals (Cyberpunk Neon) */
 /* ------------------- */
 :root {
     /* Base Colors */
-    --color-background-dark: #121212; /* Deep background */
-    --color-background-light: #1e1e1e; /* Card background */
-    --color-text-main: #e0e0e0; /* Light gray text */
-    --color-text-subtle: #a0a0a0; /* Subdued text */
-    --color-border: #333333;
+    --color-background-dark: #0a0a0f; /* Near black, deep space */
+    --color-background-light: #181820; /* Darker card background */
+    --color-text-main: #e0f7fa; /* Light cyan/white text */
+    --color-text-subtle: #80e0e0; /* Electric cyan for subtle text */
+    --color-border: #007788; /* Dark teal border */
 
     /* Accent Colors */
-    --color-accent-primary: #ff4081; /* Pink/Magenta for titles/buttons/links */
-    --color-accent-highlight: #ffc107; /* Yellow/Amber for shared VAs */
+    --color-accent-primary: #00e0ff; /* Electric Blue/Cyan (Primary Neon) */
+    --color-accent-highlight: #ff00ff; /* Neon Magenta/Fuchsia (Secondary Glow) */
 
     /* Fonts */
     --font-family-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -24,7 +33,7 @@ body {
     margin: 0;
     padding: 0;
     
-    /* Background Image Effect (Requires 'anime-bg.jpg' in the public directory) */
+    /* Background Image Effect */
     background-image: url('anime-bg.jpg');
     background-size: cover;
     background-attachment: fixed;
@@ -32,13 +41,14 @@ body {
 }
 
 #app {
-    max-width: 1200px; /* Increased max-width to comfortably fit 3 columns */
+    max-width: 1200px;
     margin: 50px auto;
     padding: 20px;
-    background-color: rgba(30, 30, 30, 0.95); /* Semi-transparent dark card */
+    background-color: var(--color-background-light); 
     border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    position: relative; /* Added for profile-container positioning */
+    /* Added subtle neon glow effect */
+    box-shadow: 0 0 30px rgba(0, 224, 255, 0.25), 0 0 10px rgba(0, 224, 255, 0.15); 
+    position: relative;
 }
 
 /* Main Application Title (Appears when logged in) */
@@ -47,7 +57,9 @@ body {
     text-align: center;
     margin-bottom: 30px;
     font-size: 2.5em;
-    letter-spacing: 2px;
+    letter-spacing: 4px;
+    /* Text Shadow for Neon Effect */
+    text-shadow: 0 0 8px rgba(0, 224, 255, 0.8), 0 0 15px rgba(0, 224, 255, 0.4); 
 }
 
 /* New Section Title Style (For Register, Login, Page Titles) */
@@ -57,7 +69,9 @@ body {
     margin-top: 30px;
     margin-bottom: 20px;
     font-size: 2.2em;
-    letter-spacing: 1.5px;
+    letter-spacing: 3px;
+    /* Text Shadow for Neon Effect */
+    text-shadow: 0 0 6px rgba(0, 224, 255, 0.6), 0 0 10px rgba(0, 224, 255, 0.3);
 }
 
 h2 {
@@ -68,35 +82,51 @@ h2 {
 }
 
 /* ------------------- */
-/* 2. Form and Controls */
+/* 2. Form and Controls (Cyberpunk Neon) */
 /* ------------------- */
 /* FIX: Explicitly target both types for consistent styling */
 input[type="text"], 
 input[type="password"], 
 select {
-    background-color: #2c2c2c;
+    background-color: #0d0d14; /* Very dark input background */
     color: var(--color-text-main);
     border: 1px solid var(--color-border);
     padding: 10px;
-    border-radius: 6px;
-    margin: 5px 0 15px 0; /* Increased margin-bottom for separation */
+    border-radius: 4px; /* Slightly sharper corners */
+    margin: 5px 0 15px 0;
     width: 100%;
     box-sizing: border-box;
+    /* Subtle inner glow */
+    box-shadow: inset 0 0 5px rgba(0, 224, 255, 0.1); 
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+select:focus {
+    border-color: var(--color-accent-primary);
+    /* Stronger neon glow on focus */
+    box-shadow: 0 0 8px var(--color-accent-primary); 
+    outline: none;
 }
 
 button {
     background-color: var(--color-accent-primary);
-    color: white;
+    color: var(--color-background-dark); /* Dark text on bright button */
     border: none;
     padding: 10px 15px;
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    /* Button neon glow */
+    box-shadow: 0 0 10px rgba(0, 224, 255, 0.4); 
 }
 
 button:hover {
-    background-color: #d81b60; /* Darker pink on hover */
+    background-color: #4df8ff; /* Lighter cyan on hover */
+    /* Stronger neon glow on hover */
+    box-shadow: 0 0 15px rgba(0, 224, 255, 0.7); 
 }
 
 /* Auth Section */
@@ -105,6 +135,8 @@ button:hover {
     border: 1px solid var(--color-border);
     border-radius: 8px;
     margin-bottom: 20px;
+    /* Subtle container glow */
+    box-shadow: 0 0 15px rgba(0, 224, 255, 0.1); 
 }
 #auth > div {
     margin-bottom: 15px;
@@ -170,7 +202,7 @@ button:hover {
 #search-results {
     list-style: none;
     padding: 0;
-    background-color: #242424;
+    background-color: #181820;
     border: 1px solid var(--color-border);
     border-top: none;
     border-radius: 0 0 6px 6px;
@@ -191,11 +223,11 @@ button:hover {
 }
 
 #search-results li:hover {
-    background-color: #383838;
+    background-color: #252530;
 }
 
 /* ------------------- */
-/* 3. Watched List (Card Layout) */
+/* 3. Watched List (Card Layout) (Cyberpunk Neon) */
 /* ------------------- */
 #watched-list.grid-container {
     list-style: none;
@@ -205,10 +237,7 @@ button:hover {
     display: grid; 
     grid-template-columns: repeat(3, 1fr); 
     gap: 20px; 
-    
-    /* Set a minimum height, allowing growth if "Read More" is used */
     grid-auto-rows: minmax(400px, auto); 
-    /* This ensures all columns start/end at the same vertical position */
     align-items: stretch; 
 }
 
@@ -216,7 +245,7 @@ button:hover {
     background-color: var(--color-background-light);
     padding: 15px;
     margin-bottom: 0; 
-    border-radius: 10px;
+    border-radius: 8px;
     
     /* Item stacking within the grid cell */
     display: flex;
@@ -224,45 +253,39 @@ button:hover {
     align-items: center;
     text-align: center;
     
-    border-left: 5px solid var(--color-accent-primary);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    transition: transform 0.2s;
-    height: 100%; /* Ensures uniform height in the grid row */
+    /* Neon border/shadow */
+    border: 1px solid rgba(0, 224, 255, 0.2); 
+    box-shadow: 0 0 10px rgba(0, 224, 255, 0.2), 0 0 5px rgba(0, 224, 255, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    height: 100%;
 }
 
 #watched-list li:hover {
-    transform: translateY(-2px); /* Slight lift on hover */
+    transform: translateY(-4px); /* Increased lift on hover */
+    /* Stronger neon glow on hover */
+    box-shadow: 0 0 20px rgba(0, 224, 255, 0.5), 0 0 10px rgba(0, 224, 255, 0.3);
 }
 
-/* --- START IMAGE FIX CSS --- */
-/* 1. NEW FIXED ASPECT RATIO CONTAINER (2:3 poster ratio) */
+/* --- IMAGE FIX CSS --- */
 .anime-cover-container {
     width: 100%;
-    /* 2:3 Ratio is 150% height of its width (3 / 2 = 1.5) */
     padding-bottom: 150%; 
     position: relative; 
     overflow: hidden;
-    border-radius: 6px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+    box-shadow: 0 0 8px rgba(255, 0, 255, 0.4); /* Highlight color glow for image */
     margin-bottom: 10px;
     flex-shrink: 0;
 }
 
-/* 2. UPDATED IMAGE STYLES */
 .anime-cover {
-    /* Position the image inside the fixed-ratio container */
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    
-    /* Use 'contain' to ensure the entire image is visible */
     object-fit: contain; 
-    
-    /* Add a subtle background color to the empty space */
-    background-color: #000000; /* Dark black to fill letterbox/pillarbox areas */
-    
+    background-color: #000000;
     border-radius: 6px; 
 }
 /* --- END IMAGE FIX CSS --- */
@@ -270,14 +293,13 @@ button:hover {
 
 /* --- CRITICAL FIX FOR CONSISTENT CARD HEIGHT --- */
 .anime-info {
-    flex-grow: 1; /* Allows this block to take up remaining vertical space */
+    flex-grow: 1; 
     text-align: center;
     width: 100%;
     padding: 0 5px;
     position: relative; 
     display: flex;
     flex-direction: column;
-    /* This ensures the Remove button is always at the bottom edge */
     justify-content: space-between; 
     align-items: center;
 }
@@ -288,16 +310,16 @@ button:hover {
     font-size: 1.1em;
     display: block;
     margin-bottom: 5px;
-    /* Allow full title to wrap normally */
     white-space: normal; 
     overflow: visible; 
     text-align: center;
+    text-shadow: 0 0 3px var(--color-accent-primary);
 }
 
 /* *** Description Wrapper for Read More (must contain text and button) *** */
 .description-wrapper {
     width: 100%;
-    text-align: left; /* Align text content to the left */
+    text-align: left;
     flex-grow: 1;
     position: relative;
     padding-bottom: 5px; 
@@ -323,23 +345,24 @@ button:hover {
 .read-more-btn {
     background: none;
     border: none;
-    color: var(--color-accent-primary);
+    color: var(--color-accent-highlight); /* Secondary neon color */
     cursor: pointer;
     padding: 0;
     margin-top: 5px;
     font-size: 0.9em;
-    text-align: left; /* Align to the left of the card */
+    text-align: left;
     display: block;
     width: auto;
 }
 .read-more-btn:hover {
     text-decoration: underline;
     background: none;
+    text-shadow: 0 0 3px var(--color-accent-highlight);
 }
 
 /* Class added by JS when Read More is clicked */
 .expanded .anime-description-text {
-    max-height: 1000px; /* Use a large value to 'unclip' and show full text */
+    max-height: 1000px;
     overflow: visible;
 }
 
@@ -354,39 +377,42 @@ button:hover {
 /* VA Tags (Displaying inline-block for proper wrapping) */
 .va {
     display: inline-block;
-    background-color: #383838;
+    background-color: #2c2c36;
     color: var(--color-text-main);
     padding: 4px 8px;
     margin: 4px; 
     border-radius: 4px;
     font-size: 0.8em; 
+    border: 1px solid var(--color-border);
 }
 
 /* Shared VA Highlight */
 .highlight {
     background-color: var(--color-accent-highlight);
-    color: #121212;
+    color: var(--color-background-dark);
     padding: 2px 4px;
     border-radius: 3px;
     font-weight: bold;
+    /* Added subtle secondary neon glow */
+    box-shadow: 0 0 8px rgba(255, 0, 255, 0.5);
 }
 
 /* --- NEW: VA Highlight Clickable Style --- */
 .highlight.clickable {
     cursor: pointer;
-    /* Optional: Add a subtle visual hover effect */
-    transition: background-color 0.15s, transform 0.1s; 
+    transition: background-color 0.15s, transform 0.1s, box-shadow 0.2s; 
 }
 
 .highlight.clickable:hover {
-    background-color: #ffd740; /* Slightly lighter yellow/amber on hover */
-    transform: scale(1.02);
+    background-color: #ff55ff; /* Lighter magenta on hover */
+    transform: scale(1.05);
+    box-shadow: 0 0 12px rgba(255, 0, 255, 0.8);
 }
 
 /* Style for when a filter is active */
 .highlight.clickable.active-filter {
-    /* You can make it darker or add a border to show it's currently selected */
-    background-color: #ff9800; /* Orange/Darker Amber */
+    background-color: #cc00cc; /* Darker Magenta */
+    box-shadow: 0 0 15px #cc00cc;
 }
 /* -------------------------------------- */
 
@@ -402,30 +428,32 @@ button:hover {
 }
 
 .navbar button {
-    background-color: #555;
+    background-color: #2c2c36; /* Darker than light background */
     color: white;
-    /* BASELINE BUTTON PADDING: 10px top/bottom, 15px left/right */
     padding: 10px 15px; 
     margin: 0 5px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0 5px rgba(0, 224, 255, 0.2);
 }
 
 .navbar button:hover {
-    background-color: #666;
+    background-color: #404050;
+    box-shadow: 0 0 10px rgba(0, 224, 255, 0.4);
 }
 
 .navbar button.active {
     background-color: var(--color-accent-primary);
+    color: var(--color-background-dark);
     font-weight: bold;
+    box-shadow: 0 0 15px var(--color-accent-primary);
 }
 
 /* Styling for Pagination Controls */
 #pagination-controls {
     text-align: center;
-    /* FIX: Add substantial top padding to ensure clearance from the cards above */
     padding-top: 40px; 
     margin-top: 20px; 
     margin-bottom: 20px;
@@ -435,25 +463,28 @@ button:hover {
 #pagination-controls button {
     padding: 8px 15px;
     background-color: var(--color-accent-primary);
-    color: white;
+    color: var(--color-background-dark);
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 224, 255, 0.4); 
 }
 
 #pagination-controls button:disabled {
-    background-color: #666;
+    background-color: #333;
+    color: var(--color-text-subtle);
     cursor: not-allowed;
+    box-shadow: none;
 }
 
 #page-info {
     margin: 0 15px;
     font-weight: bold;
-    display: inline-block; /* Ensures it stays in line with buttons */
+    display: inline-block;
 }
 
 /* ------------------- */
-/* 6. Notes Modal & Buttons */
+/* 6. Notes Modal & Buttons (Cyberpunk Neon) */
 /* ------------------- */
 
 /* Grouping the Notes and Remove buttons */
@@ -462,74 +493,87 @@ button:hover {
     gap: 5px;
     width: 100%;
     justify-content: center;
-    margin-top: 10px; /* Space from VA tags */
+    margin-top: 10px;
     flex-shrink: 0;
 }
 
 .notes-btn {
-    background-color: #00bcd4; /* Cyan/Teal color for Notes */
+    background-color: #00bcd4; /* Teal color for Notes (Tech/Data feel) */
+    color: var(--color-background-dark);
     padding: 5px 10px;
     font-size: 0.9em;
     flex-grow: 1;
+    box-shadow: 0 0 8px rgba(0, 188, 212, 0.4);
 }
 
 .notes-btn:hover {
-    background-color: #0097a7; 
+    background-color: #00a0b2; 
+    box-shadow: 0 0 12px rgba(0, 188, 212, 0.8);
 }
 
 .remove-btn {
-    background-color: #c62828; /* Red for remove */
+    background-color: var(--color-accent-highlight); /* Neon Magenta for remove */
+    color: var(--color-background-dark);
     padding: 5px 10px;
     margin-top: 0; 
     margin-bottom: 0;
     font-size: 0.9em;
     flex-shrink: 0; 
-    flex-grow: 1; /* Match notes button width */
+    flex-grow: 1; 
+    box-shadow: 0 0 8px rgba(255, 0, 255, 0.4);
+}
+
+.remove-btn:hover {
+    background-color: #cc00cc;
+    box-shadow: 0 0 12px rgba(255, 0, 255, 0.8);
 }
 
 /* Modal Backdrop */
 .modal {
     display: none; 
     position: fixed; 
-    z-index: 20; /* Above all other content */
+    z-index: 20;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,0.8); /* Dark semi-transparent background */
+    background-color: rgba(0,0,0,0.85); /* Darker backdrop */
 }
 
 /* Modal Content Box */
 .modal-content {
-    background-color: var(--color-background-light);
-    margin: 10% auto; /* 10% from the top and centered */
-    padding: 20px;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    width: 80%; /* Width on desktop */
+    background-color: #12121e; /* Darker than light background */
+    margin: 10% auto;
+    padding: 25px; 
+    border: 2px solid var(--color-accent-primary);
+    border-radius: 10px;
+    width: 80%;
     max-width: 600px;
     position: relative;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 30px rgba(0, 224, 255, 0.4); /* Stronger neon glow for modal */
 }
 
 .modal-content h3 {
     color: var(--color-accent-primary);
     margin-top: 0;
+    text-shadow: 0 0 5px var(--color-accent-primary);
 }
 
 /* Close button */
 .close-button {
-    color: var(--color-text-subtle);
+    color: var(--color-accent-highlight);
     float: right;
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
+    text-shadow: 0 0 5px var(--color-accent-highlight);
 }
 
 .close-button:hover,
 .close-button:focus {
     color: var(--color-text-main);
+    text-shadow: none;
     text-decoration: none;
     cursor: pointer;
 }
@@ -538,14 +582,15 @@ button:hover {
 #notes-textarea {
     width: 100%;
     min-height: 200px;
-    background-color: #2c2c2c;
+    background-color: #0d0d14;
     color: var(--color-text-main);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-accent-primary);
     padding: 10px;
     border-radius: 6px;
     margin: 10px 0 20px 0;
     box-sizing: border-box;
     resize: vertical;
+    box-shadow: inset 0 0 5px rgba(0, 224, 255, 0.3);
 }
 
 /* Modal Save Button */
@@ -556,10 +601,10 @@ button:hover {
 }
 
 /* ------------------- */
-/* 7. Profile Button & Sidebar Styles (UPDATED) */
+/* 7. Profile Button & Sidebar Styles (Cyberpunk Neon) */
 /* ------------------- */
 
-/* Container for the profile button (Remains the same for positioning the button) */
+/* Container for the profile button */
 #profile-container {
     position: absolute;
     top: 15px; 
@@ -568,33 +613,34 @@ button:hover {
     display: block; 
 }
 
-/* The main profile button element (MATCHING NAVBAR BUTTON LOOK) */
+/* The main profile button element */
 .profile-button {
     display: flex;
     align-items: center;
-    background-color: var(--color-background-light); 
+    background-color: #2c2c36; 
     padding: 10px 15px; 
-    border-radius: 5px; /* Match navbar buttons' border-radius */
+    border-radius: 5px; 
     cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-    transition: background-color 0.2s;
-    background-color: #555; 
+    box-shadow: 0 0 10px rgba(0, 224, 255, 0.3); 
+    transition: background-color 0.2s, box-shadow 0.2s;
 }
 .profile-button:hover {
-    background-color: #666;
+    background-color: #404050;
+    box-shadow: 0 0 15px rgba(0, 224, 255, 0.6);
 }
 
 /* 1. Notification Icon (Bell) */
 .notification-icon {
     background: transparent; 
     border: none; 
-    color: white; 
+    color: var(--color-accent-highlight); 
     padding: 0;
     margin-right: 5px; 
     font-size: 1em; 
     flex-shrink: 0;
     height: auto;
     width: auto;
+    text-shadow: 0 0 5px var(--color-accent-highlight);
 }
 .notification-icon:hover {
     background-color: transparent;
@@ -602,21 +648,21 @@ button:hover {
 
 /* 2. Avatar Icon (Blank Gray Circle) */
 .avatar-icon {
-    height: 18px; /* Significantly reduced size */
+    height: 18px; 
     width: 18px;
-    background: var(--color-accent-primary); /* Use a more distinct color */
+    background: var(--color-accent-highlight); /* Secondary accent color */
     border-radius: 50%;
     margin-right: 5px; 
     border: none; 
-    box-shadow: none; 
+    box-shadow: 0 0 5px var(--color-accent-highlight);
     flex-shrink: 0;
 }
 
 /* 3. Username Text */
 #profile-username {
-    color: white; /* Match button text color */
-    font-weight: bold; /* Match button font weight */
-    font-size: 1em; /* Match button font size */
+    color: white;
+    font-weight: bold; 
+    font-size: 1em; 
     margin-right: 8px; 
     white-space: nowrap;
 }
@@ -624,29 +670,29 @@ button:hover {
 /* 4. Dropdown Arrow - Styled to be minimal */
 .dropdown-arrow::after {
     content: '\2304'; 
-    color: white; /* Match button text color */
-    font-size: 0.8em; /* Reduced size */
+    color: white;
+    font-size: 0.8em; 
     font-weight: bold;
     transition: transform 0.2s;
 }
 
 /* --- Profile Sidebar (NEW ELEMENT STYLES) --- */
 #profile-sidebar {
-    display: block; /* Ensure it is part of the layout */
+    display: block;
     position: fixed;
-    top: 0; /* Align to the top edge of the viewport */
-    right: 0; /* Align to the right edge of the viewport */
-    width: 300px; /* Fixed width for the sidebar */
-    height: 100%; /* Full height of the viewport */
-    background-color: var(--color-background-light); /* Card background */
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 100%;
+    background-color: #0f0f1a; 
     border-left: 3px solid var(--color-accent-primary);
     padding: 20px;
-    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
-    z-index: 45; /* Below the button (z-index 50) but above everything else */
+    box-shadow: -5px 0 30px rgba(0, 224, 255, 0.6);
+    z-index: 45;
 
-    /* Initial hidden state: slide it off-screen to the right */
+    /* Bouncier slide effect */
     transform: translateX(100%);
-    transition: transform 0.3s ease-out;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
     overflow-y: auto;
 }
 
@@ -660,36 +706,41 @@ button:hover {
     border-bottom: 1px solid var(--color-border);
     padding-bottom: 10px;
     margin-bottom: 20px;
+    text-shadow: 0 0 5px var(--color-accent-primary);
 }
 
 /* --- Stats Display Styles --- */
 .stats-group {
     display: grid;
-    grid-template-columns: 1fr; /* Single column layout for better readability */
+    grid-template-columns: 1fr;
     gap: 15px;
 }
 
 .stat-item {
-    background-color: #2c2c2c;
+    background-color: #181825;
     padding: 15px;
-    border-radius: 8px;
+    border-radius: 5px;
     text-align: center;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-accent-primary);
+    /* Outline effect for the stats box */
+    box-shadow: inset 0 0 10px rgba(0, 224, 255, 0.2); 
 }
 
 .stat-value {
     display: block;
-    font-size: 1.5em;
+    font-size: 1.6em;
     font-weight: bold;
-    color: var(--color-accent-highlight);
+    color: var(--color-accent-highlight); 
     margin-bottom: 5px;
-    word-wrap: break-word; /* Important for long titles/names */
+    text-shadow: 0 0 5px var(--color-accent-highlight);
+    word-wrap: break-word;
 }
 
 .stat-label {
     display: block;
-    font-size: 0.9em;
+    font-size: 0.85em;
     color: var(--color-text-subtle);
+    letter-spacing: 1px;
 }
 
 .stats-message {
@@ -700,26 +751,28 @@ button:hover {
 }
 
 
-/* --- Logout Button in Sidebar (Reusing #logout-btn) --- */
+/* --- Logout Button in Sidebar --- */
 #profile-sidebar #logout-btn {
     margin-top: 30px;
     width: 100%;
-    /* Override primary accent for logout clarity */
-    background-color: #c62828; 
+    /* Use the secondary neon color for a distinct action */
+    background-color: var(--color-accent-highlight); 
+    color: var(--color-background-dark);
+    box-shadow: 0 0 10px var(--color-accent-highlight);
 }
 #profile-sidebar #logout-btn:hover {
-    background-color: #a01f1f;
+    background-color: #cc00cc;
+    box-shadow: 0 0 15px #ff00ff;
 }
 
 /* --- REMOVE OLD DROPDOWN STYLES (Keep the ID for JS safety, but hide it) --- */
 #profile-dropdown {
-    /* Kept the ID for reference, but should be hidden/removed in HTML */
     display: none !important; 
 }
 
 
 /* ------------------- */
-/* 5. Responsive Adjustments */
+/* 5. Responsive Adjustments (Retained/Adjusted) */
 /* ------------------- */
 @media (max-width: 950px) {
     /* Change from 3 columns to 2 columns on medium screens */
@@ -784,10 +837,10 @@ button:hover {
 
     /* RESPONSIVE FIX: Sidebar should take up more space on smaller screens */
     #profile-sidebar {
-        width: 100%; /* Take up full width */
+        width: 100%; 
         max-width: 100%;
-        top: 0; /* Start from the top edge */
-        padding-top: 80px; /* Add padding to account for the header/navbar */
+        top: 0; 
+        padding-top: 80px; 
     }
     
     /* Ensure the profile button is still visible and clickable */
