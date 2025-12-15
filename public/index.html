@@ -59,9 +59,10 @@
                 </div>
 
                 <div id="list-controls">
+                    <label for="list-search" style="display:none;">Search:</label>
                     <input type="text" id="list-search" placeholder="Search titles or VA names in your list...">
                     
-                    <label for="sort-by">Sort By:</label>
+                    <label for="sort-by" style="display:none;">Sort By:</label>
                     <select id="sort-by">
                         <option value="recent">Most Recent</option>
                         <option value="rating-desc">Rating (High to Low)</option>
@@ -69,7 +70,7 @@
                         <option value="title-asc">Title (A-Z)</option>
                     </select>
 
-                    <label for="va-lang">VA Lang:</label>
+                    <label for="va-lang" style="display:none;">VA Lang:</label>
                     <select id="va-lang">
                         <option value="japanese">Japanese</option>
                         <option value="english">English</option>
@@ -103,20 +104,23 @@
                         <li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">Start typing a username to search for friends.</li>
                     </ul>
                 </section>
+                
+                <div class="friend-section-container">
+                    <section class="friend-section">
+                        <h2>📬 Pending Requests</h2>
+                        <ul id="pending-requests-list" class="friend-list" style="grid-template-columns: 1fr; gap: 10px;">
+                            <li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">No pending friend requests.</li>
+                        </ul>
+                    </section>
 
-                <section class="friend-section">
-                    <h2>📬 Pending Requests</h2>
-                    <ul id="pending-requests-list" class="friend-list" style="grid-template-columns: 1fr; gap: 10px;">
-                        <li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">No pending friend requests.</li>
-                    </ul>
-                </section>
+                    <section class="friend-section">
+                        <h2>⭐ Confirmed Friends</h2>
+                        <ul id="confirmed-friends-list" class="friend-list" style="grid-template-columns: 1fr; gap: 10px;">
+                            <li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">You have no confirmed friends.</li>
+                        </ul>
+                    </section>
+                </div>
 
-                <section class="friend-section">
-                    <h2>⭐ Confirmed Friends</h2>
-                    <ul id="confirmed-friends-list" class="friend-list" style="grid-template-columns: 1fr; gap: 10px;">
-                        <li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">You have no confirmed friends.</li>
-                    </ul>
-                </section>
             </div>
         </div>
         
