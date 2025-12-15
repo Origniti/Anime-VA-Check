@@ -8,6 +8,8 @@
 let userId = null;
 let username = null;
 let watched = [];
+let friendRequests = []; // Stores pending requests for the current user
+let friendsList = []; // NEW: Stores confirmed friends
 let currentPage = 1;
 const itemsPerPage = 6;
 let activeVAFilter = null;
@@ -34,8 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('profile-username').textContent = username;
         showView('app-main');
         fetchWatchedAnime(userId);
-        // Load pending requests immediately if user is logged in (for the bell icon notification, etc.)
+        // Load pending requests and confirmed friends immediately if user is logged in
         fetchPendingRequests();
+        fetchFriendsList(); // NEW: Fetch confirmed friends list
     } else {
         showView('auth');
     }
@@ -49,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup Modal Listeners
     setupModalListeners();
 
-    // NEW: Setup Friend Search Listeners
+    // NEW: Setup Friend Search and Request/List Listeners
     setupFriendSearchListeners();
 });
 
@@ -67,7 +70,7 @@ function showView(viewId) {
     }
 }
 
-// Helper to switch between Watched and Search sub-views (Updated to include find-friends)
+// Helper to switch between Watched and Search sub-views (Updated to include find-friends and confirmed-friends)
 function showSubView(subViewId) {
     document.querySelectorAll('#app-main .sub-view').forEach(view => {
         view.style.display = 'none';
@@ -84,7 +87,23 @@ function showSubView(subViewId) {
 
     // NEW LOGIC for the Find Friends tab
     if (subViewId === 'page-find-friends') {
-        fetchPendingRequests(); // Load requests whenever the tab is opened
+        // This is the main Friend Management tab containing Search, Pending, and Confirmed list
+        fetchPendingRequests();
+        fetchFriendsList();
+        // Default to showing confirmed friends list when entering the tab
+        renderConfirmedFriendsList(); 
+    } 
+    
+    // Logic to reset the watched view if a friend's list was being viewed
+    if (subViewId === 'page-watched') {
+        // Restore current user's list view settings if they were viewing a friend's list
+        const backBtn = document.getElementById('back-to-my-list-btn');
+        if (backBtn) backBtn.remove();
+        document.getElementById('watched-list-title').textContent = `${username}'s Watched List`;
+        document.getElementById('list-controls').style.display = 'grid';
+        
+        // This ensures the main list is always reloaded with the current user's data when navigating back to 'page-watched'
+        fetchWatchedAnime(userId); 
     }
 }
 
@@ -94,8 +113,10 @@ function setupMainAppListeners() {
         button.addEventListener('click', (e) => {
             const view = e.target.dataset.view;
             showSubView(`page-${view}`);
+            // Explicitly fetch data when switching to the watched list
             if (view === 'watched') {
-                fetchWatchedAnime(userId);
+                // Ensure list is not being viewed as a friend's list
+                // The showSubView('page-watched') handles the fetchWatchedAnime(userId) call now
             }
             // NEW: Close sidebar whenever a main navigation button is clicked
             if (profileSidebar && profileSidebar.classList.contains('active')) {
@@ -202,7 +223,7 @@ function toggleProfileSidebar() {
 // -------------------
 
 function setupAuthListeners() {
-    // ... (Login/Register logic remains the same as previously defined) ...
+    // ... (Login/Register logic remains the same) ...
     document.getElementById('show-register-btn')?.addEventListener('click', () => {
         document.getElementById('login-form').style.display = 'none';
         document.getElementById('register-form').style.display = 'block';
@@ -259,8 +280,9 @@ function setupAuthListeners() {
             showView('app-main');
             showSubView('page-watched');
             fetchWatchedAnime(userId);
-            // Fetch pending requests immediately after login
+            // Fetch friend data immediately after login
             fetchPendingRequests();
+            fetchFriendsList();
         } else {
             messageEl.textContent = data.error || 'Login failed.';
         }
@@ -386,40 +408,61 @@ function parseVoiceActors(vaString) {
     }
 }
 
-async function fetchWatchedAnime(userId) {
-    if (!userId) return;
+// UPDATED: Now accepts a targetUserId and isUsedForFriendView flag
+async function fetchWatchedAnime(targetUserId) {
+    if (!targetUserId) return;
 
     try {
-        const res = await fetch(`/watched/${userId}`);
+        const res = await fetch(`/watched/${targetUserId}`);
         const data = await res.json();
+        
+        // Only update the global 'watched' array if we are fetching the current user's list
+        if (String(targetUserId) === String(userId)) {
+            if (data.success) {
+                watched = data.data.map(item => ({
+                    ...item,
+                    // Add a parsed version of the voice actors data for easier filtering/display
+                    voice_actors_parsed: parseVoiceActors(item.voice_actors),
+                    // Ensure rating is a number
+                    rating: parseFloat(item.rating)
+                }));
+                
+                // Apply sorting if needed (default to descending id, i.e., most recent first)
+                sortWatchedList(currentSort); 
 
-        if (data.success) {
-            watched = data.data.map(item => ({
-                ...item,
-                // Add a parsed version of the voice actors data for easier filtering/display
-                voice_actors_parsed: parseVoiceActors(item.voice_actors),
-                // Ensure rating is a number
-                rating: parseFloat(item.rating)
-            }));
-            
-            // Apply sorting if needed (default to descending id, i.e., most recent first)
-            sortWatchedList(currentSort); 
+                activeVAFilter = null; 
+                currentPage = 1;
+                renderWatchedList(watched, targetUserId); // Render the user's own list
 
-            activeVAFilter = null; 
-            currentPage = 1;
-            renderWatchedList();
-
-            // Recalculate and render stats whenever the watched list is refreshed
-            calculateAndRenderStats(); 
+                // Recalculate and render stats whenever the watched list is refreshed
+                calculateAndRenderStats(); 
+            } else {
+                console.error('Failed to fetch watched anime:', data.error);
+            }
         } else {
-            console.error('Failed to fetch watched anime:', data.error);
+            // For friend view, just process the data and send it to renderWatchedList
+            if (data.success) {
+                const friendWatchedList = data.data.map(item => ({
+                    ...item,
+                    voice_actors_parsed: parseVoiceActors(item.voice_actors),
+                    rating: parseFloat(item.rating)
+                }));
+                // Sort friend's list by title ascending for consistency
+                friendWatchedList.sort((a, b) => a.anime_title.localeCompare(b.anime_title));
+                renderWatchedList(friendWatchedList, targetUserId);
+            } else {
+                // Render a message saying the friend's list is empty or failed to load
+                document.getElementById('watched-list').innerHTML = `<li style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: var(--color-text-subtle);">Could not load list or list is empty.</li>`;
+            }
         }
+
     } catch (e) {
         console.error('Network error fetching watched anime:', e);
     }
 }
 
 function sortWatchedList(sortType) {
+    // This function only sorts the global 'watched' array for the current user's list
     switch (sortType) {
         case 'rating-desc':
             watched.sort((a, b) => b.rating - a.rating);
@@ -439,6 +482,7 @@ function sortWatchedList(sortType) {
 }
 
 function getFilteredWatchedList() {
+    // Only applies to the current user's global 'watched' array
     let filtered = watched;
     const search = document.getElementById('list-search')?.value.toLowerCase().trim() || '';
     const vaLang = document.getElementById('va-lang')?.value || 'japanese';
@@ -464,12 +508,22 @@ function getFilteredWatchedList() {
     return filtered;
 }
 
-function renderWatchedList() {
+// UPDATED: Takes the list to render and the owner's ID
+function renderWatchedList(listToRender = watched, ownerId = userId) {
     const listEl = document.getElementById('watched-list');
-    const filtered = getFilteredWatchedList();
+    const isCurrentUser = String(ownerId) === String(userId);
+    
+    // Determine the list to paginate/filter based on context
+    const filtered = isCurrentUser ? getFilteredWatchedList() : listToRender;
     const totalItems = filtered.length;
     const maxPage = Math.ceil(totalItems / itemsPerPage);
     
+    // Hide controls if viewing a friend's list
+    const listControls = document.getElementById('list-controls');
+    if (listControls) {
+        listControls.style.display = isCurrentUser ? 'grid' : 'none';
+    }
+
     // Boundary check for current page
     if (currentPage > maxPage && maxPage > 0) {
         currentPage = maxPage;
@@ -484,11 +538,12 @@ function renderWatchedList() {
     listEl.innerHTML = '';
     if (paginatedItems.length === 0) {
         listEl.innerHTML = `<li style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: var(--color-text-subtle);">
-            No anime found. ${activeVAFilter ? `Clear VA filter or list search.` : 'Your watched list is empty.'}
+            ${isCurrentUser ? (activeVAFilter ? 'No anime found matching your filter.' : 'Your watched list is empty.') : 'This user\'s list is empty.'}
         </li>`;
     }
 
-    const vaLang = document.getElementById('va-lang')?.value || 'japanese';
+    // VA language selection is only available on the current user's list
+    const vaLang = isCurrentUser ? (document.getElementById('va-lang')?.value || 'japanese') : 'japanese';
 
     paginatedItems.forEach(anime => {
         // Prepare VA Tags
@@ -501,15 +556,18 @@ function renderWatchedList() {
             const charNames = parts[0].trim();
             const vaName = parts.length > 1 ? parts[1].trim() : parts[0].trim();
             
-            // Highlight if VA is the active filter
-            const highlightClass = (vaName === activeVAFilter) ? ' highlight active-filter' : '';
+            // Highlight if VA is the active filter (only if current user's list)
+            const highlightClass = (isCurrentUser && vaName === activeVAFilter) ? ' highlight active-filter' : '';
             
-            return `<span class="va"><span class="highlight clickable${highlightClass}" data-va-name="${vaName}">${vaName}</span> (${charNames})</span>`;
+            // VA tags are only clickable if viewing the current user's list
+            const clickableClass = isCurrentUser ? ' clickable' : '';
+
+            return `<span class="va"><span class="highlight${clickableClass}${highlightClass}" data-va-name="${vaName}">${vaName}</span> (${charNames})</span>`;
         }).join('');
 
         // Truncate description for card view
         const displayDescription = anime.description || 'No description available.';
-        const isClipped = displayDescription.length > 200; // Heuristic based on max-height: 7em in CSS
+        const isClipped = displayDescription.length > 200; 
         
         // CRITICAL FIX: Ensure coverImage is not null/undefined/empty string
         const coverImageUrl = anime.coverimage || anime.coverImage || PLACEHOLDER_IMAGE; 
@@ -535,10 +593,12 @@ function renderWatchedList() {
                 <div class="va-tags-container">
                     ${vaTags}
                 </div>
-                <div class="action-buttons">
-                    <button class="notes-btn" data-action="open-notes" data-title="${anime.anime_title}" data-anime-id="${anime.anime_id}" data-notes="${escapeHtml(anime.notes || '')}">Notes</button>
-                    <button class="remove-btn" data-action="remove-anime" data-anime-id="${anime.anime_id}">Remove</button>
-                </div>
+                ${isCurrentUser ? `
+                    <div class="action-buttons">
+                        <button class="notes-btn" data-action="open-notes" data-title="${anime.anime_title}" data-anime-id="${anime.anime_id}" data-notes="${escapeHtml(anime.notes || '')}">Notes</button>
+                        <button class="remove-btn" data-action="remove-anime" data-anime-id="${anime.anime_id}">Remove</button>
+                    </div>
+                ` : ''}
             </div>
         `;
         listEl.appendChild(listItem);
@@ -549,8 +609,10 @@ function renderWatchedList() {
     document.getElementById('prev-page').disabled = currentPage <= 1;
     document.getElementById('next-page').disabled = currentPage >= maxPage;
 
-    // Add event listeners for the newly rendered elements
-    setupCardListeners(listEl);
+    // Add event listeners ONLY for the current user's list
+    if (isCurrentUser) {
+        setupCardListeners(listEl);
+    }
 }
 
 function escapeHtml(text) {
@@ -564,6 +626,7 @@ function escapeHtml(text) {
 }
 
 function setupCardListeners(container) {
+    // Read More/Less for description
     container.querySelectorAll('[data-action="toggle-desc"]').forEach(button => {
         button.addEventListener('click', (e) => {
             const descWrapper = e.target.closest('.description-wrapper');
@@ -787,7 +850,7 @@ function calculateAndRenderStats() {
 
 
 // -------------------
-// 7. NEW FRIEND SYSTEM LOGIC
+// 7. FRIEND SYSTEM LOGIC
 // -------------------
 
 function setupFriendSearchListeners() {
@@ -811,6 +874,15 @@ function setupFriendSearchListeners() {
         if (e.target.dataset.action === 'reject-request') {
             const requestId = e.target.dataset.requestId;
             handleRequestAction(requestId, 'reject', e.target);
+        }
+    });
+    
+    // NEW: Listener for the "View List" buttons in the confirmed friends list
+    document.getElementById('confirmed-friends-list')?.addEventListener('click', (e) => {
+        if (e.target.dataset.action === 'view-friend-list') {
+            const friendId = e.target.dataset.friendId;
+            const friendUsername = e.target.dataset.friendUsername;
+            viewFriendWatchedList(friendId, friendUsername);
         }
     });
 }
@@ -873,8 +945,8 @@ function renderFriendSearchResults(users) {
             // User can't send a request, they need to check their pending list
             buttonText = 'Action Needed';
             buttonClass = 'status-btn status-pending-received';
-            disabled = 'disabled';
-            buttonAction = 'none';
+            disabled = ''; // Keep it enabled if it links to navigation
+            buttonAction = 'view-requests'; 
             statusMessage = ' (<a href="#" onclick="showSubView(\'page-find-friends\')">Accept/Reject</a>)';
         }
 
@@ -882,7 +954,7 @@ function renderFriendSearchResults(users) {
         li.style.display = 'flex';
         li.style.justifyContent = 'space-between';
         li.style.alignItems = 'center';
-        li.style.backgroundColor = '#2c2c2c'; // Darker background for list items
+        li.style.backgroundColor = '#2c2c2c'; 
         
         li.innerHTML = `
             <span>
@@ -935,10 +1007,6 @@ async function handleSendFriendRequest(recipientId, buttonEl) {
     }
 }
 
-// -------------------
-// 8. Pending Requests Logic
-// -------------------
-
 // Function to fetch and render pending requests (received)
 async function fetchPendingRequests() {
     if (!userId) return;
@@ -952,6 +1020,7 @@ async function fetchPendingRequests() {
         requestsEl.innerHTML = '';
         
         if (data.success && data.requests.length > 0) {
+            friendRequests = data.requests; // Store global requests
             data.requests.forEach(request => {
                 const li = document.createElement('li');
                 li.style.display = 'flex';
@@ -969,9 +1038,17 @@ async function fetchPendingRequests() {
                 `;
                 requestsEl.appendChild(li);
             });
-            // Optional: Update the notification bell icon (not implemented here, but a place to add logic)
+            // Update the notification indicator (if you have one, e.g., a bell icon)
+            const notificationCountEl = document.getElementById('friend-notification-count');
+            if (notificationCountEl) {
+                notificationCountEl.textContent = data.requests.length;
+                notificationCountEl.style.display = data.requests.length > 0 ? 'inline-block' : 'none';
+            }
         } else {
+            friendRequests = [];
             requestsEl.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">No pending friend requests.</li>';
+            const notificationCountEl = document.getElementById('friend-notification-count');
+            if (notificationCountEl) notificationCountEl.style.display = 'none';
         }
 
     } catch (e) {
@@ -1002,12 +1079,10 @@ async function handleRequestAction(requestId, action, buttonEl) {
         if (data.success) {
             alert(`Request ${action}ed successfully!`);
             
-            // Re-fetch pending requests and potentially update friend list elsewhere
+            // Re-fetch and re-render pending requests
             fetchPendingRequests(); 
-
-            if (action === 'accept') {
-                // If the user accepts, they are now friends. We should also refetch the friends list later.
-            }
+            // NEW: Refresh the confirmed friends list
+            fetchFriendsList(); 
 
         } else {
             alert(data.error || `Failed to ${action} request.`);
@@ -1018,4 +1093,98 @@ async function handleRequestAction(requestId, action, buttonEl) {
         console.error(`Error handling request action (${action}):`, e);
         alert('Network error while processing request.');
     }
+}
+
+// -------------------
+// 8. Confirmed Friends List Logic (NEW)
+// -------------------
+
+/**
+ * Fetches the list of confirmed friends.
+ */
+async function fetchFriendsList() {
+    if (!userId) return;
+
+    try {
+        const res = await fetch(`/api/friends/${userId}`);
+        const data = await res.json();
+
+        if (data.success) {
+            friendsList = data.friends; // Update global state
+            
+            // Re-render the list if the user is in the 'Find Friends' tab
+            if (document.getElementById('page-find-friends')?.style.display === 'block') {
+                renderConfirmedFriendsList();
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching friends list:', error);
+    }
+}
+
+/**
+ * Renders the confirmed friends list.
+ */
+function renderConfirmedFriendsList() {
+    const listContainer = document.getElementById('confirmed-friends-list'); // Assumed ID
+    if (!listContainer) return;
+    
+    listContainer.innerHTML = '';
+
+    if (friendsList.length === 0) {
+        listContainer.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">You have no confirmed friends.</li>';
+        return;
+    }
+
+    friendsList.forEach(friend => {
+        const li = document.createElement('li');
+        li.style.display = 'flex';
+        li.style.justifyContent = 'space-between';
+        li.style.alignItems = 'center';
+        li.style.backgroundColor = '#2c2c2c';
+        
+        li.innerHTML = `
+            <span style="color: var(--color-text-main); font-weight: bold;">${friend.friend_username}</span>
+            <button class="status-btn status-friends" data-action="view-friend-list" data-friend-id="${friend.friend_id}" data-friend-username="${friend.friend_username}">
+                View List
+            </button>
+        `;
+        listContainer.appendChild(li);
+    });
+}
+
+/**
+ * Switches the main list view to show a friend's watched anime.
+ */
+function viewFriendWatchedList(friendId, friendUsername) {
+    // 1. Switch to the 'watched' section
+    showSubView('page-watched'); 
+
+    // 2. Update the list title
+    document.getElementById('watched-list-title').textContent = `${friendUsername}'s Watched List`;
+    
+    // 3. Load the friend's list (fetchWatchedAnime handles rendering when ownerId != userId)
+    fetchWatchedAnime(friendId);
+
+    // 4. Add a "Back to My List" button
+    const watchedHeader = document.getElementById('watched-list-header'); // Assuming this is where the title/controls are
+    if (!watchedHeader) return;
+    
+    const backBtn = document.createElement('button');
+    backBtn.id = 'back-to-my-list-btn';
+    backBtn.className = 'status-btn status-reject'; // Style placeholder
+    backBtn.textContent = '← Back to My List';
+    
+    // Remove existing back button if present
+    const existingBackBtn = document.getElementById('back-to-my-list-btn');
+    if (existingBackBtn) existingBackBtn.remove();
+    
+    backBtn.onclick = () => {
+        // Reset to original view by navigating to the page-watched subview
+        showSubView('page-watched'); 
+        // The showSubView logic now handles resetting the title and fetching the current user's list
+    };
+    
+    // Prepend the back button
+    watchedHeader.prepend(backBtn); 
 }
