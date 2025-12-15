@@ -1,14 +1,14 @@
 /*
  * ---------------------------------------
- * ORCHID AURA STYLE SHEET (Subtle Glow)
+ * VIBRANT ORCHID POP STYLE SHEET (Eye-Catching)
  * ---------------------------------------
- * Primary Accent: Soft Orchid/Purple (#e91e63)
- * Secondary Accent: Light Pink/Magenta (#ffc107)
+ * Primary Accent: Vibrant Orchid/Fuchsia (#E91E63) - HIGH GLOW
+ * Secondary Accent: Electric Yellow (#FFE000) - High Contrast
  * Background: Deep Space Dark (#0a0a0f)
  */
 
 /* ------------------- */
-/* 1. Color Palette & Globals (Orchid Aura) */
+/* 1. Color Palette & Globals (Vibrant Orchid Pop) */
 /* ------------------- */
 :root {
     /* Base Colors */
@@ -18,9 +18,9 @@
     --color-text-subtle: #c299c2; /* Soft purple for subtle text */
     --color-border: #4a148c; /* Deep purple border */
 
-    /* Accent Colors (Orchid/Purple Theme) */
-    --color-accent-primary: #e91e63; /* Orchid/Fuchsia (Primary Aura) */
-    --color-accent-highlight: #ff6e40; /* Vibrant Orange (Secondary Highlight) */
+    /* Accent Colors (Orchid Theme - Brighter Glow) */
+    --color-accent-primary: #e91e63; /* Orchid/Fuchsia (Primary Pop) */
+    --color-accent-highlight: #ffe000; /* Electric Yellow (High Contrast) */
 
     /* Fonts */
     --font-family-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -46,8 +46,8 @@ body {
     padding: 20px;
     background-color: var(--color-background-light); 
     border-radius: 12px;
-    /* Subtler Aura Effect (reduced opacity and spread) */
-    box-shadow: 0 0 15px rgba(233, 30, 99, 0.15), 0 0 5px rgba(233, 30, 99, 0.1); 
+    /* Stronger Orchid Pop Effect */
+    box-shadow: 0 0 20px rgba(233, 30, 99, 0.4), 0 0 10px rgba(233, 30, 99, 0.2); 
     position: relative;
 }
 
@@ -57,9 +57,9 @@ body {
     text-align: center;
     margin-bottom: 30px;
     font-size: 2.5em;
-    letter-spacing: 3px;
-    /* Reduced Text Aura */
-    text-shadow: 0 0 4px rgba(233, 30, 99, 0.6); 
+    letter-spacing: 4px;
+    /* High Text Pop */
+    text-shadow: 0 0 8px rgba(233, 30, 99, 0.9), 0 0 15px rgba(233, 30, 99, 0.5); 
 }
 
 /* New Section Title Style (For Register, Login, Page Titles) */
@@ -69,9 +69,9 @@ body {
     margin-top: 30px;
     margin-bottom: 20px;
     font-size: 2.2em;
-    letter-spacing: 2.5px;
-    /* Reduced Text Aura */
-    text-shadow: 0 0 3px rgba(233, 30, 99, 0.5);
+    letter-spacing: 3px;
+    /* High Text Pop */
+    text-shadow: 0 0 6px rgba(233, 30, 99, 0.8), 0 0 10px rgba(233, 30, 99, 0.4);
 }
 
 h2 {
@@ -82,12 +82,12 @@ h2 {
 }
 
 /* ------------------- */
-/* 2. Form and Controls (Orchid Aura) */
+/* 2. Form and Controls (Vibrant Orchid Pop) */
 /* ------------------- */
 input[type="text"], 
 input[type="password"], 
 select {
-    background-color: #12121a; /* Very dark input background */
+    background-color: #12121a;
     color: var(--color-text-main);
     border: 1px solid var(--color-border);
     padding: 10px;
@@ -95,8 +95,8 @@ select {
     margin: 5px 0 15px 0;
     width: 100%;
     box-sizing: border-box;
-    /* Subtler inner aura */
-    box-shadow: inset 0 0 3px rgba(233, 30, 99, 0.1); 
+    /* Inner Pop */
+    box-shadow: inset 0 0 5px rgba(233, 30, 99, 0.2); 
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -104,8 +104,8 @@ input[type="text"]:focus,
 input[type="password"]:focus,
 select:focus {
     border-color: var(--color-accent-primary);
-    /* Soft aura on focus */
-    box-shadow: 0 0 6px var(--color-accent-primary); 
+    /* Strong Focus Pop */
+    box-shadow: 0 0 10px var(--color-accent-primary); 
     outline: none;
 }
 
@@ -118,14 +118,14 @@ button {
     cursor: pointer;
     font-weight: bold;
     transition: background-color 0.2s, box-shadow 0.2s;
-    /* Subtle button aura */
-    box-shadow: 0 0 8px rgba(233, 30, 99, 0.3); 
+    /* Button Pop */
+    box-shadow: 0 0 12px rgba(233, 30, 99, 0.5); 
 }
 
 button:hover {
     background-color: #ff527b; /* Lighter orchid on hover */
-    /* Increased, but still soft, aura on hover */
-    box-shadow: 0 0 12px rgba(233, 30, 99, 0.5); 
+    /* Stronger Button Pop */
+    box-shadow: 0 0 20px rgba(233, 30, 99, 0.8); 
 }
 
 /* Auth Section */
@@ -134,14 +134,14 @@ button:hover {
     border: 1px solid var(--color-border);
     border-radius: 8px;
     margin-bottom: 20px;
-    /* Very subtle container glow */
-    box-shadow: 0 0 8px rgba(233, 30, 99, 0.05); 
+    /* Subtle container glow */
+    box-shadow: 0 0 10px rgba(233, 30, 99, 0.15); 
 }
 #auth > div {
     margin-bottom: 15px;
 }
 
-/* Search and VA Language Controls Layout (Rest of 2. Form and Controls remains the same) */
+/* Search and VA Language Controls Layout */
 .controls-container {
     display: flex;
     justify-content: space-between;
@@ -226,7 +226,7 @@ button:hover {
 
 
 /* ------------------- */
-/* 3. Watched List (Card Layout) (Orchid Aura) */
+/* 3. Watched List (Card Layout) (Vibrant Orchid Pop) */
 /* ------------------- */
 #watched-list.grid-container {
     list-style: none;
@@ -251,17 +251,17 @@ button:hover {
     align-items: center;
     text-align: center;
     
-    /* Soft Aura border/shadow */
-    border: 1px solid rgba(233, 30, 99, 0.15); 
-    box-shadow: 0 0 8px rgba(233, 30, 99, 0.15);
+    /* Card Pop */
+    border: 1px solid rgba(233, 30, 99, 0.3); 
+    box-shadow: 0 0 10px rgba(233, 30, 99, 0.3);
     transition: transform 0.2s, box-shadow 0.2s;
     height: 100%;
 }
 
 #watched-list li:hover {
-    transform: translateY(-2px); 
-    /* Increased, but soft, aura on hover */
-    box-shadow: 0 0 15px rgba(233, 30, 99, 0.4);
+    transform: translateY(-4px); 
+    /* Stronger Card Pop on hover */
+    box-shadow: 0 0 25px rgba(233, 30, 99, 0.6);
 }
 
 /* --- IMAGE FIX CSS --- */
@@ -272,7 +272,7 @@ button:hover {
     overflow: hidden;
     border-radius: 4px;
     /* Use secondary color for image frame aura */
-    box-shadow: 0 0 6px rgba(255, 110, 64, 0.4); 
+    box-shadow: 0 0 10px rgba(255, 224, 0, 0.6); 
     margin-bottom: 10px;
     flex-shrink: 0;
 }
@@ -312,7 +312,7 @@ button:hover {
     white-space: normal; 
     overflow: visible; 
     text-align: center;
-    text-shadow: 0 0 2px rgba(233, 30, 99, 0.5); /* Soft text aura */
+    text-shadow: 0 0 3px rgba(233, 30, 99, 0.8); /* Text Pop */
 }
 
 /* Description Text (Initial Clipping State) */
@@ -344,7 +344,7 @@ button:hover {
 .read-more-btn:hover {
     text-decoration: underline;
     background: none;
-    text-shadow: 0 0 2px var(--color-accent-highlight);
+    text-shadow: 0 0 3px var(--color-accent-highlight);
 }
 
 /* Class added by JS when Read More is clicked */
@@ -381,8 +381,8 @@ button:hover {
     border-radius: 3px;
     font-weight: bold;
     text-shadow: none;
-    /* Subtle secondary aura */
-    box-shadow: 0 0 5px rgba(255, 110, 64, 0.4);
+    /* Secondary Pop */
+    box-shadow: 0 0 8px rgba(255, 224, 0, 0.6);
 }
 
 /* --- NEW: VA Highlight Clickable Style --- */
@@ -392,15 +392,15 @@ button:hover {
 }
 
 .highlight.clickable:hover {
-    background-color: #ff8a65; /* Lighter orange on hover */
-    transform: scale(1.02);
-    box-shadow: 0 0 8px rgba(255, 110, 64, 0.6);
+    background-color: #ffed40; /* Lighter yellow on hover */
+    transform: scale(1.05);
+    box-shadow: 0 0 12px rgba(255, 224, 0, 0.8);
 }
 
 /* Style for when a filter is active */
 .highlight.clickable.active-filter {
-    background-color: #f4511e; /* Darker Orange */
-    box-shadow: 0 0 10px #f4511e;
+    background-color: #ffb300; /* Darker Yellow/Orange */
+    box-shadow: 0 0 15px #ffb300;
 }
 /* -------------------------------------- */
 
@@ -424,19 +424,19 @@ button:hover {
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.2s, box-shadow 0.2s;
-    box-shadow: 0 0 3px rgba(233, 30, 99, 0.1);
+    box-shadow: 0 0 5px rgba(233, 30, 99, 0.2);
 }
 
 .navbar button:hover {
     background-color: #404050;
-    box-shadow: 0 0 6px rgba(233, 30, 99, 0.2);
+    box-shadow: 0 0 10px rgba(233, 30, 99, 0.4);
 }
 
 .navbar button.active {
     background-color: var(--color-accent-primary);
     color: var(--color-background-dark);
     font-weight: bold;
-    box-shadow: 0 0 10px rgba(233, 30, 99, 0.5);
+    box-shadow: 0 0 15px var(--color-accent-primary);
 }
 
 /* Styling for Pagination Controls */
@@ -455,7 +455,7 @@ button:hover {
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    box-shadow: 0 0 8px rgba(233, 30, 99, 0.3); 
+    box-shadow: 0 0 10px rgba(233, 30, 99, 0.4); 
 }
 
 #pagination-controls button:disabled {
@@ -472,7 +472,7 @@ button:hover {
 }
 
 /* ------------------- */
-/* 6. Notes Modal & Buttons (Orchid Aura) */
+/* 6. Notes Modal & Buttons (Vibrant Orchid Pop) */
 /* ------------------- */
 
 /* Grouping the Notes and Remove buttons */
@@ -491,16 +491,16 @@ button:hover {
     padding: 5px 10px;
     font-size: 0.9em;
     flex-grow: 1;
-    box-shadow: 0 0 6px rgba(126, 87, 194, 0.4);
+    box-shadow: 0 0 8px rgba(126, 87, 194, 0.5);
 }
 
 .notes-btn:hover {
     background-color: #673ab7; 
-    box-shadow: 0 0 10px rgba(126, 87, 194, 0.6);
+    box-shadow: 0 0 12px rgba(126, 87, 194, 0.8);
 }
 
 .remove-btn {
-    background-color: var(--color-accent-highlight); /* Secondary accent (Orange) for remove */
+    background-color: var(--color-accent-highlight); /* Secondary accent (Yellow) for remove */
     color: var(--color-background-dark);
     padding: 5px 10px;
     margin-top: 0; 
@@ -508,12 +508,12 @@ button:hover {
     font-size: 0.9em;
     flex-shrink: 0; 
     flex-grow: 1; 
-    box-shadow: 0 0 6px rgba(255, 110, 64, 0.4);
+    box-shadow: 0 0 8px rgba(255, 224, 0, 0.5);
 }
 
 .remove-btn:hover {
-    background-color: #ff5e28;
-    box-shadow: 0 0 10px rgba(255, 110, 64, 0.6);
+    background-color: #ffc107;
+    box-shadow: 0 0 12px rgba(255, 224, 0, 0.8);
 }
 
 /* Modal Content Box */
@@ -526,14 +526,14 @@ button:hover {
     width: 80%;
     max-width: 600px;
     position: relative;
-    /* Subtler modal aura */
-    box-shadow: 0 0 20px rgba(233, 30, 99, 0.3); 
+    /* Stronger modal pop */
+    box-shadow: 0 0 30px rgba(233, 30, 99, 0.5); 
 }
 
 .modal-content h3 {
     color: var(--color-accent-primary);
     margin-top: 0;
-    text-shadow: 0 0 3px var(--color-accent-primary);
+    text-shadow: 0 0 5px var(--color-accent-primary);
 }
 
 /* Close button */
@@ -543,7 +543,7 @@ button:hover {
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
-    text-shadow: 0 0 3px var(--color-accent-highlight);
+    text-shadow: 0 0 5px var(--color-accent-highlight);
 }
 
 .close-button:hover,
@@ -566,7 +566,7 @@ button:hover {
     margin: 10px 0 20px 0;
     box-sizing: border-box;
     resize: vertical;
-    box-shadow: inset 0 0 3px rgba(233, 30, 99, 0.1);
+    box-shadow: inset 0 0 5px rgba(233, 30, 99, 0.3);
 }
 
 /* Modal Save Button */
@@ -577,7 +577,7 @@ button:hover {
 }
 
 /* ------------------- */
-/* 7. Profile Button & Sidebar Styles (Orchid Aura) */
+/* 7. Profile Button & Sidebar Styles (Vibrant Orchid Pop) */
 /* ------------------- */
 
 /* The main profile button element */
@@ -588,12 +588,12 @@ button:hover {
     padding: 10px 15px; 
     border-radius: 5px; 
     cursor: pointer;
-    box-shadow: 0 0 6px rgba(233, 30, 99, 0.2); 
+    box-shadow: 0 0 8px rgba(233, 30, 99, 0.4); 
     transition: background-color 0.2s, box-shadow 0.2s;
 }
 .profile-button:hover {
     background-color: #404050;
-    box-shadow: 0 0 10px rgba(233, 30, 99, 0.3);
+    box-shadow: 0 0 15px rgba(233, 30, 99, 0.6);
 }
 
 /* 1. Notification Icon (Bell) */
@@ -607,7 +607,7 @@ button:hover {
     flex-shrink: 0;
     height: auto;
     width: auto;
-    text-shadow: 0 0 3px var(--color-accent-highlight);
+    text-shadow: 0 0 5px var(--color-accent-highlight);
 }
 .notification-icon:hover {
     background-color: transparent;
@@ -621,7 +621,7 @@ button:hover {
     border-radius: 50%;
     margin-right: 5px; 
     border: none; 
-    box-shadow: 0 0 3px var(--color-accent-highlight);
+    box-shadow: 0 0 5px var(--color-accent-highlight);
     flex-shrink: 0;
 }
 
@@ -636,8 +636,8 @@ button:hover {
     background-color: #0f0f1a; 
     border-left: 3px solid var(--color-accent-primary);
     padding: 20px;
-    /* Soft sidebar aura */
-    box-shadow: -5px 0 20px rgba(233, 30, 99, 0.3); 
+    /* Strong sidebar pop */
+    box-shadow: -5px 0 30px rgba(233, 30, 99, 0.6); 
     z-index: 45;
 
     transform: translateX(100%);
@@ -655,7 +655,7 @@ button:hover {
     border-bottom: 1px solid var(--color-border);
     padding-bottom: 10px;
     margin-bottom: 20px;
-    text-shadow: 0 0 3px var(--color-accent-primary);
+    text-shadow: 0 0 5px var(--color-accent-primary);
 }
 
 /* --- Stats Display Styles --- */
@@ -665,8 +665,8 @@ button:hover {
     border-radius: 5px;
     text-align: center;
     border: 1px solid var(--color-accent-primary);
-    /* Soft internal aura */
-    box-shadow: inset 0 0 5px rgba(233, 30, 99, 0.1); 
+    /* Internal Pop */
+    box-shadow: inset 0 0 8px rgba(233, 30, 99, 0.2); 
 }
 
 .stat-value {
@@ -675,7 +675,7 @@ button:hover {
     font-weight: bold;
     color: var(--color-accent-highlight); 
     margin-bottom: 5px;
-    text-shadow: 0 0 3px var(--color-accent-highlight);
+    text-shadow: 0 0 5px var(--color-accent-highlight);
     word-wrap: break-word;
 }
 
@@ -692,11 +692,11 @@ button:hover {
     width: 100%;
     background-color: var(--color-accent-highlight); 
     color: var(--color-background-dark);
-    box-shadow: 0 0 8px rgba(255, 110, 64, 0.4);
+    box-shadow: 0 0 10px rgba(255, 224, 0, 0.6);
 }
 #profile-sidebar #logout-btn:hover {
-    background-color: #ff5e28;
-    box-shadow: 0 0 12px rgba(255, 110, 64, 0.6);
+    background-color: #ffc107;
+    box-shadow: 0 0 15px rgba(255, 224, 0, 0.8);
 }
 
 /* --- REMOVE OLD DROPDOWN STYLES (Keep the ID for JS safety, but hide it) --- */
