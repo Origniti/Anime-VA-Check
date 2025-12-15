@@ -432,7 +432,7 @@ app.get('/api/friends/pending/:userId', async (req, res) => {
     }
 });
 
-// D. Handle Friend Request (Accept/Reject)
+// D. Handle Friend Request (Accept/Reject) - **FIXED WITH LOGGING**
 app.patch('/api/friends/request/:requestId', async (req, res) => {
     const requestId = parseInt(req.params.requestId);
     // userId is the authenticated user taking the action (must match the request recipient)
@@ -440,6 +440,10 @@ app.patch('/api/friends/request/:requestId', async (req, res) => {
     const currentUserId = parseInt(currentUserIdStr);
     const actionType = action.toLowerCase();
     
+    // START DEBUG LOG
+    console.log(`[REQUEST ACTION] ID: ${requestId}, User: ${currentUserId}, Action: ${actionType}`);
+    // END DEBUG LOG
+
     if (isNaN(requestId) || isNaN(currentUserId) || (actionType !== 'accept' && actionType !== 'reject')) {
         return res.status(400).json({ success: false, error: 'Invalid request ID, user ID, or action.' });
     }
@@ -455,13 +459,17 @@ app.patch('/api/friends/request/:requestId', async (req, res) => {
             WHERE id = $1 AND recipient_id = $2 AND status = 'pending';
         `;
         const requestResult = await client.query(requestQuery, [requestId, currentUserId]);
-
+        
+        // This check is the first possible failure point if the request ID or user ID is wrong.
         if (requestResult.rows.length === 0) {
             await client.query('ROLLBACK');
             return res.status(404).json({ success: false, error: 'Pending request not found or you are not the recipient.' });
         }
         
         const { requester_id, recipient_id } = requestResult.rows[0];
+        // START DEBUG LOG
+        console.log(`[REQUEST FOUND] Requester: ${requester_id}, Recipient: ${recipient_id}`);
+        // END DEBUG LOG
 
         // 2. Update the request status
         const updateRequestQuery = `
@@ -475,6 +483,9 @@ app.patch('/api/friends/request/:requestId', async (req, res) => {
             // 3. If accepted, create a friendship entry in friends_list
             const user1 = Math.min(requester_id, recipient_id);
             const user2 = Math.max(requester_id, recipient_id);
+            // START DEBUG LOG
+            console.log(`[FRIENDSHIP INSERT] Inserting pair: (${user1}, ${user2})`);
+            // END DEBUG LOG
 
             const insertFriendshipQuery = `
                 INSERT INTO friends_list (user_id_1, user_id_2)
@@ -489,7 +500,8 @@ app.patch('/api/friends/request/:requestId', async (req, res) => {
 
     } catch (error) {
         await client.query('ROLLBACK'); // Rollback on error
-        console.error(`Error processing friend request ${actionType}:`, error);
+        // CRITICAL: This line will print the exact database error in your Render logs
+        console.error(`CRITICAL DB ERROR processing friend request ${actionType}:`, error); 
         res.status(500).json({ success: false, error: 'Server error processing request.' });
     } finally {
         client.release();
