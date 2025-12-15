@@ -1,51 +1,57 @@
 /*
  * ---------------------------------------
- * NEO-VINTAGE DARK THEME (Warm, Textured Depth)
+ * HIGH-TECH FROSTED GLASS THEME
  * ---------------------------------------
- * Primary Accent: Muted Rust/Copper (#FF8A65) - For action/focus
- * Secondary Accent: Deep Teal (#00838F) - For subtle interface contrast
- * Background: Deep Charcoal Black (#212121)
- * Text: Soft Cream (#ECEFF1)
+ * Primary Accent: Icy Blue/Cyan (#00C8FF) - For action/focus
+ * Secondary Accent: Silver Gray (#B0BEC5) - For subtle contrast
+ * Background: Deep Navy/Black (#080E14)
+ * Text: Pure White (#FFFFFF)
  */
 
 /* ------------------- */
-/* 1. Color Palette & Globals (Neo-Vintage Dark) */
+/* 1. Color Palette & Globals (High-Tech Frosted Glass) */
 /* ------------------- */
 :root {
     /* Base Colors */
-    --color-background-dark: #212121; /* Deep Charcoal Black */
-    --color-background-light: #2c2c2c; /* Card/Container background */
-    --color-text-main: #ECEFF1; /* Soft Cream/Off-White text */
+    --color-background-dark: #080E14; /* Deep Navy/Black */
+    --color-background-light: rgba(255, 255, 255, 0.05); /* Semi-transparent base */
+    --color-text-main: #FFFFFF; /* Pure White text */
     --color-text-subtle: #9E9E9E; /* Muted gray text */
-    --color-border: #424242; /* Medium dark separator border */
+    --color-border: #1a3e5c; /* Darker blue border */
 
     /* Accent Colors */
-    --color-accent-primary: #FF8A65; /* Muted Rust/Copper (Warm Focus) */
-    --color-accent-secondary: #00838F; /* Deep Teal (Cool Contrast) */
+    --color-accent-primary: #00C8FF; /* Icy Blue/Cyan (Action/Focus) */
+    --color-accent-secondary: #B0BEC5; /* Silver Gray (Interface elements) */
 
-    /* Fonts (Using system defaults but favoring a clean serif for headers if possible) */
-    --font-family-main: 'Georgia', 'Times New Roman', serif; /* Vintage feel */
-    --font-family-sans: 'Helvetica Neue', Arial, sans-serif;
+    /* Fonts */
+    --font-family-main: 'Segoe UI', 'Roboto', sans-serif; /* Clean, modern sans-serif */
 }
 
 body {
     background-color: var(--color-background-dark);
     color: var(--color-text-main);
-    font-family: var(--font-family-sans);
+    font-family: var(--font-family-main);
     margin: 0;
     padding: 0;
+    
+    /* Subtle background glow/texture for high-tech feel */
+    background-image: radial-gradient(circle at center, rgba(0, 200, 255, 0.05) 0%, rgba(8, 14, 20, 1) 70%);
+    background-size: cover;
+    background-attachment: fixed;
 }
 
 #app {
     max-width: 1200px;
     margin: 50px auto;
     padding: 30px;
-    background-color: var(--color-background-light); 
-    border-radius: 6px;
-    /* Deeper, more noticeable lift shadow */
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6); 
-    position: relative;
+    background-color: rgba(18, 18, 18, 0.4); /* Dark semi-transparent layer */
+    border-radius: 8px;
+    /* Sharp, defined border and subtle box shadow */
     border: 1px solid var(--color-border);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6), 0 0 10px rgba(0, 200, 255, 0.1); 
+    position: relative;
+    /* Enable Frosted Glass for deeper effects later */
+    backdrop-filter: blur(5px);
 }
 
 /* Main Application Title */
@@ -54,10 +60,9 @@ body {
     text-align: center;
     margin-bottom: 35px;
     font-size: 3em;
-    letter-spacing: 1px;
-    font-family: var(--font-family-main);
-    /* Subtle text shadow for depth */
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+    letter-spacing: 4px;
+    /* Electric glow for the main title */
+    text-shadow: 0 0 10px rgba(0, 200, 255, 0.8), 0 0 20px rgba(0, 200, 255, 0.4);
 }
 
 /* Section Title Style */
@@ -67,10 +72,10 @@ body {
     margin-top: 30px;
     margin-bottom: 25px;
     font-size: 2.5em;
-    letter-spacing: 0.5px;
-    border-bottom: 2px dashed var(--color-accent-secondary);
-    padding-bottom: 12px;
-    font-family: var(--font-family-main);
+    letter-spacing: 1px;
+    /* Clean line separator */
+    border-bottom: 2px solid var(--color-accent-primary);
+    padding-bottom: 10px;
 }
 
 h2 {
@@ -81,21 +86,20 @@ h2 {
 }
 
 /* ------------------- */
-/* 2. Form and Controls (Neo-Vintage Dark) */
+/* 2. Form and Controls (High-Tech) */
 /* ------------------- */
 input[type="text"], 
 input[type="password"], 
 select {
-    background-color: #383838;
+    background-color: rgba(26, 46, 62, 0.5); /* Semi-transparent blue input */
     color: var(--color-text-main);
     border: 1px solid var(--color-border);
     padding: 12px;
-    border-radius: 3px;
+    border-radius: 4px;
     margin: 5px 0 15px 0;
     width: 100%;
     box-sizing: border-box;
-    /* Subtle inner shadow for recessed look */
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6); 
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3); 
     transition: border-color 0.2s, background-color 0.2s;
 }
 
@@ -103,9 +107,8 @@ input[type="text"]:focus,
 input[type="password"]:focus,
 select:focus {
     border-color: var(--color-accent-primary);
-    background-color: #424242;
-    /* Very subtle outer highlight */
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6), 0 0 3px var(--color-accent-primary); 
+    background-color: rgba(30, 50, 70, 0.7);
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3), 0 0 8px rgba(0, 200, 255, 0.8); 
     outline: none;
 }
 
@@ -114,27 +117,28 @@ button {
     color: var(--color-background-dark); 
     border: none;
     padding: 12px 18px;
-    border-radius: 3px;
+    border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     transition: background-color 0.2s, box-shadow 0.2s;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+    /* Button Glow */
+    box-shadow: 0 0 10px rgba(0, 200, 255, 0.5);
 }
 
 button:hover {
-    background-color: #ffb799; /* Lighter copper on hover */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+    background-color: #55E8FF; /* Lighter cyan on hover */
+    box-shadow: 0 0 15px rgba(0, 200, 255, 0.9);
 }
 
 /* Auth Section */
 #auth {
     padding: 25px;
-    border: 1px solid var(--color-accent-secondary);
+    border: 1px solid var(--color-accent-primary);
     border-radius: 6px;
     margin-bottom: 25px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); 
+    box-shadow: 0 0 10px rgba(0, 200, 255, 0.3); 
 }
 #auth > div {
     margin-bottom: 15px;
@@ -154,29 +158,13 @@ button:hover {
     align-items: center;
     margin-bottom: 20px;
 }
-.controls-bar select {
-    width: auto;
-    min-width: 120px;
-    margin-left: 5px;
-    margin-bottom: 0;
-}
-.controls-bar input[type="text"] {
-    width: 300px; 
-    margin-right: auto; 
-    margin-bottom: 0;
-}
-.controls-container label,
-.controls-bar label {
-    color: var(--color-text-subtle);
-    margin-right: 5px;
-}
 
 /* Search Results Dropdown */
 #search-results {
     list-style: none;
     padding: 0;
-    background-color: #383838;
-    border: 1px solid var(--color-border);
+    background-color: rgba(18, 18, 18, 0.8);
+    border: 1px solid var(--color-accent-primary);
     border-top: none;
     border-radius: 0 0 4px 4px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
@@ -188,21 +176,17 @@ button:hover {
     padding: 10px 15px;
     cursor: pointer;
     transition: background-color 0.15s;
-    border-bottom: 1px solid #424242;
-}
-
-#search-results li:last-child {
-    border-bottom: none;
+    border-bottom: 1px solid #333;
 }
 
 #search-results li:hover {
-    background-color: #424242;
+    background-color: rgba(0, 200, 255, 0.1);
     color: var(--color-accent-primary);
 }
 
 
 /* ------------------- */
-/* 3. Watched List (Card Layout) (Neo-Vintage Dark) */
+/* 3. Watched List (Card Layout) (Frosted Glass) */
 /* ------------------- */
 #watched-list.grid-container {
     list-style: none;
@@ -211,32 +195,36 @@ button:hover {
     /* === CRITICAL GRID RULES for UNIFORM HEIGHT (3x3 grid preserved) === */
     display: grid; 
     grid-template-columns: repeat(3, 1fr); 
-    gap: 20px; 
+    gap: 25px; 
     grid-auto-rows: minmax(450px, auto); 
     align-items: stretch; 
 }
 
 #watched-list li {
-    background-color: var(--color-background-light);
+    /* Frosted Glass Effect */
+    background-color: rgba(255, 255, 255, 0.1); 
+    backdrop-filter: blur(10px); 
+    
     padding: 20px;
     margin-bottom: 0; 
-    border-radius: 4px;
+    border-radius: 10px;
     
     display: flex;
     flex-direction: column; 
     align-items: center;
     text-align: center;
     
-    /* Defined border with lift */
-    border: 1px solid var(--color-border); 
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    /* Accent border and glow */
+    border: 1px solid rgba(0, 200, 255, 0.3); 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
     height: 100%;
 }
 
 #watched-list li:hover {
-    transform: translateY(-4px); 
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.8);
+    transform: translateY(-5px); 
+    /* Stronger shadow and glow on hover */
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 200, 255, 0.6);
     border-color: var(--color-accent-primary); 
 }
 
@@ -246,9 +234,9 @@ button:hover {
     padding-bottom: 150%; 
     position: relative; 
     overflow: hidden;
-    border-radius: 3px;
-    /* Image frame uses secondary color for contrast */
-    box-shadow: 0 0 8px rgba(0, 131, 143, 0.5); 
+    border-radius: 4px;
+    /* Image frame uses a subtle silver gray */
+    box-shadow: 0 0 8px rgba(176, 190, 197, 0.5); 
     margin-bottom: 15px;
     flex-shrink: 0;
 }
@@ -261,7 +249,7 @@ button:hover {
     height: 100%;
     object-fit: cover; 
     background-color: #000000;
-    border-radius: 3px; 
+    border-radius: 4px; 
 }
 /* --- END IMAGE FIX CSS --- */
 
@@ -277,23 +265,23 @@ button:hover {
     align-items: center;
 }
 
-/* Original Title (Bold text, using serif font) */
+/* Original Title (Bold text) */
 .anime-info b {
     color: var(--color-accent-primary);
-    font-size: 1.2em;
+    font-size: 1.3em;
     display: block;
     margin-bottom: 8px;
     white-space: normal; 
     overflow: visible; 
     text-align: center;
-    font-family: var(--font-family-main);
-    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+    /* Subtle text glow */
+    text-shadow: 0 0 5px rgba(0, 200, 255, 0.5);
 }
 
 /* Description Text */
 .anime-description-text {
     color: var(--color-text-subtle);
-    font-style: italic; /* Subtle style change for body text */
+    font-style: normal;
     display: block;
     margin-top: 5px;
     margin-bottom: 0; 
@@ -308,7 +296,7 @@ button:hover {
 .read-more-btn {
     background: none;
     border: none;
-    color: var(--color-accent-secondary); /* Deep Teal for link contrast */
+    color: var(--color-accent-secondary); 
     cursor: pointer;
     padding: 0;
     margin-top: 5px;
@@ -321,7 +309,6 @@ button:hover {
     text-decoration: underline;
     background: none;
     color: var(--color-accent-primary);
-    text-shadow: none;
 }
 
 /* Class added by JS when Read More is clicked */
@@ -336,30 +323,30 @@ button:hover {
     flex-shrink: 0; 
     flex-grow: 0;
     width: 100%;
-    border-top: 1px solid var(--color-border);
+    border-top: 1px dashed var(--color-border);
     padding-top: 5px;
 }
 
 /* VA Tags */
 .va {
     display: inline-block;
-    background-color: #383838;
-    color: var(--color-text-main);
+    background-color: rgba(26, 46, 62, 0.8);
+    color: var(--color-accent-secondary);
     padding: 4px 8px;
     margin: 3px; 
-    border-radius: 2px;
+    border-radius: 3px;
     font-size: 0.8em; 
-    border: 1px solid #555;
+    border: 1px solid rgba(0, 200, 255, 0.2);
 }
 
 /* Shared VA Highlight */
 .highlight {
-    background-color: var(--color-accent-primary); /* Rust/Copper for highlight */
+    background-color: var(--color-accent-primary); 
     color: var(--color-background-dark);
     padding: 2px 4px;
-    border-radius: 2px;
+    border-radius: 3px;
     font-weight: bold;
-    box-shadow: 0 0 5px rgba(255, 138, 101, 0.6);
+    box-shadow: 0 0 8px rgba(0, 200, 255, 0.7);
 }
 
 /* --- VA Highlight Clickable Style --- */
@@ -369,15 +356,15 @@ button:hover {
 }
 
 .highlight.clickable:hover {
-    background-color: #ffb799; 
+    background-color: #55E8FF; 
     transform: scale(1.05);
-    box-shadow: 0 0 10px rgba(255, 138, 101, 0.9); 
+    box-shadow: 0 0 12px rgba(0, 200, 255, 1.0); 
 }
 
 /* Style for when a filter is active */
 .highlight.clickable.active-filter {
-    background-color: #bf360c; /* Deep Red/Brown when active */
-    box-shadow: 0 0 12px #bf360c;
+    background-color: #0088b3; 
+    box-shadow: 0 0 15px #0088b3;
 }
 /* -------------------------------------- */
 
@@ -393,20 +380,20 @@ button:hover {
 }
 
 .navbar button {
-    background-color: #383838; 
+    background-color: rgba(30, 50, 70, 0.8); 
     color: var(--color-text-main);
     padding: 10px 15px; 
     margin: 0 8px;
     border: 1px solid var(--color-border);
-    border-radius: 3px;
+    border-radius: 4px;
     box-shadow: none;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
 }
 
 .navbar button:hover {
-    background-color: #424242;
+    background-color: rgba(0, 200, 255, 0.1);
     color: var(--color-accent-primary);
     border-color: var(--color-accent-primary);
-    transform: none;
 }
 
 .navbar button.active {
@@ -414,7 +401,7 @@ button:hover {
     color: var(--color-background-dark);
     font-weight: bold;
     border-color: var(--color-accent-primary);
-    box-shadow: 0 0 8px rgba(255, 138, 101, 0.8);
+    box-shadow: 0 0 10px rgba(0, 200, 255, 0.8);
 }
 
 /* Styling for Pagination Controls */
@@ -428,7 +415,7 @@ button:hover {
 
 #pagination-controls button {
     padding: 10px 18px;
-    box-shadow: 0 0 8px rgba(255, 138, 101, 0.6); 
+    box-shadow: 0 0 10px rgba(0, 200, 255, 0.6); 
 }
 
 #pagination-controls button:disabled {
@@ -446,7 +433,7 @@ button:hover {
 }
 
 /* ------------------- */
-/* 6. Notes Modal & Buttons (Neo-Vintage Dark) */
+/* 6. Notes Modal & Buttons (High-Tech) */
 /* ------------------- */
 
 /* Grouping the Notes and Remove buttons */
@@ -460,37 +447,38 @@ button:hover {
 }
 
 .notes-btn {
-    background-color: var(--color-accent-secondary); /* Deep Teal for Notes */
-    color: var(--color-text-main);
+    background-color: var(--color-accent-secondary); 
+    color: var(--color-background-dark);
     padding: 10px 15px;
     font-size: 0.9em;
     flex-grow: 1;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 8px rgba(176, 190, 197, 0.5);
 }
 
 .notes-btn:hover {
-    background-color: #0097a7; 
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+    background-color: #90a4ae; 
+    box-shadow: 0 0 12px rgba(176, 190, 197, 0.9);
 }
 
 .remove-btn {
-    background-color: #c62828; /* Deep Red for remove action */
+    background-color: #d32f2f; /* Standard Red for remove action */
     color: var(--color-text-main);
     padding: 10px 15px;
     font-size: 0.9em;
     flex-shrink: 0; 
     flex-grow: 1; 
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 8px rgba(211, 47, 47, 0.5);
 }
 
 .remove-btn:hover {
     background-color: #e57373;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 0 12px rgba(211, 47, 47, 0.9);
 }
 
 /* Modal Content Box */
 .modal-content {
-    background-color: #2c2c2c;
+    background-color: rgba(26, 46, 62, 0.95);
+    backdrop-filter: blur(15px);
     margin: 10% auto;
     padding: 30px; 
     border: 2px solid var(--color-accent-primary);
@@ -498,13 +486,13 @@ button:hover {
     width: 80%;
     max-width: 600px;
     position: relative;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8); 
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 200, 255, 0.7); 
 }
 
 .modal-content h3 {
     color: var(--color-accent-primary);
     margin-top: 0;
-    font-family: var(--font-family-main);
+    text-shadow: 0 0 5px rgba(0, 200, 255, 0.5);
 }
 
 /* Close button */
@@ -514,7 +502,7 @@ button:hover {
     font-size: 32px;
     font-weight: bold;
     cursor: pointer;
-    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.7);
+    text-shadow: 0 0 5px rgba(176, 190, 197, 0.5);
 }
 
 .close-button:hover,
@@ -528,15 +516,15 @@ button:hover {
 #notes-textarea {
     width: 100%;
     min-height: 200px;
-    background-color: #383838;
+    background-color: #121e28;
     color: var(--color-text-main);
-    border: 1px solid var(--color-accent-secondary);
+    border: 1px solid var(--color-accent-primary);
     padding: 12px;
-    border-radius: 3px;
+    border-radius: 4px;
     margin: 10px 0 20px 0;
     box-sizing: border-box;
     resize: vertical;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+    box-shadow: inset 0 0 5px rgba(0, 200, 255, 0.3);
 }
 
 /* Modal Save Button */
@@ -547,23 +535,23 @@ button:hover {
 }
 
 /* ------------------- */
-/* 7. Profile Button & Sidebar Styles (Neo-Vintage Dark) */
+/* 7. Profile Button & Sidebar Styles (High-Tech) */
 /* ------------------- */
 
 /* The main profile button element */
 .profile-button {
     display: flex;
     align-items: center;
-    background-color: #383838; 
+    background-color: rgba(26, 46, 62, 0.8); 
     padding: 10px 15px; 
     border-radius: 4px; 
     cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); 
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5); 
     transition: background-color 0.2s, box-shadow 0.2s;
 }
 .profile-button:hover {
-    background-color: #424242;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
+    background-color: rgba(30, 50, 70, 0.9);
+    box-shadow: 0 4px 12px rgba(0, 200, 255, 0.4);
 }
 
 /* 1. Notification Icon (Bell) */
@@ -599,10 +587,11 @@ button:hover {
     right: 0;
     width: 320px;
     height: 100%;
-    background-color: #1a1a1a; 
+    background-color: rgba(8, 14, 20, 0.95); 
+    backdrop-filter: blur(10px);
     border-left: 2px solid var(--color-accent-primary);
     padding: 25px;
-    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.8); 
+    box-shadow: -5px 0 20px rgba(0, 200, 255, 0.6); 
     z-index: 45;
 
     transform: translateX(100%);
@@ -620,17 +609,17 @@ button:hover {
     border-bottom: 1px solid var(--color-border);
     padding-bottom: 10px;
     margin-bottom: 25px;
-    font-family: var(--font-family-main);
+    text-shadow: 0 0 5px rgba(0, 200, 255, 0.5);
 }
 
 /* --- Stats Display Styles --- */
 .stat-item {
-    background-color: #2c2c2c;
+    background-color: rgba(18, 40, 60, 0.6);
     padding: 18px;
     border-radius: 4px;
     text-align: center;
     border: 1px solid var(--color-accent-secondary);
-    box-shadow: inset 0 1px 5px rgba(0, 0, 0, 0.4); 
+    box-shadow: inset 0 0 8px rgba(0, 200, 255, 0.1); 
 }
 
 .stat-value {
@@ -639,7 +628,7 @@ button:hover {
     font-weight: bold;
     color: var(--color-accent-primary); 
     margin-bottom: 5px;
-    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+    text-shadow: 0 0 5px rgba(0, 200, 255, 0.5);
     word-wrap: break-word;
 }
 
@@ -654,13 +643,13 @@ button:hover {
 #profile-sidebar #logout-btn {
     margin-top: 30px;
     width: 100%;
-    background-color: #c62828; 
+    background-color: #d32f2f; 
     color: var(--color-text-main);
-    box-shadow: 0 0 8px rgba(198, 40, 40, 0.6);
+    box-shadow: 0 0 10px rgba(211, 47, 47, 0.6);
 }
 #profile-sidebar #logout-btn:hover {
     background-color: #e57373;
-    box-shadow: 0 0 12px rgba(198, 40, 40, 0.9);
+    box-shadow: 0 0 15px rgba(211, 47, 47, 0.9);
 }
 
 /* --- REMOVE OLD DROPDOWN STYLES (Keep the ID for JS safety, but hide it) --- */
@@ -673,7 +662,6 @@ button:hover {
 /* 5. Responsive Adjustments (Retained) */
 /* ------------------- */
 @media (max-width: 950px) {
-    /* Change from 3 columns to 2 columns on medium screens */
     #watched-list.grid-container {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -685,12 +673,10 @@ button:hover {
         padding: 15px;
     }
     
-    /* Change from 2 columns to 1 column on small screens */
     #watched-list.grid-container {
         grid-template-columns: 1fr;
     }
     
-    /* Ensure full title/description is shown on mobile */
     .anime-description-text {
         max-height: none;
         overflow: visible;
@@ -705,7 +691,6 @@ button:hover {
         text-align: left;
     }
     
-    /* Adjustments for the new image container on mobile */
     .anime-cover-container {
         max-width: 150px; 
         margin: 0 auto 10px auto; 
@@ -716,33 +701,16 @@ button:hover {
         flex-direction: column;
         align-items: flex-start;
     }
-
-    .controls-bar input[type="text"] {
-        width: 100%;
-        margin-right: 0;
-        margin-bottom: 10px;
-    }
     
     .modal-content {
         width: 90%;
         margin: 20% auto;
     }
     
-    #pagination-controls {
-        padding-top: 20px; 
-    }
-
-    /* RESPONSIVE FIX: Sidebar should take up more space on smaller screens */
     #profile-sidebar {
         width: 100%; 
         max-width: 100%;
         top: 0; 
         padding-top: 80px; 
-    }
-    
-    /* Ensure the profile button is still visible and clickable */
-    #profile-container {
-        top: 15px; 
-        right: 15px;
     }
 }
