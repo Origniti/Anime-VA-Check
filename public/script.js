@@ -20,7 +20,7 @@ const profileSidebar = document.getElementById('profile-sidebar');
 
 
 // -------------------
-// 1. Initial Setup and Navigation (Updated Profile Button Handler)
+// 1. Initial Setup and Navigation (Updated Profile Button Handler & Nav)
 // -------------------
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -29,9 +29,13 @@ document.addEventListener('DOMContentLoaded', () => {
     username = localStorage.getItem('animeTrackerUsername');
     
     if (userId) {
+        // Ensure userId is treated as a string for use in local storage and fetch
+        userId = String(userId); 
         document.getElementById('profile-username').textContent = username;
         showView('app-main');
         fetchWatchedAnime(userId);
+        // Load pending requests immediately if user is logged in (for the bell icon notification, etc.)
+        fetchPendingRequests();
     } else {
         showView('auth');
     }
@@ -44,6 +48,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Setup Modal Listeners
     setupModalListeners();
+
+    // NEW: Setup Friend Search Listeners
+    setupFriendSearchListeners();
 });
 
 // Helper to switch between Auth and App views
@@ -60,7 +67,7 @@ function showView(viewId) {
     }
 }
 
-// Helper to switch between Watched and Search sub-views
+// Helper to switch between Watched and Search sub-views (Updated to include find-friends)
 function showSubView(subViewId) {
     document.querySelectorAll('#app-main .sub-view').forEach(view => {
         view.style.display = 'none';
@@ -69,10 +76,16 @@ function showSubView(subViewId) {
 
     document.querySelectorAll('.navbar button').forEach(button => {
         button.classList.remove('active');
-        if (button.dataset.view === subViewId.replace('page-', '')) {
+        const viewName = subViewId.replace('page-', '');
+        if (button.dataset.view === viewName) {
             button.classList.add('active');
         }
     });
+
+    // NEW LOGIC for the Find Friends tab
+    if (subViewId === 'page-find-friends') {
+        fetchPendingRequests(); // Load requests whenever the tab is opened
+    }
 }
 
 function setupMainAppListeners() {
@@ -153,6 +166,8 @@ function setupMainAppListeners() {
 
     // Pagination Listeners
     document.getElementById('prev-page')?.addEventListener('click', () => {
+        const filteredList = getFilteredWatchedList();
+        const maxPage = Math.ceil(filteredList.length / itemsPerPage);
         if (currentPage > 1) {
             currentPage--;
             renderWatchedList();
@@ -235,7 +250,7 @@ function setupAuthListeners() {
         const data = await res.json();
 
         if (data.success) {
-            userId = data.userId;
+            userId = String(data.userId); // Ensure it's a string
             username = usernameInput;
             localStorage.setItem('animeTrackerUserId', userId);
             localStorage.setItem('animeTrackerUsername', username);
@@ -244,6 +259,8 @@ function setupAuthListeners() {
             showView('app-main');
             showSubView('page-watched');
             fetchWatchedAnime(userId);
+            // Fetch pending requests immediately after login
+            fetchPendingRequests();
         } else {
             messageEl.textContent = data.error || 'Login failed.';
         }
@@ -284,7 +301,7 @@ async function handleSearch(e) {
             const li = document.createElement('li');
             li.dataset.anime = JSON.stringify(anime);
             li.innerHTML = `
-                <img src="${coverUrl}" style="width: 30px; height: 45px; vertical-align: middle; margin-right: 10px; border-radius: 3px;">
+                <img src="${coverUrl}" onerror="this.onerror=null; this.src='${PLACEHOLDER_IMAGE}'" style="width: 30px; height: 45px; vertical-align: middle; margin-right: 10px; border-radius: 3px;">
                 <strong>${anime.title.romaji || anime.title.english}</strong> (Score: ${anime.averageScore || 'N/A'})
             `;
             searchResultsEl.appendChild(li);
@@ -351,7 +368,7 @@ async function handleAddAnime(e) {
 }
 
 // -------------------
-// 4. Watched Anime List Management (Updated fetchWatchedAnime)
+// 4. Watched Anime List Management 
 // -------------------
 
 // Helper to safely parse voice actor data string from DB
@@ -392,7 +409,7 @@ async function fetchWatchedAnime(userId) {
             currentPage = 1;
             renderWatchedList();
 
-            // NEW: Recalculate and render stats whenever the watched list is refreshed
+            // Recalculate and render stats whenever the watched list is refreshed
             calculateAndRenderStats(); 
         } else {
             console.error('Failed to fetch watched anime:', data.error);
@@ -430,7 +447,9 @@ function getFilteredWatchedList() {
     if (activeVAFilter) {
         filtered = filtered.filter(anime => {
             const vaString = anime.voice_actors_parsed[vaLang];
-            return vaString.includes(activeVAFilter);
+            // Check if any VA name contains the active filter name
+            const vaNames = vaString.split('|').map(entry => entry.split(':').pop().trim());
+            return vaNames.includes(activeVAFilter);
         });
     }
 
@@ -603,7 +622,7 @@ async function handleRemoveAnime(e) {
             watched = watched.filter(anime => anime.anime_id !== parseInt(animeId));
             // Re-render list
             renderWatchedList();
-            // NEW: Recalculate stats
+            // Recalculate stats
             calculateAndRenderStats();
         } else {
             alert(`Failed to remove anime: ${data.error}`);
@@ -692,8 +711,10 @@ async function handleSaveNotes() {
     }
 }
 
+// -------------------
+// 6. Stats Logic
+// -------------------
 
-// NEW FUNCTION: Calculate and Render Statistics
 function calculateAndRenderStats() {
     const statsContainer = document.getElementById('stats-content');
     if (!statsContainer) return;
@@ -722,7 +743,7 @@ function calculateAndRenderStats() {
         vaList.forEach(vaEntry => {
             // Extract the VA name, which is after the colon and space (e.g., 'Character: VA Name')
             const vaNameMatch = vaEntry.match(/: (.*)$/);
-            const vaName = vaNameMatch ? vaNameMatch[1].trim() : null;
+            const vaName = vaNameMatch ? vaNameMatch[1].trim() : vaEntry.trim(); // Fallback if no colon is found
 
             if (vaName) {
                 vaCount[vaName] = (vaCount[vaName] || 0) + 1;
@@ -762,4 +783,239 @@ function calculateAndRenderStats() {
             </div>
         </div>
     `;
+}
+
+
+// -------------------
+// 7. NEW FRIEND SYSTEM LOGIC
+// -------------------
+
+function setupFriendSearchListeners() {
+    // Listener for the friend search input (debounced for performance)
+    document.getElementById('friend-search-input')?.addEventListener('input', debounce(handleFriendSearch, 300));
+    
+    // Listener for the "Add Friend" buttons in the search results
+    document.getElementById('friend-search-results')?.addEventListener('click', (e) => {
+        if (e.target.dataset.action === 'send-request') {
+            const recipientId = e.target.dataset.recipientId;
+            handleSendFriendRequest(recipientId, e.target);
+        }
+    });
+
+    // Listener for the "Accept/Reject" buttons in the pending requests
+    document.getElementById('pending-requests-list')?.addEventListener('click', (e) => {
+        if (e.target.dataset.action === 'accept-request') {
+            const requestId = e.target.dataset.requestId;
+            handleRequestAction(requestId, 'accept', e.target);
+        }
+        if (e.target.dataset.action === 'reject-request') {
+            const requestId = e.target.dataset.requestId;
+            handleRequestAction(requestId, 'reject', e.target);
+        }
+    });
+}
+
+// Function to handle the user search API call
+async function handleFriendSearch(e) {
+    if (!userId) return;
+
+    const search = e.target.value.trim();
+    if (search.length < 3) {
+        document.getElementById('friend-search-results').innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">Start typing a username to search for friends.</li>';
+        return;
+    }
+
+    try {
+        // Call the new search API endpoint
+        const res = await fetch(`/api/users/search?q=${encodeURIComponent(search)}&userId=${userId}`);
+        const data = await res.json();
+
+        if (data.success) {
+            renderFriendSearchResults(data.users);
+        } else {
+            console.error("User search failed:", data.error);
+            document.getElementById('friend-search-results').innerHTML = `<li style="grid-column: 1; text-align: center; border: none; background: none; color: #f44336;">Error: ${data.error || 'Could not fetch users.'}</li>`;
+        }
+    } catch (e) {
+        console.error("Network error during friend search:", e);
+    }
+}
+
+// Function to render the search results
+function renderFriendSearchResults(users) {
+    const resultsEl = document.getElementById('friend-search-results');
+    resultsEl.innerHTML = '';
+
+    if (users.length === 0) {
+        resultsEl.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">No users found matching that name.</li>';
+        return;
+    }
+
+    users.forEach(user => {
+        let buttonText = 'Add Friend';
+        let buttonClass = 'add-friend-btn';
+        let disabled = '';
+        let buttonAction = 'send-request';
+        let statusMessage = '';
+
+        // Check the relationship status provided by the backend helper
+        if (user.relationshipStatus === 'friends') {
+            buttonText = 'Friends';
+            buttonClass = 'status-btn status-friends';
+            disabled = 'disabled';
+            buttonAction = 'none';
+        } else if (user.relationshipStatus === 'request_sent') {
+            buttonText = 'Pending (Sent)';
+            buttonClass = 'status-btn status-pending-sent';
+            disabled = 'disabled';
+            buttonAction = 'none';
+        } else if (user.relationshipStatus === 'request_received') {
+            // User can't send a request, they need to check their pending list
+            buttonText = 'Action Needed';
+            buttonClass = 'status-btn status-pending-received';
+            disabled = 'disabled';
+            buttonAction = 'none';
+            statusMessage = ' (<a href="#" onclick="showSubView(\'page-find-friends\')">Accept/Reject</a>)';
+        }
+
+        const li = document.createElement('li');
+        li.style.display = 'flex';
+        li.style.justifyContent = 'space-between';
+        li.style.alignItems = 'center';
+        li.style.backgroundColor = '#2c2c2c'; // Darker background for list items
+        
+        li.innerHTML = `
+            <span>
+                <strong style="font-size: 1.1em; color: var(--color-text-main);">${user.username}</strong>
+                <span style="color: var(--color-text-subtle);">${statusMessage}</span>
+            </span>
+            <button class="${buttonClass}" data-action="${buttonAction}" data-recipient-id="${user.id}" ${disabled}>
+                ${buttonText}
+            </button>
+        `;
+        resultsEl.appendChild(li);
+    });
+}
+
+// Function to handle sending the friend request
+async function handleSendFriendRequest(recipientId, buttonEl) {
+    if (!userId) return alert("You must be logged in to send a request.");
+
+    buttonEl.textContent = 'Sending...';
+    buttonEl.disabled = true;
+
+    try {
+        const res = await fetch(`/api/friends/request/${recipientId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: userId })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            buttonEl.textContent = 'Pending (Sent)';
+            buttonEl.classList.add('status-pending-sent');
+            alert(data.message);
+            
+            // Re-run the search to update the button status for this user
+            const searchInput = document.getElementById('friend-search-input');
+            if(searchInput) handleFriendSearch({target: searchInput});
+
+        } else {
+            buttonEl.textContent = 'Failed (Retry)';
+            buttonEl.disabled = false;
+            alert(data.error || 'Failed to send request.');
+        }
+
+    } catch (e) {
+        console.error("Send request failed:", e);
+        buttonEl.textContent = 'Network Error (Retry)';
+        buttonEl.disabled = false;
+    }
+}
+
+// -------------------
+// 8. Pending Requests Logic
+// -------------------
+
+// Function to fetch and render pending requests (received)
+async function fetchPendingRequests() {
+    if (!userId) return;
+
+    try {
+        // New API endpoint needed to fetch requests *received* by the current user
+        const res = await fetch(`/api/friends/pending/${userId}`);
+        const data = await res.json();
+
+        const requestsEl = document.getElementById('pending-requests-list');
+        requestsEl.innerHTML = '';
+        
+        if (data.success && data.requests.length > 0) {
+            data.requests.forEach(request => {
+                const li = document.createElement('li');
+                li.style.display = 'flex';
+                li.style.justifyContent = 'space-between';
+                li.style.alignItems = 'center';
+                li.style.backgroundColor = '#2c2c2c';
+                
+                li.innerHTML = `
+                    <span style="color: var(--color-accent-highlight);">${request.requester_username}</span>
+                    <span style="color: var(--color-text-subtle);"> wants to be friends.</span>
+                    <div>
+                        <button data-action="accept-request" data-request-id="${request.id}" style="background-color: #4CAF50; margin-right: 5px;">Accept</button>
+                        <button data-action="reject-request" data-request-id="${request.id}" style="background-color: #f44336;">Reject</button>
+                    </div>
+                `;
+                requestsEl.appendChild(li);
+            });
+            // Optional: Update the notification bell icon (not implemented here, but a place to add logic)
+        } else {
+            requestsEl.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">No pending friend requests.</li>';
+        }
+
+    } catch (e) {
+        console.error("Error fetching pending requests:", e);
+    }
+}
+
+// Function to handle the Accept or Reject action
+async function handleRequestAction(requestId, action, buttonEl) {
+    if (!userId) return;
+
+    buttonEl.textContent = 'Loading...';
+    buttonEl.closest('div').querySelectorAll('button').forEach(btn => btn.disabled = true);
+
+    try {
+        // New API endpoint needed to handle the action
+        const res = await fetch(`/api/friends/request/${requestId}`, {
+            method: 'PATCH', // Use PATCH for updates
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                userId: userId,
+                action: action 
+            })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            alert(`Request ${action}ed successfully!`);
+            
+            // Re-fetch pending requests and potentially update friend list elsewhere
+            fetchPendingRequests(); 
+
+            if (action === 'accept') {
+                // If the user accepts, they are now friends. We should also refetch the friends list later.
+            }
+
+        } else {
+            alert(data.error || `Failed to ${action} request.`);
+            buttonEl.closest('div').querySelectorAll('button').forEach(btn => btn.disabled = false);
+        }
+
+    } catch (e) {
+        console.error(`Error handling request action (${action}):`, e);
+        alert('Network error while processing request.');
+    }
 }
