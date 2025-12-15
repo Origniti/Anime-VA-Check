@@ -1,33 +1,30 @@
 /*
  * ---------------------------------------
- * VIBRANT ORCHID / DEEP TEAL POP STYLE SHEET
+ * MODERN MINIMALIST DARK THEME
  * ---------------------------------------
- * Primary Accent: Vibrant Orchid/Fuchsia (#E91E63) - HIGH GLOW
- * Secondary Accent (Functional): Electric Yellow (#FFE000) - ONLY for VA Highlights
- * Tertiary Accent (Interface): Deep Teal/Cyan (#00BCD4) - For Modal/Profile/Stats
- * Background: Deep Space Dark (#0a0a0f)
+ * Primary Accent: Electric Lime Green (#00FF00) - For action/focus
+ * Secondary Accent: Cool Gray/Silver (#B0BEC5) - For subtle text/borders
+ * Background: Obsidian Dark (#121212)
+ * Borders: Sharp, Clean Lines
  */
 
 /* ------------------- */
-/* 1. Color Palette & Globals (Orchid/Deep Teal Pop) */
+/* 1. Color Palette & Globals (Minimalist Dark) */
 /* ------------------- */
 :root {
     /* Base Colors */
-    --color-background-dark: #0a0a0f; /* Near black, deep space */
-    --color-background-light: #181820; /* Darker card background */
-    --color-text-main: #f0f0f0; /* Near white text */
-    --color-text-subtle: #c299c2; /* Soft purple for subtle text */
-    --color-border: #4a148c; /* Deep purple border */
+    --color-background-dark: #121212; /* Obsidian Dark */
+    --color-background-light: #1e1e1e; /* Card/Container background */
+    --color-text-main: #ffffff; /* Pure White text */
+    --color-text-subtle: #9e9e9e; /* Muted gray text */
+    --color-border: #333333; /* Dark gray clean border */
 
     /* Accent Colors */
-    --color-accent-primary: #e91e63; /* Orchid/Fuchsia (Primary Pop) */
-    
-    /* SECONDARY ACCENTS */
-    --color-accent-highlight-functional: #ffe000; /* Electric Yellow (VA Highlights ONLY) */
-    --color-accent-tertiary-interface: #00bcd4; /* Deep Teal/Cyan (Interface elements) */
+    --color-accent-primary: #00ff00; /* Electric Lime Green (Action/Focus) */
+    --color-accent-secondary: #b0bec5; /* Cool Gray/Silver (Interface elements) */
 
     /* Fonts */
-    --font-family-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --font-family-main: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
 body {
@@ -37,8 +34,8 @@ body {
     margin: 0;
     padding: 0;
     
-    /* Background Image Effect */
-    background-image: url('anime-bg.jpg');
+    /* Subtle texture or plain background for minimalism */
+    background-image: none; 
     background-size: cover;
     background-attachment: fixed;
     background-position: center top;
@@ -49,33 +46,32 @@ body {
     margin: 50px auto;
     padding: 20px;
     background-color: var(--color-background-light); 
-    border-radius: 12px;
-    /* Stronger Orchid Pop Effect */
-    box-shadow: 0 0 20px rgba(233, 30, 99, 0.4), 0 0 10px rgba(233, 30, 99, 0.2); 
+    border-radius: 4px; /* Sharp corners */
+    /* Minimal shadow - focusing on lift, not glow */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4); 
     position: relative;
 }
 
-/* Main Application Title (Appears when logged in) */
+/* Main Application Title */
 .app-main-title {
     color: var(--color-accent-primary);
     text-align: center;
     margin-bottom: 30px;
     font-size: 2.5em;
-    letter-spacing: 4px;
-    /* High Text Pop */
-    text-shadow: 0 0 8px rgba(233, 30, 99, 0.9), 0 0 15px rgba(233, 30, 99, 0.5); 
+    letter-spacing: 2px;
+    text-shadow: none; /* No glow */
 }
 
-/* New Section Title Style (For Register, Login, Page Titles) */
+/* Section Title Style */
 .section-title {
-    color: var(--color-accent-primary);
+    color: var(--color-text-main);
     text-align: center;
     margin-top: 30px;
     margin-bottom: 20px;
     font-size: 2.2em;
-    letter-spacing: 3px;
-    /* High Text Pop */
-    text-shadow: 0 0 6px rgba(233, 30, 99, 0.8), 0 0 10px rgba(233, 30, 99, 0.4);
+    letter-spacing: 1.5px;
+    border-bottom: 1px solid var(--color-accent-primary);
+    padding-bottom: 10px;
 }
 
 h2 {
@@ -86,30 +82,29 @@ h2 {
 }
 
 /* ------------------- */
-/* 2. Form and Controls (Orchid Pop) */
+/* 2. Form and Controls (Minimalist Dark) */
 /* ------------------- */
 input[type="text"], 
 input[type="password"], 
 select {
-    background-color: #12121a;
+    background-color: #282828; /* Slightly lighter input background */
     color: var(--color-text-main);
     border: 1px solid var(--color-border);
     padding: 10px;
-    border-radius: 4px;
+    border-radius: 2px; /* Very sharp corners */
     margin: 5px 0 15px 0;
     width: 100%;
     box-sizing: border-box;
-    /* Inner Pop */
-    box-shadow: inset 0 0 5px rgba(233, 30, 99, 0.2); 
-    transition: border-color 0.2s, box-shadow 0.2s;
+    box-shadow: none;
+    transition: border-color 0.2s, background-color 0.2s;
 }
 
 input[type="text"]:focus,
 input[type="password"]:focus,
 select:focus {
     border-color: var(--color-accent-primary);
-    /* Strong Focus Pop */
-    box-shadow: 0 0 10px var(--color-accent-primary); 
+    background-color: #383838;
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5); 
     outline: none;
 }
 
@@ -118,34 +113,33 @@ button {
     color: var(--color-background-dark); 
     border: none;
     padding: 10px 15px;
-    border-radius: 4px;
+    border-radius: 2px;
     cursor: pointer;
     font-weight: bold;
-    transition: background-color 0.2s, box-shadow 0.2s;
-    /* Button Pop */
-    box-shadow: 0 0 12px rgba(233, 30, 99, 0.5); 
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: background-color 0.2s, transform 0.1s;
+    box-shadow: none;
 }
 
 button:hover {
-    background-color: #ff527b; /* Lighter orchid on hover */
-    /* Stronger Button Pop */
-    box-shadow: 0 0 20px rgba(233, 30, 99, 0.8); 
+    background-color: #4aff4a; /* Lighter lime on hover */
+    transform: translateY(-1px);
 }
 
 /* Auth Section */
 #auth {
     padding: 20px;
     border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: 4px;
     margin-bottom: 20px;
-    /* Subtle container glow */
-    box-shadow: 0 0 10px rgba(233, 30, 99, 0.15); 
+    box-shadow: none; 
 }
 #auth > div {
     margin-bottom: 15px;
 }
 
-/* Search and VA Language Controls Layout */
+/* Controls Layout */
 .controls-container {
     display: flex;
     justify-content: space-between;
@@ -187,27 +181,14 @@ button:hover {
     margin: 5px 15px 5px 0;
 }
 
-.controls-container select {
-    width: auto;
-    min-width: 120px;
-    margin-left: 5px;
-    margin-bottom: 0;
-}
-
-#anime-search {
-    width: 100%;
-    margin-top: 10px;
-    margin-bottom: 20px;
-}
-
-/* Search Results Dropdown */
+/* Search Results Dropdown (Clean look) */
 #search-results {
     list-style: none;
     padding: 0;
-    background-color: #181820;
+    background-color: #282828;
     border: 1px solid var(--color-border);
     border-top: none;
-    border-radius: 0 0 6px 6px;
+    border-radius: 0 0 4px 4px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
     position: relative;
     z-index: 10;
@@ -217,7 +198,7 @@ button:hover {
     padding: 10px 15px;
     cursor: pointer;
     transition: background-color 0.15s;
-    border-bottom: 1px solid #282835;
+    border-bottom: 1px solid #333;
 }
 
 #search-results li:last-child {
@@ -225,22 +206,23 @@ button:hover {
 }
 
 #search-results li:hover {
-    background-color: #252530;
+    background-color: #383838;
+    color: var(--color-accent-primary);
 }
 
 
 /* ------------------- */
-/* 3. Watched List (Card Layout) (Orchid Pop) */
+/* 3. Watched List (Card Layout) (Minimalist Dark) */
 /* ------------------- */
 #watched-list.grid-container {
     list-style: none;
     padding: 0;
     
-    /* === CRITICAL GRID RULES for UNIFORM HEIGHT === */
+    /* === CRITICAL GRID RULES for UNIFORM HEIGHT (3x3 grid preserved) === */
     display: grid; 
     grid-template-columns: repeat(3, 1fr); 
     gap: 20px; 
-    grid-auto-rows: minmax(400px, auto); 
+    grid-auto-rows: minmax(450px, auto); /* Slightly taller cards */
     align-items: stretch; 
 }
 
@@ -248,24 +230,24 @@ button:hover {
     background-color: var(--color-background-light);
     padding: 15px;
     margin-bottom: 0; 
-    border-radius: 8px;
+    border-radius: 4px;
     
     display: flex;
     flex-direction: column; 
     align-items: center;
     text-align: center;
     
-    /* Card Pop */
-    border: 1px solid rgba(233, 30, 99, 0.3); 
-    box-shadow: 0 0 10px rgba(233, 30, 99, 0.3);
-    transition: transform 0.2s, box-shadow 0.2s;
+    /* Clean border, subtle hover lift and color change */
+    border: 1px solid var(--color-border); 
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
     height: 100%;
 }
 
 #watched-list li:hover {
-    transform: translateY(-4px); 
-    /* Stronger Card Pop on hover */
-    box-shadow: 0 0 25px rgba(233, 30, 99, 0.6);
+    transform: translateY(-3px); 
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.6);
+    border-color: var(--color-accent-primary); /* Highlight border on hover */
 }
 
 /* --- IMAGE FIX CSS --- */
@@ -274,9 +256,8 @@ button:hover {
     padding-bottom: 150%; 
     position: relative; 
     overflow: hidden;
-    border-radius: 4px;
-    /* Use Tertiary/Interface color for image frame aura */
-    box-shadow: 0 0 10px rgba(0, 188, 212, 0.6); 
+    border-radius: 2px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5); 
     margin-bottom: 10px;
     flex-shrink: 0;
 }
@@ -287,14 +268,12 @@ button:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: contain; 
+    object-fit: cover; /* Changed to cover for a cleaner look */
     background-color: #000000;
-    border-radius: 6px; 
+    border-radius: 2px; 
 }
 /* --- END IMAGE FIX CSS --- */
 
-
-/* --- CRITICAL FIX FOR CONSISTENT CARD HEIGHT --- */
 .anime-info {
     flex-grow: 1; 
     text-align: center;
@@ -316,7 +295,7 @@ button:hover {
     white-space: normal; 
     overflow: visible; 
     text-align: center;
-    text-shadow: 0 0 3px rgba(233, 30, 99, 0.8); /* Text Pop */
+    text-shadow: none;
 }
 
 /* Description Text (Initial Clipping State) */
@@ -330,14 +309,14 @@ button:hover {
     overflow: hidden; 
     width: 100%;
     transition: max-height 0.3s ease-out; 
+    text-align: left;
 }
 
 /* Style for the Read More button/link */
 .read-more-btn {
     background: none;
     border: none;
-    /* Use Tertiary/Interface color for read more text */
-    color: var(--color-accent-tertiary-interface); 
+    color: var(--color-accent-secondary); /* Cool Gray for subtle link */
     cursor: pointer;
     padding: 0;
     margin-top: 5px;
@@ -349,7 +328,8 @@ button:hover {
 .read-more-btn:hover {
     text-decoration: underline;
     background: none;
-    text-shadow: 0 0 3px var(--color-accent-tertiary-interface);
+    color: var(--color-accent-primary); /* Lime hover */
+    text-shadow: none;
 }
 
 /* Class added by JS when Read More is clicked */
@@ -366,47 +346,44 @@ button:hover {
     width: 100%;
 }
 
-/* VA Tags (Displaying inline-block for proper wrapping) */
+/* VA Tags */
 .va {
     display: inline-block;
     background-color: #2c2c36;
     color: var(--color-text-main);
     padding: 4px 8px;
     margin: 4px; 
-    border-radius: 4px;
+    border-radius: 2px;
     font-size: 0.8em; 
     border: 1px solid var(--color-border);
 }
 
 /* Shared VA Highlight */
 .highlight {
-    /* *** THIS RETAINS THE YELLOW FOR VA HIGHLIGHTS *** */
-    background-color: var(--color-accent-highlight-functional); 
+    background-color: var(--color-accent-primary); /* Lime Green for highlight */
     color: var(--color-background-dark);
     padding: 2px 4px;
-    border-radius: 3px;
+    border-radius: 2px;
     font-weight: bold;
-    text-shadow: none;
-    /* Yellow Pop */
-    box-shadow: 0 0 8px rgba(255, 224, 0, 0.6);
+    box-shadow: none;
 }
 
-/* --- NEW: VA Highlight Clickable Style --- */
+/* --- VA Highlight Clickable Style --- */
 .highlight.clickable {
     cursor: pointer;
     transition: background-color 0.15s, transform 0.1s, box-shadow 0.2s; 
 }
 
 .highlight.clickable:hover {
-    background-color: #ffed40; /* Lighter yellow on hover */
+    background-color: #4aff4a; 
     transform: scale(1.05);
-    box-shadow: 0 0 12px rgba(255, 224, 0, 0.8);
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.6); /* Subtle Lime Glow on interactive highlight */
 }
 
 /* Style for when a filter is active */
 .highlight.clickable.active-filter {
-    background-color: #ffb300; /* Darker Yellow/Orange */
-    box-shadow: 0 0 15px #ffb300;
+    background-color: #008000; /* Darker Lime Green when active */
+    box-shadow: 0 0 10px #008000;
 }
 /* -------------------------------------- */
 
@@ -416,33 +393,36 @@ button:hover {
 /* ------------------- */
 .navbar {
     margin-bottom: 20px;
-    border-bottom: 2px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
     padding-bottom: 10px;
     text-align: center;
 }
 
 .navbar button {
     background-color: #2c2c36; 
-    color: white;
+    color: var(--color-text-main);
     padding: 10px 15px; 
     margin: 0 5px;
-    border: none;
-    border-radius: 5px;
+    border: 1px solid var(--color-border);
+    border-radius: 2px;
     cursor: pointer;
-    transition: background-color 0.2s, box-shadow 0.2s;
-    box-shadow: 0 0 5px rgba(233, 30, 99, 0.2);
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+    box-shadow: none;
 }
 
 .navbar button:hover {
-    background-color: #404050;
-    box-shadow: 0 0 10px rgba(233, 30, 99, 0.4);
+    background-color: #383838;
+    color: var(--color-accent-primary);
+    border-color: var(--color-accent-primary);
+    transform: none;
 }
 
 .navbar button.active {
     background-color: var(--color-accent-primary);
     color: var(--color-background-dark);
     font-weight: bold;
-    box-shadow: 0 0 15px var(--color-accent-primary);
+    border-color: var(--color-accent-primary);
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
 }
 
 /* Styling for Pagination Controls */
@@ -459,9 +439,8 @@ button:hover {
     background-color: var(--color-accent-primary);
     color: var(--color-background-dark);
     border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    box-shadow: 0 0 10px rgba(233, 30, 99, 0.4); 
+    border-radius: 2px;
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.4); 
 }
 
 #pagination-controls button:disabled {
@@ -469,6 +448,7 @@ button:hover {
     color: var(--color-text-subtle);
     cursor: not-allowed;
     box-shadow: none;
+    transform: none;
 }
 
 #page-info {
@@ -478,7 +458,7 @@ button:hover {
 }
 
 /* ------------------- */
-/* 6. Notes Modal & Buttons (Orchid/Teal Pop) */
+/* 6. Notes Modal & Buttons (Minimalist Dark) */
 /* ------------------- */
 
 /* Grouping the Notes and Remove buttons */
@@ -492,72 +472,68 @@ button:hover {
 }
 
 .notes-btn {
-    background-color: var(--color-accent-tertiary-interface); /* Teal color for Notes */
+    background-color: var(--color-accent-secondary); /* Cool Gray for Notes */
     color: var(--color-background-dark);
     padding: 5px 10px;
     font-size: 0.9em;
     flex-grow: 1;
-    box-shadow: 0 0 8px rgba(0, 188, 212, 0.5);
+    box-shadow: none;
 }
 
 .notes-btn:hover {
-    background-color: #0097a7; 
-    box-shadow: 0 0 12px rgba(0, 188, 212, 0.8);
+    background-color: #90a4ae; 
+    box-shadow: none;
 }
 
 .remove-btn {
-    /* *** THIS RETAINS THE YELLOW FOR THE REMOVE BUTTON, matching the functional VA highlight *** */
-    background-color: var(--color-accent-highlight-functional); 
-    color: var(--color-background-dark);
+    background-color: #d32f2f; /* Standard Red for remove action */
+    color: var(--color-text-main);
     padding: 5px 10px;
     margin-top: 0; 
     margin-bottom: 0;
     font-size: 0.9em;
     flex-shrink: 0; 
     flex-grow: 1; 
-    box-shadow: 0 0 8px rgba(255, 224, 0, 0.5);
+    box-shadow: none;
 }
 
 .remove-btn:hover {
-    background-color: #ffc107;
-    box-shadow: 0 0 12px rgba(255, 224, 0, 0.8);
+    background-color: #e57373;
+    box-shadow: 0 0 8px rgba(211, 47, 47, 0.5);
 }
 
 /* Modal Content Box */
 .modal-content {
-    background-color: #12121e;
+    background-color: #1e1e1e;
     margin: 10% auto;
     padding: 25px; 
-    border: 2px solid var(--color-accent-primary);
-    border-radius: 10px;
+    border: 1px solid var(--color-accent-primary);
+    border-radius: 4px;
     width: 80%;
     max-width: 600px;
     position: relative;
-    /* Stronger modal pop */
-    box-shadow: 0 0 30px rgba(233, 30, 99, 0.5); 
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7); 
 }
 
 .modal-content h3 {
     color: var(--color-accent-primary);
     margin-top: 0;
-    text-shadow: 0 0 5px var(--color-accent-primary);
+    text-shadow: none;
 }
 
 /* Close button */
 .close-button {
-    /* Using Tertiary/Interface color */
-    color: var(--color-accent-tertiary-interface); 
+    color: var(--color-accent-secondary);
     float: right;
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
-    text-shadow: 0 0 5px var(--color-accent-tertiary-interface);
+    text-shadow: none;
 }
 
 .close-button:hover,
 .close-button:focus {
-    color: var(--color-text-main);
-    text-shadow: none;
+    color: var(--color-accent-primary);
     text-decoration: none;
     cursor: pointer;
 }
@@ -566,15 +542,15 @@ button:hover {
 #notes-textarea {
     width: 100%;
     min-height: 200px;
-    background-color: #12121a;
+    background-color: #282828;
     color: var(--color-text-main);
-    border: 1px solid var(--color-accent-primary);
+    border: 1px solid var(--color-border);
     padding: 10px;
-    border-radius: 6px;
+    border-radius: 2px;
     margin: 10px 0 20px 0;
     box-sizing: border-box;
     resize: vertical;
-    box-shadow: inset 0 0 5px rgba(233, 30, 99, 0.3);
+    box-shadow: none;
 }
 
 /* Modal Save Button */
@@ -585,7 +561,7 @@ button:hover {
 }
 
 /* ------------------- */
-/* 7. Profile Button & Sidebar Styles (Orchid/Teal Pop) */
+/* 7. Profile Button & Sidebar Styles (Minimalist Dark) */
 /* ------------------- */
 
 /* The main profile button element */
@@ -594,48 +570,46 @@ button:hover {
     align-items: center;
     background-color: #2c2c36; 
     padding: 10px 15px; 
-    border-radius: 5px; 
+    border-radius: 4px; 
     cursor: pointer;
-    box-shadow: 0 0 8px rgba(233, 30, 99, 0.4); 
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); 
     transition: background-color 0.2s, box-shadow 0.2s;
 }
 .profile-button:hover {
-    background-color: #404050;
-    box-shadow: 0 0 15px rgba(233, 30, 99, 0.6);
+    background-color: #383838;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
 }
 
 /* 1. Notification Icon (Bell) */
 .notification-icon {
     background: transparent; 
     border: none; 
-    /* Using Tertiary/Interface color */
-    color: var(--color-accent-tertiary-interface); 
+    color: var(--color-accent-secondary); 
     padding: 0;
     margin-right: 5px; 
     font-size: 1em; 
     flex-shrink: 0;
     height: auto;
     width: auto;
-    text-shadow: 0 0 5px var(--color-accent-tertiary-interface);
+    text-shadow: none;
 }
 .notification-icon:hover {
-    background-color: transparent;
+    color: var(--color-accent-primary);
 }
 
 /* 2. Avatar Icon (Blank Gray Circle) */
 .avatar-icon {
     height: 18px; 
     width: 18px;
-    /* Using Tertiary/Interface color */
-    background: var(--color-accent-tertiary-interface); 
+    background: var(--color-accent-secondary); 
     border-radius: 50%;
     margin-right: 5px; 
     border: none; 
-    box-shadow: 0 0 5px var(--color-accent-tertiary-interface);
+    box-shadow: none;
     flex-shrink: 0;
 }
 
-/* --- Profile Sidebar (NEW ELEMENT STYLES) --- */
+/* --- Profile Sidebar --- */
 #profile-sidebar {
     display: block;
     position: fixed;
@@ -643,15 +617,14 @@ button:hover {
     right: 0;
     width: 300px;
     height: 100%;
-    background-color: #0f0f1a; 
-    border-left: 3px solid var(--color-accent-primary);
+    background-color: #1a1a1a; 
+    border-left: 2px solid var(--color-accent-primary);
     padding: 20px;
-    /* Strong sidebar pop */
-    box-shadow: -5px 0 30px rgba(233, 30, 99, 0.6); 
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.7); 
     z-index: 45;
 
     transform: translateX(100%);
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    transition: transform 0.3s ease-out; 
     overflow-y: auto;
 }
 
@@ -665,28 +638,26 @@ button:hover {
     border-bottom: 1px solid var(--color-border);
     padding-bottom: 10px;
     margin-bottom: 20px;
-    text-shadow: 0 0 5px var(--color-accent-primary);
+    text-shadow: none;
 }
 
 /* --- Stats Display Styles --- */
 .stat-item {
-    background-color: #181825;
+    background-color: #282828;
     padding: 15px;
-    border-radius: 5px;
+    border-radius: 2px;
     text-align: center;
-    border: 1px solid var(--color-accent-primary);
-    /* Internal Pop */
-    box-shadow: inset 0 0 8px rgba(233, 30, 99, 0.2); 
+    border: 1px solid var(--color-border);
+    box-shadow: none; 
 }
 
 .stat-value {
     display: block;
     font-size: 1.6em;
     font-weight: bold;
-    /* Using Tertiary/Interface color */
-    color: var(--color-accent-tertiary-interface); 
+    color: var(--color-accent-primary); 
     margin-bottom: 5px;
-    text-shadow: 0 0 5px var(--color-accent-tertiary-interface);
+    text-shadow: none;
     word-wrap: break-word;
 }
 
@@ -701,14 +672,14 @@ button:hover {
 #profile-sidebar #logout-btn {
     margin-top: 30px;
     width: 100%;
-    /* Using Tertiary/Interface color */
-    background-color: var(--color-accent-tertiary-interface); 
-    color: var(--color-background-dark);
-    box-shadow: 0 0 10px rgba(0, 188, 212, 0.6);
+    background-color: #d32f2f; /* Standard Red for logout */
+    color: var(--color-text-main);
+    box-shadow: 0 0 5px rgba(211, 47, 47, 0.5);
 }
 #profile-sidebar #logout-btn:hover {
-    background-color: #0097a7;
-    box-shadow: 0 0 15px rgba(0, 188, 212, 0.8);
+    background-color: #e57373;
+    box-shadow: 0 0 10px rgba(211, 47, 47, 0.8);
+    transform: translateY(-1px);
 }
 
 /* --- REMOVE OLD DROPDOWN STYLES (Keep the ID for JS safety, but hide it) --- */
@@ -718,7 +689,7 @@ button:hover {
 
 
 /* ------------------- */
-/* 5. Responsive Adjustments (Retained/Adjusted) */
+/* 5. Responsive Adjustments (Retained) */
 /* ------------------- */
 @media (max-width: 950px) {
     /* Change from 3 columns to 2 columns on medium screens */
@@ -742,10 +713,11 @@ button:hover {
     .anime-description-text {
         max-height: none;
         overflow: visible;
+        text-align: left;
     }
     
     .read-more-btn {
-        display: none; /* Hide button on mobile when full text is visible */
+        display: none; 
     }
 
     #watched-list li {
@@ -754,10 +726,9 @@ button:hover {
     
     /* Adjustments for the new image container on mobile */
     .anime-cover-container {
-        max-width: 120px; /* Constrain the size on mobile */
-        margin: 0 auto 10px auto; /* Center the container */
-        /* Recalculate padding based on 120px max-width and 2:3 ratio */
-        padding-bottom: calc(120px * 3 / 2); 
+        max-width: 150px; 
+        margin: 0 auto 10px auto; 
+        padding-bottom: calc(150px * 3 / 2); /* Recalculate based on 150px max-width and 2:3 ratio */
     }
 
     .controls-container, .controls-bar {
@@ -776,9 +747,8 @@ button:hover {
         margin: 20% auto;
     }
     
-    /* Ensure pagination controls are fully visible on mobile too */
     #pagination-controls {
-        padding-top: 20px; /* Reduced padding for mobile */
+        padding-top: 20px; 
     }
 
     /* RESPONSIVE FIX: Sidebar should take up more space on smaller screens */
