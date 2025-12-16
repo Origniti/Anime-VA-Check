@@ -28,305 +28,284 @@
 }
 
 body {
+    font-family: var(--font-family-main);
     background-color: var(--color-background-dark);
     color: var(--color-text-main);
-    font-family: var(--font-family-main);
+    line-height: 1.6;
     margin: 0;
     padding: 0;
-    
-    /* UPDATED BACKGROUND: Subtle Grid Pattern */
-    background-image: linear-gradient(rgba(218, 112, 214, 0.02) 1px, transparent 1px), 
-                        linear-gradient(90deg, rgba(218, 112, 214, 0.02) 1px, transparent 1px);
-    background-size: 50px 50px;
-    background-attachment: fixed;
+    display: flex; /* Use flexbox for layout */
+    min-height: 100vh; /* Ensure body takes full viewport height */
 }
 
 #app {
+    flex-grow: 1; /* Allows the main app container to take up remaining space */
     max-width: 1200px;
-    margin: 50px auto;
-    padding: 30px;
-    background-color: rgba(18, 18, 18, 0.4); 
-    border-radius: 8px;
-    border: 1px solid var(--color-border);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6), 0 0 10px rgba(218, 112, 214, 0.1); 
-    position: relative;
-    backdrop-filter: blur(5px);
-}
-
-/* --- Profile Button Container --- */
-#profile-container {
-    position: absolute;
-    top: 30px; 
-    right: 30px; 
-    z-index: 10;
-}
-
-/* Main Application Title */
-.app-main-title {
-    color: var(--color-accent-primary);
-    text-align: center;
-    margin-bottom: 35px;
-    font-size: 3em;
-    letter-spacing: 4px;
-    text-shadow: 0 0 10px rgba(218, 112, 214, 0.8), 0 0 20px rgba(218, 112, 214, 0.4);
-}
-
-/* Section Title Style */
-.section-title {
-    color: var(--color-text-main);
-    text-align: center;
-    margin-top: 30px;
-    margin-bottom: 25px;
-    font-size: 2.5em;
-    letter-spacing: 1px;
-    border-bottom: 2px solid var(--color-accent-primary);
-    padding-bottom: 10px;
-}
-
-h2 {
-    color: var(--color-text-main);
-    text-align: center;
-    margin: 20px 0;
-    font-size: 1.5em;
-}
-
-/* ------------------- */
-/* 2. Form and Controls (High-Tech) */
-/* ------------------- */
-input[type="text"], 
-input[type="password"], 
-select {
-    background-color: rgba(26, 46, 62, 0.5); 
-    color: var(--color-text-main);
-    border: 1px solid var(--color-border);
-    padding: 12px;
-    border-radius: 4px;
-    margin: 5px 0 15px 0;
     width: 100%;
-    box-sizing: border-box;
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3); 
-    transition: border-color 0.2s, background-color 0.2s;
+    margin: 40px auto;
+    padding: 30px;
+    border-radius: 15px;
+    background-color: rgba(255, 255, 255, 0.02); /* Very subtle background for the main container */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px); /* Frosted glass effect */
+    border: 1px solid var(--color-border);
+    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
-input[type="text"]:focus,
-input[type="password"]:focus,
-select:focus {
+/* ------------------- */
+/* 2. Typography & Headings */
+/* ------------------- */
+h1, h2, h3 {
+    color: var(--color-text-main);
+    margin-bottom: 20px;
+    font-weight: 300;
+}
+
+.section-title, .subview-title {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--color-accent-primary);
+    margin-bottom: 25px;
+}
+
+.subview-title {
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* ------------------- */
+/* 3. Forms & Inputs */
+/* ------------------- */
+input[type="text"], input[type="password"], textarea, select {
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid var(--color-border);
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.05); /* Frosted glass input */
+    color: var(--color-text-main);
+    box-sizing: border-box;
+    width: 100%;
+    font-size: 16px;
+    transition: border-color 0.2s;
+}
+
+input[type="text"]:focus, input[type="password"]:focus, textarea:focus, select:focus {
     border-color: var(--color-accent-primary);
-    background-color: rgba(30, 50, 70, 0.7);
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3), 0 0 8px rgba(218, 112, 214, 0.8); 
     outline: none;
 }
 
+::placeholder {
+    color: var(--color-text-subtle);
+    opacity: 1; /* Firefox */
+}
+
+/* ------------------- */
+/* 4. Buttons */
+/* ------------------- */
 button {
+    padding: 12px 20px;
     background-color: var(--color-accent-primary);
-    color: var(--color-background-dark); 
+    color: var(--color-background-dark);
     border: none;
-    padding: 12px 18px;
-    border-radius: 4px;
+    border-radius: 5px;
     cursor: pointer;
     font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: background-color 0.2s, box-shadow 0.2s;
-    box-shadow: 0 0 10px rgba(218, 112, 214, 0.5);
+    font-size: 16px;
+    transition: background-color 0.2s, transform 0.1s;
 }
 
 button:hover {
-    background-color: #F780F3; 
-    box-shadow: 0 0 15px rgba(218, 112, 214, 0.9);
+    background-color: #ff80e5; /* Lighter Orchid on hover */
 }
 
-/* Auth Section */
-#auth {
-    padding: 25px;
-    border: 1px solid var(--color-accent-primary);
-    border-radius: 6px;
-    margin-bottom: 25px;
-    box-shadow: 0 0 10px rgba(218, 112, 214, 0.3); 
-}
-#auth > div {
-    margin-bottom: 15px;
+button:active {
+    transform: scale(0.98);
 }
 
-/* Controls Layout (Retaining original class names but changing layout) */
-.controls-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap; 
-}
-.controls-bar {
-    display: flex;
-    justify-content: flex-end; 
-    align-items: center;
-    margin-bottom: 20px;
-}
-.controls-bar select {
-    width: auto;
-    min-width: 120px;
-    margin-left: 5px;
-    margin-bottom: 0;
-}
-.controls-bar input[type="text"] {
-    width: 300px; 
-    margin-right: auto; 
-    margin-bottom: 0;
-}
-.controls-container label,
-.controls-bar label {
-    color: var(--color-text-subtle);
-    margin-right: 5px;
-}
-
-/* Search Results Dropdown */
-#search-results {
-    list-style: none;
-    padding: 0;
-    background-color: rgba(18, 18, 18, 0.8);
-    border: 1px solid var(--color-accent-primary);
-    border-top: none;
-    border-radius: 0 0 4px 4px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-    position: relative;
-    z-index: 10;
-}
-
-#search-results li {
-    padding: 10px 15px;
-    cursor: pointer;
-    transition: background-color 0.15s;
-    border-bottom: 1px solid #333;
-}
-
-#search-results li:hover {
-    background-color: rgba(218, 112, 214, 0.1);
-    color: var(--color-accent-primary);
-}
-
-
-/* ------------------- */
-/* 3. Watched List (Card Layout) (Frosted Glass) */
-/* ------------------- */
-
-/* --- NEW: Container for the Back Button and the Title --- */
-#friend-list-header-row {
-    display: flex;
-    align-items: center; /* Vertically align button and text */
-    gap: 30px; /* Space between the button and the title text */
-    padding: 20px 0;
-    margin-bottom: 20px;
-}
-
-/* 3.1. Profile Specific Header Style */
-.profile-list-header {
-    /* Ensures the text lines up neatly with the adjacent back button */
-    color: var(--color-text-main); /* Pure White text */
-    font-size: 2.2em; /* Prominent size for a secondary header */
-    font-weight: 500;
-    letter-spacing: 1px;
-    margin: 0; /* Important: Removes default h-tag margins */
-}
-
-/* Highlight the specific username within the header */
-.profile-list-header .username-highlight {
-    color: var(--color-accent-primary); /* Orchid color */
-    font-weight: bold;
-    font-size: 1.1em; /* Makes the username slightly larger than the rest of the title */
-    text-shadow: 0 0 5px rgba(218, 112, 214, 0.6); /* Subtle Orchid glow */
-    margin-right: 5px; 
-}
-
-
-/* === UPDATED LIST CONTROLS LAYOUT AND STYLE === */
-#list-controls {
-    display: grid;
-    /* 1st column for search, 2nd for sort/lang */
-    grid-template-columns: 2fr 1fr 1fr; 
-    gap: 15px;
-    align-items: center;
-    margin-bottom: 30px;
-    padding: 15px;
-    background-color: rgba(18, 18, 18, 0.6);
-    border-radius: 6px;
+.nav-btn {
+    background-color: var(--color-background-light);
+    color: var(--color-text-main);
+    margin-right: 10px;
     border: 1px solid var(--color-border);
 }
 
-#list-search {
-    /* Takes up 2/4 columns */
-    grid-column: 1 / span 1; 
-    margin: 0;
-    font-size: 1.0em;
+.nav-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
-#list-controls label {
-    /* Hide labels as they are implied by the select content or placeholder */
-    display: none; 
+.nav-btn.active {
+    background-color: var(--color-accent-primary);
+    color: var(--color-background-dark);
+    border-color: var(--color-accent-primary);
 }
 
-#list-controls select {
-    /* Style consistency */
-    width: 100%;
-    margin: 0;
-    -webkit-appearance: none; /* Remove default browser styling */
-    -moz-appearance: none;
-    appearance: none;
-    padding-right: 30px; /* Space for the custom arrow */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23B0BEC5' width='18px' height='18px'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3Csvg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    cursor: pointer;
+.status-btn {
+    padding: 8px 12px;
+    font-size: 14px;
+    margin-left: 5px;
+    border-radius: 3px;
+    background-color: var(--color-accent-secondary);
+    color: var(--color-background-dark);
 }
-/* === END UPDATED LIST CONTROLS LAYOUT AND STYLE === */
 
+.status-accept {
+    background-color: #4CAF50; /* Green */
+}
 
-#watched-list.grid-container {
+.status-accept:hover {
+    background-color: #66BB6A;
+}
+
+.status-reject {
+    background-color: #F44336; /* Red */
+}
+
+.status-reject:hover {
+    background-color: #E57373;
+}
+
+/* ------------------- */
+/* 5. Layout & Containers */
+/* ------------------- */
+#dashboard {
+    padding-top: 20px;
+}
+
+.view {
+    display: none;
+}
+
+.view.active {
+    display: block;
+}
+
+.subview {
+    margin-top: 30px;
+    padding-top: 20px;
+}
+
+.subview.active {
+    display: block;
+}
+
+#auth {
+    max-width: 400px;
+    margin: 40px auto;
+    text-align: center;
+}
+
+#auth input, #auth button {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+/* Flex layout for controls */
+#list-controls {
+    display: grid;
+    grid-template-columns: 2fr 1fr auto;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 25px;
+    padding: 15px;
+    background-color: var(--color-background-light);
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+}
+
+#list-search input {
+    margin-bottom: 0;
+}
+
+#list-sort {
+    display: flex;
+    align-items: center;
+}
+
+#list-sort label {
+    margin-right: 10px;
+    color: var(--color-text-subtle);
+}
+
+#list-pagination button {
+    padding: 8px 15px;
+    margin: 0 5px;
+    font-size: 14px;
+    background-color: var(--color-accent-secondary);
+    color: var(--color-background-dark);
+}
+
+#list-pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: var(--color-background-light);
+    color: var(--color-text-subtle);
+}
+
+/* ------------------- */
+/* 6. Grid Layout for Lists */
+/* ------------------- */
+.grid-container {
     list-style: none;
     padding: 0;
-    
-    /* === CRITICAL GRID RULES for UNIFORM HEIGHT (3x3 grid preserved) === */
-    display: grid; 
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 25px; 
-    grid-auto-rows: minmax(450px, auto); 
-    align-items: stretch; 
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
 }
 
-#watched-list li {
-    background-color: rgba(255, 255, 255, 0.1); 
-    backdrop-filter: blur(10px); 
-    
+/* ------------------- */
+/* 7. Anime List Item Styling (Search & Watched) */
+/* ------------------- */
+#search-results li, #watched-list li {
+    background-color: var(--color-background-light);
     padding: 20px;
-    margin-bottom: 0; 
     border-radius: 10px;
-    
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--color-border);
+    transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden;
     display: flex;
-    flex-direction: column; 
-    align-items: center;
-    text-align: center;
-    
-    border: 1px solid rgba(218, 112, 214, 0.3); 
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
-    height: 100%;
+    flex-direction: column;
+    position: relative;
 }
 
-#watched-list li:hover {
-    transform: translateY(-5px); 
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(218, 112, 214, 0.6);
-    border-color: var(--color-accent-primary); 
+#search-results li:hover, #watched-list li:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    border-color: var(--color-accent-primary);
 }
 
-/* --- IMAGE FIX CSS --- */
+.anime-title {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: var(--color-accent-primary);
+    margin-bottom: 5px;
+    line-height: 1.3;
+}
+
+.anime-score {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #FFC107; /* Amber for score */
+    color: var(--color-background-dark);
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 1.1em;
+    z-index: 2;
+}
+
 .anime-cover-container {
     width: 100%;
-    padding-bottom: 150%; 
-    position: relative; 
+    /* Aspect ratio 2:3 for anime covers (3/2 = 1.5) */
+    padding-bottom: calc(100% * 3 / 2); 
+    position: relative;
     overflow: hidden;
-    border-radius: 4px;
-    box-shadow: 0 0 8px rgba(176, 190, 197, 0.5); 
     margin-bottom: 15px;
-    flex-shrink: 0;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
 .anime-cover {
@@ -335,285 +314,295 @@ button:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover; 
-    background-color: #000000;
-    border-radius: 4px; 
-}
-/* --- END IMAGE FIX CSS --- */
-
-.anime-info {
-    flex-grow: 1; 
-    text-align: center;
-    width: 100%;
-    padding: 0 5px;
-    position: relative; 
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between; 
-    align-items: center;
+    object-fit: cover;
+    z-index: 1;
 }
 
-/* Original Title (Bold text) */
-.anime-info b {
-    color: var(--color-accent-primary);
-    font-size: 1.3em;
-    display: block;
-    margin-bottom: 8px;
-    white-space: normal; 
-    overflow: visible; 
-    text-align: center;
-    text-shadow: 0 0 5px rgba(218, 112, 214, 0.5);
-}
-
-/* Description Text */
 .anime-description-text {
+    font-size: 0.9em;
     color: var(--color-text-subtle);
-    font-style: normal;
-    display: block;
-    margin-top: 5px;
-    margin-bottom: 0; 
-    max-height: 7em; 
-    overflow: hidden; 
-    width: 100%;
-    transition: max-height 0.3s ease-out; 
-    text-align: left;
+    margin: 10px 0;
+    /* Truncate description */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 4; /* Show a maximum of 4 lines */
+    -webkit-box-orient: vertical;
 }
 
-/* Style for the Read More button/link */
-.read-more-btn {
-    background: none;
-    border: none;
-    color: var(--color-accent-secondary); 
-    cursor: pointer;
+.anime-va-list {
+    list-style: none;
     padding: 0;
-    margin-top: 5px;
-    font-size: 0.9em;
-    text-align: left;
-    display: block;
-    width: auto;
-}
-.read-more-btn:hover {
-    text-decoration: underline;
-    background: none;
-    color: var(--color-accent-primary);
-}
-
-/* Class added by JS when Read More is clicked */
-.expanded .anime-description-text {
-    max-height: 1000px;
-    overflow: visible;
-}
-
-/* VA Tags Container */
-.va-tags-container {
-    margin-top: 10px;
-    flex-shrink: 0; 
-    flex-grow: 0;
-    width: 100%;
-    border-top: 1px dashed var(--color-border);
-    padding-top: 5px;
-}
-
-/* VA Tags */
-.va {
-    display: inline-block;
-    background-color: rgba(26, 46, 62, 0.8);
+    margin: 10px 0 0 0;
+    font-size: 0.85em;
     color: var(--color-accent-secondary);
-    padding: 4px 8px;
-    margin: 3px; 
-    border-radius: 3px;
-    font-size: 0.8em; 
-    border: 1px solid rgba(218, 112, 214, 0.2);
 }
 
-/* Shared VA Highlight */
-.highlight {
-    background-color: var(--color-accent-primary); 
-    color: var(--color-background-dark);
-    padding: 2px 4px;
-    border-radius: 3px;
-    font-weight: bold;
-    box-shadow: 0 0 8px rgba(218, 112, 214, 0.7);
-}
-
-/* --- VA Highlight Clickable Style --- */
-.highlight.clickable {
-    cursor: pointer;
-    transition: background-color 0.15s, transform 0.1s, box-shadow 0.2s; 
-}
-
-.highlight.clickable:hover {
-    background-color: #F780F3; 
-    transform: scale(1.05);
-    box-shadow: 0 0 12px rgba(218, 112, 214, 1.0); 
-}
-
-/* Style for when a filter is active */
-.highlight.clickable.active-filter {
-    background-color: #B457B1; 
-    box-shadow: 0 0 15px #B457B1;
-}
-/* -------------------------------------- */
-
-
-/* ------------------- */
-/* 4. Navigation and Pagination Styles */
-/* ------------------- */
-.navbar {
-    margin-bottom: 25px;
-    border-bottom: 1px solid var(--color-accent-secondary);
-    padding-bottom: 15px;
-    text-align: center;
-}
-
-.navbar button {
-    background-color: rgba(30, 50, 70, 0.8); 
-    color: var(--color-text-main);
-    padding: 10px 15px; 
-    margin: 0 8px;
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
+.anime-va-list li {
+    padding: 2px 0;
+    background: none;
     box-shadow: none;
-    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
-}
-
-.navbar button:hover {
-    background-color: rgba(218, 112, 214, 0.1);
-    color: var(--color-accent-primary);
-    border-color: var(--color-accent-primary);
-}
-
-.navbar button.active {
-    background-color: var(--color-accent-primary);
-    color: var(--color-background-dark);
-    font-weight: bold;
-    border-color: var(--color-accent-primary);
-    box-shadow: 0 0 10px rgba(218, 112, 214, 0.8);
-}
-
-/* Styling for Pagination Controls */
-#pagination-controls {
-    text-align: center;
-    padding-top: 40px; 
-    margin-top: 20px; 
-    margin-bottom: 20px;
-    width: 100%;
-}
-
-#pagination-controls button {
-    padding: 10px 18px;
-    box-shadow: 0 0 10px rgba(218, 112, 214, 0.6); 
-}
-
-#pagination-controls button:disabled {
-    background-color: #333;
-    color: var(--color-text-subtle);
-    cursor: not-allowed;
-    box-shadow: none;
+    border: none;
+    transition: none;
     transform: none;
+    overflow: visible;
+    display: list-item; /* Override flex for li in ul */
+    margin: 0;
 }
 
-#page-info {
-    margin: 0 15px;
+.va-highlight {
+    color: var(--color-accent-primary);
     font-weight: bold;
-    display: inline-block;
+    cursor: pointer;
 }
 
-/* ------------------- */
-/* 6. Notes Modal & Buttons (Fixed Positioning) */
-/* ------------------- */
-
-/* Grouping the Notes and Remove buttons */
-.action-buttons {
-    display: flex;
-    gap: 10px;
+/* Buttons in list items */
+.add-btn, .remove-btn {
+    padding: 10px;
+    margin-top: auto; /* Push to the bottom */
+    font-size: 1em;
     width: 100%;
-    justify-content: center;
-    margin-top: 15px;
-    flex-shrink: 0;
+    text-align: center;
 }
 
-.notes-btn {
-    background-color: var(--color-accent-secondary); 
-    color: var(--color-background-dark);
-    padding: 10px 15px;
-    font-size: 0.9em;
-    flex-grow: 1;
-    box-shadow: 0 0 8px rgba(176, 190, 197, 0.5);
+.add-btn {
+    background-color: #2196F3; /* Blue for Add */
 }
 
-.notes-btn:hover {
-    background-color: #90a4ae; 
-    box-shadow: 0 0 12px rgba(176, 190, 197, 0.9);
+.add-btn:hover {
+    background-color: #64B5F6;
 }
 
 .remove-btn {
-    background-color: #d32f2f; 
-    color: var(--color-text-main);
-    padding: 10px 15px;
-    font-size: 0.9em;
-    flex-shrink: 0; 
-    flex-grow: 1; 
-    box-shadow: 0 0 8px rgba(211, 47, 47, 0.5);
+    background-color: #F44336; /* Red for Remove */
 }
 
 .remove-btn:hover {
-    background-color: #e57373;
-    box-shadow: 0 0 12px rgba(211, 47, 47, 0.9);
+    background-color: #E57373;
 }
 
-/* --- NEW: Modal Overlay (Full-screen, hidden by default) --- */
+.notes-btn {
+    background-color: #FF9800; /* Orange for Notes */
+    padding: 8px 12px;
+    font-size: 0.9em;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.notes-btn:hover {
+    background-color: #FFB74D;
+}
+
+.list-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.list-actions button {
+    flex-grow: 1;
+}
+
+
+/* ------------------- */
+/* 8. Profile Sidebar */
+/* ------------------- */
+#profile-sidebar {
+    width: 280px;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.05); /* Slightly more prominent background for sidebar */
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.2);
+    border-left: 1px solid var(--color-border);
+    position: sticky; /* Sticky positioning for a fixed sidebar effect */
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#profile-sidebar h3 {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+#stats-content {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.stats-message {
+    color: var(--color-text-subtle);
+    font-style: italic;
+    text-align: center;
+    padding: 20px 0;
+}
+
+#logout-btn {
+    width: 100%;
+    margin-top: 20px;
+    background-color: #555;
+}
+
+#logout-btn:hover {
+    background-color: #777;
+}
+
+/* Profile button in dashboard */
+#profile-container {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+.profile-button {
+    background: var(--color-background-light);
+    color: var(--color-text-main);
+    padding: 10px 15px;
+    border: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.profile-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.avatar-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: var(--color-accent-primary);
+    display: block;
+}
+
+.dropdown-arrow {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-left: 5px;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid var(--color-text-main);
+}
+
+.notification-icon {
+    color: #FFC107; /* Amber */
+    font-weight: bold;
+}
+
+
+/* ------------------- */
+/* 9. Friends Section */
+/* ------------------- */
+.friend-section {
+    padding: 20px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background-color: var(--color-background-light);
+    margin-bottom: 20px;
+}
+
+.friend-section h2 {
+    font-size: 1.2em;
+    border-bottom: 1px dashed var(--color-text-subtle);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.friend-section-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+#add-friend-form {
+    display: flex;
+    gap: 10px;
+}
+
+#add-friend-form input {
+    margin-bottom: 0;
+    flex-grow: 1;
+}
+
+#add-friend-form button {
+    flex-shrink: 0;
+    width: auto;
+}
+
+.friend-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.friend-list li {
+    padding: 10px 15px;
+    border: 1px solid var(--color-border);
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.02);
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--color-text-main);
+}
+
+.friend-list li span {
+    font-weight: bold;
+}
+
+.friend-actions button {
+    margin-left: 5px;
+}
+
+/* ------------------- */
+/* 10. Modal Styling (Notes, etc.) - NECESSARY ADDITION */
+/* ------------------- */
 .modal {
-    display: none; /* Hidden by default - JS toggles to 'flex' */
-    position: fixed;
-    z-index: 50; /* Above all content */
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 10; /* Sit on top of everything */
     left: 0;
     top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.7); /* Dark semi-transparent background */
-    backdrop-filter: blur(4px); /* Subtle blur on background content */
-    align-items: center; /* Center vertically */
-    justify-content: center; /* Center horizontally */
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.85); /* Black w/ high opacity overlay */
+    padding-top: 60px;
 }
 
-/* Modal Content Box */
 .modal-content {
-    background-color: rgba(26, 46, 62, 0.95);
-    backdrop-filter: blur(15px);
-    margin: auto; /* Not needed due to flex, but good fallback */
-    padding: 30px; 
-    border: 2px solid var(--color-accent-primary);
-    border-radius: 8px;
+    background-color: var(--color-background-dark); /* Use dark background */
+    border: 1px solid var(--color-accent-secondary);
+    border-radius: 10px;
+    margin: 10% auto; /* 10% from the top and centered */
+    padding: 30px;
     width: 80%;
     max-width: 600px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7);
     position: relative;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(218, 112, 214, 0.7); 
-    animation: fadeIn 0.3s ease-out; /* Optional fade in */
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.9); }
-    to { opacity: 1; transform: scale(1); }
 }
 
 .modal-content h3 {
-    color: var(--color-accent-primary);
+    color: var(--color-text-main);
     margin-top: 0;
-    text-shadow: 0 0 5px rgba(218, 112, 214, 0.5);
+    border-bottom: 2px solid var(--color-accent-primary);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
 }
 
-/* Close button */
 .close-button {
-    color: var(--color-accent-secondary);
-    position: absolute; /* Positioned relative to .modal-content */
-    top: 10px;
-    right: 15px;
-    font-size: 32px;
+    color: var(--color-text-subtle);
+    float: right;
+    font-size: 28px;
     font-weight: bold;
-    cursor: pointer;
-    text-shadow: 0 0 5px rgba(176, 190, 197, 0.5);
+    transition: color 0.2s;
 }
 
 .close-button:hover,
@@ -623,276 +612,66 @@ button:hover {
     cursor: pointer;
 }
 
-/* Text area for notes */
 #notes-textarea {
     width: 100%;
     min-height: 200px;
-    background-color: #121e28;
-    color: var(--color-text-main);
-    border: 1px solid var(--color-accent-primary);
-    padding: 12px;
-    border-radius: 4px;
-    margin: 10px 0 20px 0;
-    box-sizing: border-box;
-    resize: vertical;
-    box-shadow: inset 0 0 5px rgba(218, 112, 214, 0.3);
-}
-
-/* Modal Save Button */
-.modal-content button {
-    width: 100%;
-    padding: 12px;
-    font-size: 1.1em;
-}
-
-/* ------------------- */
-/* 7. Profile Button & Sidebar Styles (Hidden by Default) */
-/* ------------------- */
-
-/* The main profile button element */
-.profile-button {
-    display: flex;
-    align-items: center;
-    background-color: rgba(26, 46, 62, 0.8); 
-    padding: 10px 15px; 
-    border-radius: 4px; 
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5); 
-    transition: background-color 0.2s, box-shadow 0.2s;
-}
-.profile-button:hover {
-    background-color: rgba(30, 50, 70, 0.9);
-    box-shadow: 0 4px 12px rgba(218, 112, 214, 0.4);
-}
-
-/* 1. Notification Icon (Bell) */
-.notification-icon {
-    background: transparent; 
-    border: none; 
-    color: var(--color-accent-secondary); 
-    padding: 0;
-    margin-right: 8px; 
-    font-size: 1.2em; 
-    text-shadow: none;
-}
-.notification-icon:hover {
-    color: var(--color-accent-primary);
-}
-
-/* 2. Avatar Icon (Blank Circle) */
-.avatar-icon {
-    height: 20px; 
-    width: 20px;
-    background: var(--color-accent-secondary); 
-    border-radius: 50%;
-    margin-right: 8px; 
-    border: none; 
-    box-shadow: none;
-}
-
-/* --- Profile Sidebar (HIDDEN BY DEFAULT) --- */
-#profile-sidebar {
-    display: block;
-    position: fixed;
-    top: 0;
-    right: 0;
-    width: 320px;
-    height: 100%;
-    background-color: rgba(8, 14, 20, 0.95); 
-    backdrop-filter: blur(10px);
-    border-left: 2px solid var(--color-accent-primary);
-    padding: 25px;
-    box-shadow: -5px 0 20px rgba(218, 112, 214, 0.6); 
-    z-index: 45; 
-
-    /* KEY: Start off-screen */
-    transform: translateX(100%);
-    transition: transform 0.3s ease-out; 
-    overflow-y: auto;
-}
-
-/* Active state: slide it into view (JS adds this class) */
-#profile-sidebar.active {
-    transform: translateX(0);
-}
-
-#profile-sidebar h3 {
-    color: var(--color-accent-primary);
-    border-bottom: 1px solid var(--color-border);
-    padding-bottom: 10px;
-    margin-bottom: 25px;
-    text-shadow: 0 0 5px rgba(218, 112, 214, 0.5);
-}
-
-/* --- Stats Display Styles --- */
-.stat-item {
-    background-color: rgba(18, 40, 60, 0.6);
-    padding: 18px;
-    border-radius: 4px;
-    text-align: center;
-    border: 1px solid var(--color-accent-secondary);
-    box-shadow: inset 0 0 8px rgba(218, 112, 214, 0.1); 
-}
-
-.stat-value {
-    display: block;
-    font-size: 1.8em;
-    font-weight: bold;
-    color: var(--color-accent-primary); 
-    margin-bottom: 5px;
-    text-shadow: 0 0 5px rgba(218, 112, 214, 0.5);
-    word-wrap: break-word;
-}
-
-.stat-label {
-    display: block;
-    font-size: 0.9em;
-    color: var(--color-text-subtle);
-    letter-spacing: 1px;
-}
-
-/* --- Logout Button in Sidebar --- */
-#profile-sidebar #logout-btn {
-    margin-top: 30px;
-    width: 100%;
-    background-color: #d32f2f; 
-    color: var(--color-text-main);
-    box-shadow: 0 0 10px rgba(211, 47, 47, 0.6);
-}
-#profile-sidebar #logout-btn:hover {
-    background-color: #e57373;
-    box-shadow: 0 0 15px rgba(211, 47, 47, 0.9);
-}
-
-/* --- REMOVE OLD DROPDOWN STYLES --- */
-#profile-dropdown {
-    display: none !important; 
-}
-
-/* ------------------- */
-/* 8. Friends Section Styles (Modern and Clean) */
-/* ------------------- */
-
-#page-find-friends {
-    padding: 20px 0;
-}
-
-/* 9. Grid Layout for Friend Sections */
-.friend-section-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* Two columns for sections on large screens */
-    gap: 30px;
-    margin-top: 20px;
-}
-
-/* Base style for each search/list section */
-.friend-section {
-    background-color: rgba(255, 255, 255, 0.05); /* Lighter frosted glass background */
-    backdrop-filter: blur(8px);
-    padding: 25px;
-    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
     border: 1px solid var(--color-border);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-}
-
-.friend-section h2 {
-    text-align: left;
-    color: var(--color-accent-secondary);
-    font-size: 1.3em;
-    border-bottom: 2px solid rgba(218, 112, 214, 0.3); /* Subtle Orchid underline */
-    padding-bottom: 10px;
-    margin-top: 0;
-    margin-bottom: 20px;
-    letter-spacing: 1px;
-}
-
-/* 10. User Search Input */
-#friend-search-input {
-    width: 100%;
-    margin-bottom: 20px;
-}
-
-/* 11. Friend Lists (Search Results, Pending, Confirmed) */
-.friend-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 10px; /* Space between list items */
-}
-
-/* Styling for individual user cards in the lists */
-.friend-list li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 15px;
-    border-radius: 4px;
-    background-color: rgba(18, 18, 18, 0.7); /* Darker background for list items */
-    border: 1px solid rgba(218, 112, 214, 0.1);
-    transition: background-color 0.2s, border-color 0.2s;
-    font-size: 1.0em;
-}
-
-.friend-list li:hover {
-    background-color: rgba(26, 46, 62, 0.8);
-    border-color: var(--color-accent-primary);
-}
-
-/* User name styling */
-.friend-list .username {
-    font-weight: bold;
+    border-radius: 5px;
+    box-sizing: border-box;
+    background-color: rgba(255, 255, 255, 0.05); /* Frosted glass effect */
     color: var(--color-text-main);
-    flex-grow: 1; /* Allows it to push actions to the right */
+    resize: vertical;
+    font-family: var(--font-family-main);
+    font-size: 16px;
 }
 
-/* 12. Friend Action Buttons (Send, Accept, Remove) */
-.friend-actions {
-    display: flex;
-    gap: 8px;
+#save-notes-btn {
+    width: 100%;
+    padding: 15px;
+    background-color: var(--color-accent-primary);
+    color: var(--color-background-dark);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
 }
 
-.friend-actions button {
-    padding: 6px 12px;
-    font-size: 0.85em;
-    font-weight: 500;
-    text-transform: capitalize; /* Don't force uppercase */
-    box-shadow: none; /* Remove heavy glow for small buttons */
-    transition: all 0.2s;
-}
-
-/* Specific colors for actions */
-.friend-actions .send-btn, 
-.friend-actions .accept-btn {
-    background-color: #4CAF50; /* Green for positive action */
-    color: white;
-}
-.friend-actions .send-btn:hover,
-.friend-actions .accept-btn:hover {
-    background-color: #66BB6A;
-}
-
-.friend-actions .remove-btn, 
-.friend-actions .decline-btn {
-    background-color: #D32F2F; /* Red for negative action */
-    color: white;
-}
-.friend-actions .remove-btn:hover,
-.friend-actions .decline-btn:hover {
-    background-color: #E57373;
+#save-notes-btn:hover {
+    background-color: #ff80e5; /* Lighter Orchid on hover */
 }
 
 /* ------------------- */
-/* 5. Responsive Adjustments (Updated for new controls layout) */
+/* 11. Media Queries (Responsiveness) */
 /* ------------------- */
-@media (max-width: 950px) {
-    #watched-list.grid-container {
-        grid-template-columns: repeat(2, 1fr);
+@media (max-width: 1024px) {
+    body {
+        flex-direction: column; /* Stack main content and sidebar */
+    }
+
+    #profile-sidebar {
+        position: relative; /* Not sticky anymore */
+        width: 100%;
+        height: auto;
+        border-left: none;
+        border-top: 1px solid var(--color-border);
     }
     
+    #profile-container {
+        position: static;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    
+    .profile-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Adjust list controls for smaller screens */
     #list-controls {
-        /* Switch to 2 columns on tablets */
         grid-template-columns: 1fr 1fr; 
     }
     #list-search {
@@ -941,29 +720,14 @@ button:hover {
         grid-template-columns: 1fr; 
     }
     #list-search {
-        grid-column: 1 / span 1; 
+        grid-column: 1; /* Reset search to single column */
     }
-    
-    .controls-container, .controls-bar {
+    #list-sort {
         flex-direction: column;
         align-items: flex-start;
     }
-    
-    .modal-content {
-        width: 90%;
-        margin: 20% auto;
-    }
-    
-    /* Ensure profile button stays visible */
-    #profile-container {
-        top: 15px; 
-        right: 15px;
-    }
-
-    #profile-sidebar {
-        width: 100%; 
-        max-width: 100%;
-        top: 0; 
-        padding-top: 80px; 
+    #list-sort label {
+        margin-right: 0;
+        margin-bottom: 5px;
     }
 }
