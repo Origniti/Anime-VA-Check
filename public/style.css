@@ -623,7 +623,51 @@ button:hover {
     cursor: pointer;
 }
 
-/* Text area for notes */
+/* =========================================================================
+   >>> START OF FIX: Date, Rating, and Notes Fields STYLES <<<
+   ========================================================================= */
+
+/* 1. Layout for the new Date/Rating section */
+.modal-details-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Three equal columns */
+    gap: 15px; /* Spacing between the columns */
+    margin-bottom: 20px; /* Space before the notes textarea */
+}
+
+/* 2. Styling for Labels above the date/rating inputs */
+.modal-content label {
+    display: block; /* Ensures the label takes its own line */
+    margin-bottom: 5px;
+    font-size: 0.9em;
+    color: var(--color-text-subtle); 
+}
+
+/* 3. Styling for the new input types (matching the general theme) */
+.modal-content input[type="date"],
+.modal-content input[type="number"] {
+    /* Inherits from general input styles for color/border but removes margin */
+    background-color: rgba(26, 46, 62, 0.5); 
+    color: var(--color-text-main);
+    border: 1px solid var(--color-border);
+    padding: 8px 10px; /* Adjusted padding for better fit */
+    border-radius: 4px;
+    margin: 0; /* Remove default margin for grid layout */
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+    height: 40px; /* Consistent height */
+    text-align: center; /* Center rating number */
+    font-size: 1em;
+}
+
+/* Fix for date picker icon color on dark background */
+.modal-content input[type="date"]::-webkit-calendar-picker-indicator {
+    /* Inverts the color of the built-in calendar icon to white */
+    filter: invert(1);
+}
+
+/* Text area for notes (MODIFIED MARGIN) */
 #notes-textarea {
     width: 100%;
     min-height: 200px;
@@ -632,18 +676,24 @@ button:hover {
     border: 1px solid var(--color-accent-primary);
     padding: 12px;
     border-radius: 4px;
-    margin: 10px 0 20px 0;
+    /* CHANGED: Adjusted margin to fit below the grid */
+    margin: 5px 0 20px 0; 
     box-sizing: border-box;
     resize: vertical;
     box-shadow: inset 0 0 5px rgba(218, 112, 214, 0.3);
 }
 
-/* Modal Save Button */
+/* Modal Save Button (MODIFIED MARGIN) */
 .modal-content button {
     width: 100%;
     padding: 12px;
     font-size: 1.1em;
+    margin-top: 5px; /* Added small top margin for spacing */
 }
+
+/* =========================================================================
+   >>> END OF FIX: Date, Rating, and Notes Fields STYLES <<<
+   ========================================================================= */
 
 /* ------------------- */
 /* 7. Profile Button & Sidebar Styles (Hidden by Default) */
@@ -951,7 +1001,12 @@ button:hover {
     
     .modal-content {
         width: 90%;
-        margin: 20% auto;
+        margin: 10% auto; /* Adjusted for better fit on mobile */
+    }
+    
+    /* Stack date/rating fields vertically on small screens */
+    .modal-details-grid {
+        grid-template-columns: 1fr; 
     }
     
     /* Ensure profile button stays visible */
