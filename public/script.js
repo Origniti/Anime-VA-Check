@@ -8,14 +8,10 @@
 var userId = null;
 var username = null;
 var watched = []; // Stores the current user's (your) permanent list data
-var currentViewedList = [];
-// Stores the list data currently being rendered (yours or a friend's)
-var currentViewedUserId = null;
-// Stores the ID of the user whose list is currently being rendered
-var vaCounts = {};
-// Stores counts of all VAs in the current user's list (for filtering/highlighting)
-var friendRequests = [];
-// Stores pending requests for the current user
+var currentViewedList = []; // Stores the list data currently being rendered (yours or a friend's)
+var currentViewedUserId = null; // Stores the ID of the user whose list is currently being rendered
+var vaCounts = {}; // Stores counts of all VAs in the current user's list (for filtering/highlighting)
+var friendRequests = []; // Stores pending requests for the current user
 var friendsList = []; // Stores confirmed friends
 var currentPage = 1;
 var itemsPerPage = 6;
@@ -253,8 +249,7 @@ async function handleRegister() {
         document.getElementById('register-form').style.display = 'none';
         document.getElementById('login-form').style.display = 'block';
     } else {
-        messageEl.textContent = data.error ||
-'Registration failed.';
+        messageEl.textContent = data.error || 'Registration failed.';
     }
 }
 
@@ -327,14 +322,11 @@ async function handleSearch(e) {
                 var coverUrl = anime.coverImage?.large || PLACEHOLDER_IMAGE;
                 var li = document.createElement('li');
                 li.dataset.anime = JSON.stringify(anime);
-                li.innerHTML 
-= `
-   
+                li.innerHTML = `
                     <img src="${coverUrl}" onerror="this.onerror=null; this.src='${PLACEHOLDER_IMAGE}'" style="width: 30px; height: 45px; vertical-align: middle; margin-right: 10px; border-radius: 3px;">
                     <strong>${anime.title.romaji || anime.title.english}</strong> (Score: ${anime.averageScore || 'N/A'})
                 `;
                 document.getElementById('search-results').appendChild(li);
-     
             });
         } else {
             searchResultsEl.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">No results found.</li>';
@@ -406,10 +398,8 @@ function parseVoiceActors(vaString) {
     try {
         var vaData = JSON.parse(vaString);
         return {
-            japanese: vaData.japanese ||
-"",
-            english: vaData.english ||
-""
+            japanese: vaData.japanese || "",
+            english: vaData.english || ""
         };
     } catch (e) {
         return { japanese: "", english: "" };
@@ -423,8 +413,7 @@ function parseVoiceActors(vaString) {
 function getVoiceActorCounts() {
     vaCounts = {}; // Reset counts
     // Uses the language selected in the UI
-    var vaLang = document.getElementById('va-lang')?.value ||
-'japanese';
+    var vaLang = document.getElementById('va-lang')?.value || 'japanese';
 
     watched.forEach(function(anime) {
         var vaString = anime.voice_actors_parsed[vaLang] || "";
@@ -866,7 +855,7 @@ function calculateAndRenderStats() {
 
     // Stats always use the current user's (watched) list
     if (watched.length === 0) {
-        statsContainer.innerHTML = '<p class="stats-message">Your list is empty.\n\nAdd some anime to see stats!</p>';
+        statsContainer.innerHTML = '<p class="stats-message">Your list is empty. Add some anime to see stats!</p>';
         return;
     }
 
@@ -1010,13 +999,11 @@ function renderFriendSearchResults(users) {
             buttonText = 'Action Needed';
             buttonClass = 'status-btn status-pending-received';
             buttonAction = 'view-requests'; 
-            statusMessage = ' (<a href="#" 
-onclick="showSubView(\'page-find-friends\')">Accept/Reject</a>)';
+            statusMessage = ' (<a href="#" onclick="showSubView(\'page-find-friends\')">Accept/Reject</a>)';
         }
 
         var li = document.createElement('li');
-        li.style.cssText = 'display: flex; justify-content: space-between;
-align-items: center;\nbackground-color: #2c2c2c;';
+        li.style.cssText = 'display: flex; justify-content: space-between; align-items: center; background-color: #2c2c2c;';
         
         li.innerHTML = `
             <span>
