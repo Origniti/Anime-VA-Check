@@ -107,10 +107,10 @@ async function setupDatabase() {
                 recipient_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
                 status VARCHAR(10) CHECK (status IN ('pending', 'accepted', 'rejected')) DEFAULT 'pending',
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                -- Constraint: Prevent a user from sending a request to themselves
                 CONSTRAINT no_self_request CHECK (requester_id <> recipient_id),
-                -- Ensure only one *pending* request can exist between two users
-                CONSTRAINT unique_pending_request EXCLUDE (requester_id WITH =, recipient_id WITH =) 
-                WHERE (status = 'pending')
+                -- Constraint: Ensure only one pending request exists between two users
+                CONSTRAINT unique_pending_request UNIQUE (requester_id, recipient_id)
             );
         `);
         
@@ -425,7 +425,7 @@ app.post('/api/friends/request/:recipientId', async (req, res) => {
         res.json({ success: true, message: 'Friend request sent.' });
 
     } catch (error) {
-        // Catch the unique_pending_request constraint if two requests happen simultaneously
+        // Catch the unique_pending_request constraint
         if (error.code === '23505') {
             return res.status(400).json({ success: false, error: 'A request is already pending between these users.' });
         }
