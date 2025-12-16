@@ -107,10 +107,10 @@ async function setupDatabase() {
                 recipient_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
                 status VARCHAR(10) CHECK (status IN ('pending', 'accepted', 'rejected')) DEFAULT 'pending',
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                -- Constraint: Prevent a user from sending a request to themselves
                 CONSTRAINT no_self_request CHECK (requester_id <> recipient_id),
-                -- Constraint: Ensure only one pending request exists between two users
-                CONSTRAINT unique_pending_request UNIQUE (requester_id, recipient_id)
+                -- Ensure only one *pending* request can exist between two users
+                CONSTRAINT unique_pending_request EXCLUDE (requester_id WITH =, recipient_id WITH =) 
+                WHERE (status = 'pending')
             );
         `);
         
@@ -128,36 +128,6 @@ async function setupDatabase() {
             DO $$ BEGIN
                 BEGIN
                     ALTER TABLE watched_anime ADD COLUMN notes TEXT;
-                EXCEPTION
-                    WHEN duplicate_column THEN null;
-                END;
-            END $$;
-        `);
-        // =========================================================================
-
-        // === NEW DATABASE MIGRATION STEP: Add 'status', 'date_started', and 'date_finished' if they don't exist ===
-        await query(`
-            DO $$ BEGIN
-                BEGIN
-                    ALTER TABLE watched_anime ADD COLUMN status VARCHAR(10) DEFAULT 'watched' CHECK (status IN ('watched', 'planning'));
-                EXCEPTION
-                    WHEN duplicate_column THEN null;
-                END;
-            END $$;
-        `);
-        await query(`
-            DO $$ BEGIN
-                BEGIN
-                    ALTER TABLE watched_anime ADD COLUMN date_started DATE;
-                EXCEPTION
-                    WHEN duplicate_column THEN null;
-                END;
-            END $$;
-        `);
-        await query(`
-            DO $$ BEGIN
-                BEGIN
-                    ALTER TABLE watched_anime ADD COLUMN date_finished DATE;
                 EXCEPTION
                     WHEN duplicate_column THEN null;
                 END;
@@ -217,10 +187,10 @@ app.post('/login', async (req, res) => {
 });
 
 // -------------------
-// Add watched/planning anime
+// Add watched anime
 // -------------------
 app.post('/add-anime', async (req, res) => {
-    let { userId, animeId, animeTitle, rating, description, characters, coverImage, status } = req.body; // ADDED status
+    let { userId, animeId, animeTitle, rating, description, characters, coverImage } = req.body;
 
     const MAX_DESC_LENGTH = 800;
     
@@ -231,10 +201,6 @@ app.post('/add-anime', async (req, res) => {
     }
     
     const initialNotes = ''; 
-
-    // Use null for initial dates, as they are not passed on initial add
-    const date_started = null;
-    const date_finished = null;
 
     try {
         // Check for duplicate
@@ -300,10 +266,10 @@ app.post('/add-anime', async (req, res) => {
         
         // --- END OF VOICE ACTOR Processing ---
 
-        // Insert new record (UPDATED TO INCLUDE status, date_started, date_finished)
+        // Insert new record
         const insertResult = await query(
-            'INSERT INTO watched_anime (user_id, anime_id, anime_title, rating, voice_actors, description, coverImage, notes, status, date_started, date_finished) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id',
-            [userId, animeId, animeTitle, rating, voiceActors, description, coverImage, initialNotes, status, date_started, date_finished]
+            'INSERT INTO watched_anime (user_id, anime_id, anime_title, rating, voice_actors, description, coverImage, notes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id',
+            [userId, animeId, animeTitle, rating, voiceActors, description, coverImage, initialNotes]
         );
 
         res.json({ success: true, animeId: insertResult.rows[0].id });
@@ -335,10 +301,10 @@ app.delete('/remove-anime/:userId/:animeId', async (req, res) => {
 });
 
 // -------------------
-// Update anime list item (notes, rating, dates, status) - NEW ROUTE
+// Update anime notes
 // -------------------
-app.patch('/update-list-item', async (req, res) => {
-    const { userId, animeId, notes, rating, date_started, date_finished, status } = req.body;
+app.patch('/update-notes', async (req, res) => {
+    const { userId, animeId, notes } = req.body;
     
     if (!userId || !animeId) {
         return res.status(400).json({ success: false, error: 'User ID and Anime ID are required.' });
@@ -350,25 +316,17 @@ app.patch('/update-list-item', async (req, res) => {
     
     try {
         const result = await query(
-            `UPDATE watched_anime 
-             SET 
-                notes = $1, 
-                rating = $2, 
-                date_started = $3, 
-                date_finished = $4,
-                status = $5
-             WHERE user_id = $6 AND anime_id = $7 
-             RETURNING id`,
-            [sanitizedNotes, rating, date_started || null, date_finished || null, status, userId, animeId]
+            'UPDATE watched_anime SET notes = $1 WHERE user_id = $2 AND anime_id = $3 RETURNING id',
+            [sanitizedNotes, userId, animeId]
         );
 
         if (result.rowCount === 0) {
             return res.json({ success: false, error: 'Anime record not found for this user.' });
         }
         
-        res.json({ success: true, message: 'Details updated successfully.' });
+        res.json({ success: true, message: 'Notes updated successfully.' });
     } catch (err) {
-        console.error("Update details failed:", err);
+        console.error("Update notes failed:", err);
         res.status(500).json({ success: false, error: err.message });
     }
 });
@@ -379,29 +337,15 @@ app.patch('/update-list-item', async (req, res) => {
 // -------------------
 app.get('/watched/:userId', async (req, res) => {
     const targetUserId = parseInt(req.params.userId);
-    // NEW: Get the status filter from query (e.g., 'watched', 'planning', or 'all' which means no filter)
-    const statusFilter = req.query.status ? req.query.status.toLowerCase() : 'all'; 
+    // Note: The client-side logic should handle checking if the current user has permission
+    // to view the list (i.e., if they are friends or if targetUserId is the current user's ID).
     
     if (isNaN(targetUserId)) {
         return res.status(400).json({ success: false, error: 'Invalid User ID.' });
     }
 
-    let sql = 'SELECT * FROM watched_anime WHERE user_id=$1';
-    const params = [targetUserId];
-
-    // Only apply a filter if it's not 'all' and it's a valid status
-    if (statusFilter !== 'all' && (statusFilter === 'watched' || statusFilter === 'planning')) {
-        // If the client sends 'status=watched' or 'status=planning', apply the filter
-        sql += ' AND status = $2';
-        params.push(statusFilter);
-    } else if (statusFilter !== 'all') {
-         // If the client sends an invalid status (and it's not 'all')
-         return res.status(400).json({ success: false, error: 'Invalid status filter provided. Must be watched, planning, or all.' });
-    }
-    // If statusFilter is 'all', no additional WHERE clause is added.
-
     try {
-        const result = await query(sql, params);
+        const result = await query('SELECT * FROM watched_anime WHERE user_id=$1', [targetUserId]);
         res.json({ success: true, data: result.rows });
     } catch (err) {
         console.error("Get watched failed:", err);
@@ -481,7 +425,7 @@ app.post('/api/friends/request/:recipientId', async (req, res) => {
         res.json({ success: true, message: 'Friend request sent.' });
 
     } catch (error) {
-        // Catch the unique_pending_request constraint
+        // Catch the unique_pending_request constraint if two requests happen simultaneously
         if (error.code === '23505') {
             return res.status(400).json({ success: false, error: 'A request is already pending between these users.' });
         }
