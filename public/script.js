@@ -28,8 +28,6 @@ var listSearchInput = document.getElementById('list-search');
 var notesRatingInput = document.getElementById('notes-rating');
 var notesDateStartedInput = document.getElementById('notes-date-started');
 var notesDateFinishedInput = document.getElementById('notes-date-finished');
-
-
 // =================================================================================
 // 1. INITIAL SETUP AND NAVIGATION
 // =================================================================================
@@ -44,10 +42,9 @@ document.addEventListener('DOMContentLoaded', function() {
         currentViewedUserId = userId; // Initialize current view ID to self
         document.getElementById('profile-username').textContent = username;
         showView('app-main');
-        fetchWatchedAnime(userId); // Load user's own watched list initially
-        fetchToWatchList(userId); // NEW: Load user's to-watch list
+        // Initial load is for the 'watched' list
+        fetchUserLists(userId); 
         fetchPendingRequests(); // Load pending requests immediately
-     
         fetchFriendsList(); // Load confirmed friends list immediately
     } else {
         showView('auth');
@@ -76,8 +73,9 @@ function showView(viewId) {
 
 /**
  * Helper to switch between Watched, Search, and Find Friends sub-views.
+ * Updated to handle list types ('watched' or 'to-watch').
  */
-function showSubView(subViewId) {
+function showSubView(subViewId, listType = null) {
     document.querySelectorAll('#app-main .sub-view').forEach(function(view) {
         view.style.display = 'none';
     });
@@ -92,35 +90,32 @@ function showSubView(subViewId) {
         }
     });
     
-    // Logic to reset the view state
-    var watchedHeader = document.getElementById('watched-list-header');
-    var backBtn = document.getElementById('back-to-my-list-btn');
-    if (backBtn) backBtn.remove();
-    document.getElementById('list-controls').style.display = 'none'; // Default to hidden
-
+    // Logic to handle list viewing
     if (subViewId === 'page-watched') {
-        currentListType = 'watched'; // NEW: Set list type
-        document.getElementById('watched-list-title').textContent = username + "'s Watched List";
-        document.getElementById('list-controls').style.display = 'grid';
+        var watchedHeader = document.getElementById('watched-list-header');
+        // Restore current user's list view settings
+        var backBtn = document.getElementById('back-to-my-list-btn');
+        if (backBtn) backBtn.remove();
+        document.getElementById('list-controls').style.display = 'grid'; // Always show controls for user's own list
         
-        // Only re-fetch if we are currently NOT viewing the current user's list
-        if (String(currentViewedUserId) !== String(userId)) {
-            fetchWatchedAnime(userId);
+        // Handle list type switching only for the current user's view
+        if (listType && String(currentViewedUserId) === String(userId)) {
+            currentListType = listType;
+        }
+
+        // Set the appropriate title
+        document.getElementById('watched-list-title').textContent = (String(currentViewedUserId) === String(userId) ? username + "'s " : currentViewedList.length > 0 ? currentViewedList[0].username + "'s " : "Friend's ") + 
+            (currentListType === 'watched' ? 'Watched List' : 'To Watch List');
+
+        // Only re-fetch if we are currently NOT viewing the correct list or if we switched list types
+        if (String(currentViewedUserId) !== String(userId) || listType) {
+             fetchUserLists(currentViewedUserId, currentListType);
         } else {
+            // Re-render quickly if we were already viewing our own list of the current type
             renderWatchedList(); 
         }
 
-    } else if (subViewId === 'page-to-watch') { // NEW: To Watch List (Goal 2)
-        currentListType = 'to-watch'; 
-        document.getElementById('watched-list-title').textContent = username + "'s To Watch List";
-        
-        // Since we fetch it on DOMContentLoaded, we just need to render
-        currentViewedList = toWatchList;
-        currentViewedUserId = userId; // Always self for this tab
-        renderWatchedList();
-        
     } else if (subViewId === 'page-find-friends') {
-        currentListType = 'watched'; // Reset back to default
         fetchPendingRequests();
         fetchFriendsList();
         renderConfirmedFriendsList();
@@ -132,7 +127,9 @@ function setupMainAppListeners() {
     document.querySelectorAll('.navbar button').forEach(function(button) {
         button.addEventListener('click', function(e) {
             var view = e.target.dataset.view;
-            showSubView('page-' + view);
+            var listType = e.target.dataset.listType || null; // Read new data attribute
+            
+            showSubView('page-' + view, listType);
             // Close sidebar whenever a main navigation button is clicked
             if (profileSidebar && profileSidebar.classList.contains('active')) {
           
@@ -154,9 +151,6 @@ function setupMainAppListeners() {
     });
     // Logout Handler
     document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
-    
-    // MAL Transfer Button Handler (Goal 6)
-    document.getElementById('mal-transfer-btn')?.addEventListener('click', handleMalTransfer);
 
     // VA Language Selector
     document.getElementById('va-lang')?.addEventListener('change', function() {
@@ -171,7 +165,11 @@ function setupMainAppListeners() {
         currentSort = e.target.value;
         // Only sort the main 'watched' array if we are viewing our own list
         if (String(currentViewedUserId) === String(userId)) {
-            sortWatchedList(currentSort);
+            if (currentListType === 'watched') {
+                sortList(watched, currentSort);
+            } else {
+                sortList(toWatchList, currentSort);
+            }
         }
         renderWatchedList();
     });
@@ -179,7 +177,7 @@ function setupMainAppListeners() {
     if (listSearchInput) {
         listSearchInput.addEventListener('input', function() {
             // Only apply search/filter reset if viewing current user's list
-            if (String(currentViewedUserId) === String(userId) && currentListType === 'watched') {
+            if (String(currentViewedUserId) === String(userId)) {
                 activeVAFilter = null;
                 currentPage = 1;
             }
@@ -225,23 +223,13 @@ function handleLogout() {
     localStorage.removeItem('animeTrackerUsername');
     userId = null;
     username = null;
-    currentViewedList = []; // Clear state
-    toWatchList = []; // NEW: Clear state
-    currentViewedUserId = null; // Clear state
-    currentListType = 'watched'; // Reset state
+    currentViewedList = []; // Clear new state
+    currentViewedUserId = null; // Clear new state
+    watched = [];
+    toWatchList = [];
+    currentListType = 'watched';
     showView('auth');
-    watched.length = 0;
     document.getElementById('watched-list').innerHTML = '';
-    if (profileSidebar) profileSidebar.classList.remove('active');
-}
-
-/**
- * Handles the placeholder for MAL Transfer (Goal 6).
- */
-function handleMalTransfer() {
-    // Placeholder for MAL Transfer logic
-    alert("MAL Transfer feature not yet implemented on the server side. Please check back later.");
-    // Close sidebar
     if (profileSidebar) profileSidebar.classList.remove('active');
 }
 
@@ -309,9 +297,8 @@ async function handleLogin() {
         currentViewedUserId = userId; // Set current view to self upon login
         
         showView('app-main');
-        showSubView('page-watched');
-        fetchWatchedAnime(userId);
-        fetchToWatchList(userId); // NEW: Load To-Watch list
+        showSubView('page-watched', 'watched'); // Load watched list by default
+        fetchUserLists(userId);
         fetchPendingRequests();
         fetchFriendsList();
     } else {
@@ -321,11 +308,12 @@ async function handleLogin() {
 
 
 // =================================================================================
-// 3. ANILIST SEARCH AND ADD
+// 3. ANILIST SEARCH AND ADD (FIXED)
 // =================================================================================
 
+// Removed old document.getElementById('search-results')?.addEventListener('click', handleAddAnime);
 document.getElementById('anime-search')?.addEventListener('input', debounce(handleSearch, 300));
-document.getElementById('search-results')?.addEventListener('click', handleAddAnime);
+
 /**
  * Debounce utility to limit the rate of function calls.
  */
@@ -340,94 +328,200 @@ function debounce(func, delay) {
 }
 
 async function handleSearch(e) {
-// ... (existing handleSearch function, no changes needed) ...
     var search = e.target.value.trim();
     var searchResultsEl = document.getElementById('search-results');
     searchResultsEl.innerHTML = '';
     
     if (search.length < 3) return;
-    searchResultsEl.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">Searching...</li>';
+    searchResultsEl.innerHTML = '<li class="search-message" style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: #a0a0a0;">Searching...</li>';
     try {
         var res = await fetch('/search-anime?q=' + encodeURIComponent(search) + '&lang=romaji');
         var data = await res.json();
-        searchResultsEl.innerHTML = '';
+        
+        // --- NEW: Call dedicated display function ---
+        displaySearchResults(data); 
 
-        if (data && data.length) {
-            data.forEach(function(anime) {
-                var coverUrl = anime.coverImage?.large || PLACEHOLDER_IMAGE;
-                var li = document.createElement('li');
-                li.dataset.anime = JSON.stringify(anime);
-                li.innerHTML = `
-   
-                    <img src="${coverUrl}" onerror="this.onerror=null; this.src='${PLACEHOLDER_IMAGE}'" style="width: 30px; height: 45px; vertical-align: middle; margin-right: 10px; border-radius: 3px;">
-                    <strong>${anime.title.romaji || anime.title.english}</strong> (Score: ${anime.averageScore || 'N/A'})
-                `;
-                document.getElementById('search-results').appendChild(li);
-            
-            });
-        } else {
-            searchResultsEl.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">No results found.</li>';
-        }
     } catch (e) {
-        searchResultsEl.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #f44336;">Error during search.</li>';
+        console.error("[SEARCH ERROR] AniList fetch failed:", e.message);
+        searchResultsEl.innerHTML = '<li class="search-message" style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: #f44336;">Error during search.</li>';
     }
 }
 
-async function handleAddAnime(e) {
-    var target = e.target;
-    while(target && target.tagName !== 'LI') {
-        target = target.parentNode;
+/**
+ * NEW FUNCTION: Displays the structured search results with Add buttons.
+ */
+function displaySearchResults(results) {
+    const listContainer = document.getElementById('search-results');
+    listContainer.innerHTML = '';
+    
+    if (!results || results.length === 0) {
+        listContainer.innerHTML = '<li class="search-message" style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: #a0a0a0;">No anime found. Try a different search term.</li>';
+        return;
     }
-    if (!target || !target.dataset.anime) return;
 
-    var animeData = JSON.parse(target.dataset.anime);
-    var animeTitle = animeData.title.romaji || animeData.title.english;
-    
-    // GOAL 1 & 2: Remove rating prompt, add status choice
-    var listChoice = confirm("Do you want to add \"" + animeTitle + "\" to your 'To Watch' list? Click OK for 'To Watch' or Cancel for 'Watched'.");
-    var status = listChoice ? 'planning' : 'watched';
-    
-    // Default rating is 0, dates are null. User will update them in the Notes Modal later.
-    var initialRating = 0; 
-    
-    var coverImageURL = animeData.coverImage?.large || '';
+    // Combine local lists to check if an anime already exists (in any status)
+    const existingAnimeIds = new Set([
+        ...watched.map(a => String(a.anime_id)),
+        ...toWatchList.map(a => String(a.anime_id))
+    ]);
+
+    results.forEach(anime => {
+        // Use Romaji title as default, fall back to English if Romaji is not available
+        const title = anime.title.romaji || anime.title.english || 'Untitled Anime';
+        // Sanitize and truncate description for display
+        const description = anime.description 
+            ? anime.description.replace(/<br>/g, ' ').replace(/<[^>]*>/g, '').trim().substring(0, 200) + (anime.description.length > 200 ? '...' : '') 
+            : 'No description available.';
+        const coverImage = anime.coverImage ? anime.coverImage.large : PLACEHOLDER_IMAGE;
+        const animeIdStr = String(anime.id);
+        const alreadyInList = existingAnimeIds.has(animeIdStr);
+
+        const li = document.createElement('li');
+        li.className = 'search-result-item'; // Class for CSS styling
+        li.dataset.animeId = animeIdStr;
+        
+        li.innerHTML = `
+            <div class="search-info-container">
+                <div class="search-cover-container">
+                    <img src="${coverImage}" alt="${title} cover" class="search-cover-image" onerror="this.onerror=null; this.src='${PLACEHOLDER_IMAGE}'">
+                </div>
+                <div class="search-details">
+                    <h4 class="anime-title">${title}</h4>
+                    <p class="anime-score">Score: ${anime.averageScore ? (anime.averageScore / 10).toFixed(1) : 'N/A'}</p>
+                    <p class="anime-description-text">${description}</p>
+                </div>
+            </div>
+            <div class="search-actions">
+                <button class="add-btn status-watched" data-status="watched" data-anime-id="${anime.id}" ${alreadyInList ? 'disabled' : ''}>
+                    ${alreadyInList ? 'Already in List' : 'Add to Watched'}
+                </button>
+                <button class="add-btn status-planning" data-status="planning" data-anime-id="${anime.id}" ${alreadyInList ? 'disabled' : ''}>
+                    ${alreadyInList ? 'Already in List' : 'Add to To Watch'}
+                </button>
+            </div>
+        `;
+
+        // --- Event Listeners for New Buttons ---
+        const watchedBtn = li.querySelector('.status-watched');
+        const planningBtn = li.querySelector('.status-planning');
+        
+        if (alreadyInList) {
+            watchedBtn.classList.add('disabled-add');
+            planningBtn.classList.add('disabled-add');
+            // If already in list, no need to add listeners
+            listContainer.appendChild(li);
+            return;
+        }
+
+        // Combined handler logic for both buttons
+        const addAnimeHandler = async (event) => {
+            const status = event.currentTarget.dataset.status;
+            event.currentTarget.disabled = true;
+            event.currentTarget.textContent = status === 'watched' ? 'Adding...' : 'Planning...';
+
+            // Ask for rating only if adding to the 'watched' list immediately
+            let rating = 0;
+            if (status === 'watched') {
+                 let ratingInput = prompt("Enter your rating for \"" + title + "\" (0-10 scale). Press OK for 0 rating or Cancel to stop:");
+                 
+                 // If the user presses Cancel or provides an empty string, we treat it as no rating but proceed
+                 if (ratingInput === null) {
+                    event.currentTarget.disabled = false;
+                    event.currentTarget.textContent = 'Add to Watched';
+                    return;
+                 }
+                 
+                 rating = parseFloat(ratingInput) || 0;
+                 
+                 if (rating < 0 || rating > 10) {
+                    alert("Invalid rating. Please enter a number between 0 and 10.");
+                    event.currentTarget.disabled = false;
+                    event.currentTarget.textContent = 'Add to Watched';
+                    return;
+                 }
+            }
+            
+
+            const success = await addAnimeToList({
+                userId: userId,
+                animeId: anime.id,
+                animeTitle: title,
+                description: anime.description,
+                coverImage: coverImage,
+                characters: anime.characters ? anime.characters.edges : [],
+                status: status, // Pass the correct status to the server
+                rating: rating // Pass the rating
+            });
+
+            if (success) {
+                event.currentTarget.textContent = status === 'watched' ? 'Added! (Watched)' : 'Added! (To Watch)';
+                event.currentTarget.classList.add('added');
+                
+                // Disable the other button as well
+                const otherBtn = status === 'watched' ? planningBtn : watchedBtn;
+                otherBtn.disabled = true;
+                otherBtn.textContent = 'Already Added';
+                otherBtn.classList.add('disabled-add');
+                
+                // Update both watched and toWatch lists after adding
+                fetchUserLists(userId); 
+            } else {
+                // Assuming failure is due to 'Already Exists' based on server implementation
+                event.currentTarget.textContent = 'Already Exists';
+                event.currentTarget.classList.add('disabled-add');
+                event.currentTarget.disabled = true;
+                
+                // Disable the other button too as the anime is now in the list
+                const otherBtn = status === 'watched' ? planningBtn : watchedBtn;
+                otherBtn.disabled = true;
+                otherBtn.textContent = 'Already Exists';
+                otherBtn.classList.add('disabled-add');
+            }
+        };
+
+        watchedBtn.addEventListener('click', addAnimeHandler);
+        planningBtn.addEventListener('click', addAnimeHandler);
+
+        listContainer.appendChild(li);
+    });
+}
+
+/**
+ * NEW ASYNC HELPER: Handles the API call to add an anime with a specific status.
+ */
+async function addAnimeToList({ userId, animeId, animeTitle, description, coverImage, characters, status, rating }) {
     try {
         var res = await fetch('/add-anime', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 userId: userId,
-                animeId: animeData.id,
-          
+                animeId: animeId,
                 animeTitle: animeTitle,
-                rating: initialRating, 
-                description: animeData.description,
-                coverImage: coverImageURL,
-                characters: animeData.characters ? animeData.characters.edges : [],
-                status: status // NEW: Add status to payload
+                rating: rating, // Rating is now 0-10, passed directly
+                description: description,
+                coverImage: coverImage,
+                characters: characters,
+                status: status // Pass the required status
             })
-  
         });
 
         var data = await res.json();
+        
         if (data.success) {
-            // GOAL 5: Keep search results & show notification
-            alert(animeTitle + (status === 'planning' ? " added successfully to your To Watch list!" : " added successfully to your Watched list!"));
-
-            if (status === 'watched') {
-                fetchWatchedAnime(userId);
-            } else {
-                fetchToWatchList(userId);
-            }
-            
-            // Show the appropriate list if not already there
-            showSubView('page-' + (status === 'planning' ? 'to-watch' : 'watched'));
+            return true;
         } else {
-            alert("Failed to add anime: " + data.error);
+            console.error("Failed to add anime:", data.error);
+            // Alert user only on unique failure (not 'already added')
+            if (!data.error.includes("already added")) {
+                 alert("Failed to add anime: " + data.error);
+            }
+            return false;
         }
     } catch (e) {
         console.error("Add anime failed:", e);
         alert("An error occurred while adding the anime.");
+        return false;
     }
 }
 
@@ -454,7 +548,8 @@ function parseVoiceActors(vaString) {
 }
 
 /**
- * Calculates the occurrence count for every voice actor in the user's list.
+ * Calculates the occurrence count for every voice actor in the user's watched list.
+ * NOTE: Only calculates for the WATCHED list, as to-watch is less relevant for this stat.
  * Updates the global vaCounts object.
  */
 function getVoiceActorCounts() {
@@ -462,7 +557,7 @@ function getVoiceActorCounts() {
     // Uses the language selected in the UI
     var vaLang = document.getElementById('va-lang')?.value || 'japanese';
 
-    watched.forEach(function(anime) {
+    watched.forEach(function(anime) { // Only iterate over the watched list
         var vaString = anime.voice_actors_parsed[vaLang] || "";
         var vaList = vaString.split('|');
         vaList.forEach(function(vaEntry) {
@@ -479,145 +574,125 @@ function getVoiceActorCounts() {
 
 
 /**
- * Fetches the watched list (status=watched) for a given user ID and updates the display.
+ * Sorts the provided list based on the given sort criteria.
  */
-async function fetchWatchedAnime(targetUserId) {
-    if (!targetUserId) return;
-    // Updated endpoint to specifically request 'watched' items
-    var isCurrentUser = String(targetUserId) === String(userId);
-    var targetListEl = document.getElementById('watched-list');
-    
-    if (isCurrentUser && currentListType === 'watched') {
-        targetListEl.innerHTML = '<li style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: var(--color-text-subtle);">Loading...</li>';
+function sortList(list, sortType) {
+    switch (sortType) {
+        case 'rating-desc':
+            list.sort(function(a, b) { 
+                // Treat null/0 rating as lowest for sorting
+                var ratingA = a.rating || 0;
+                var ratingB = b.rating || 0;
+                return ratingB - ratingA; 
+            });
+            break;
+        case 'rating-asc':
+            list.sort(function(a, b) { 
+                 var ratingA = a.rating || 0;
+                 var ratingB = b.rating || 0;
+                 return ratingA - ratingB; 
+            });
+            break;
+        case 'title-asc':
+            list.sort(function(a, b) { return a.anime_title.localeCompare(b.anime_title); });
+            break;
+        case 'recent':
+        default:
+            list.sort(function(a, b) { return b.id - a.id; });
+            break;
     }
+}
+
+/**
+ * Fetches ALL list data (watched and to-watch) for a given user ID and updates the display.
+ * @param {string} targetUserId - The ID of the user whose list to fetch.
+ * @param {string} [listType=currentListType] - The type of list to set as the active view ('watched' or 'to-watch').
+ */
+async function fetchUserLists(targetUserId, listType = currentListType) {
+    if (!targetUserId) return;
+    
+    document.getElementById('watched-list').innerHTML = '<li style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: var(--color-text-subtle);">Loading ' + listType + ' list...</li>';
+    
+    // Clear the current view list while fetching to avoid stale data display
+    currentViewedList = []; 
 
     try {
-        // ASSUMPTION: API endpoint supports an optional 'status' parameter
-        var url = '/watched/' + targetUserId + (isCurrentUser ? '?status=watched' : ''); 
-        var res = await fetch(url);
+        // Fetch ALL lists for the user ID
+        var res = await fetch('/watched/' + targetUserId + '?status=all'); 
         var data = await res.json();
+        
+        var isCurrentUser = String(targetUserId) === String(userId);
         
         if (data.success) {
             var listData = data.data.map(function(item) {
                 return {
                     ...item,
                     voice_actors_parsed: parseVoiceActors(item.voice_actors),
-                    rating: parseFloat(item.rating),
-                    date_started: item.date_started || '', // NEW: Add date_started (Goal 3)
-                    date_finished: item.date_finished || '' // NEW: Add date_finished (Goal 3)
+                    rating: parseFloat(item.rating) || 0,
+                    date_started: item.date_started || '',
+                    date_finished: item.date_finished || ''
                 };
             });
 
-            // --- Set Global State for Current View ---
-            currentViewedList = listData;
-            currentViewedUserId = targetUserId;
-
             if (isCurrentUser) {
-                watched = listData; // Update permanent user list
-                sortWatchedList(currentSort); // Sort the permanent list
-                getVoiceActorCounts(); // Calculate VA counts
+                // Separate into the two permanent user lists
+                watched = listData.filter(item => item.status === 'watched');
+                toWatchList = listData.filter(item => item.status === 'planning');
+
+                // Sort the permanent lists
+                sortList(watched, currentSort);
+                sortList(toWatchList, currentSort);
+                getVoiceActorCounts(); // Calculate VA counts for 'watched' list
                 calculateAndRenderStats(); 
+                
+                // Set the current view based on the active list type
+                currentListType = listType; 
+                currentViewedList = currentListType === 'watched' ? watched : toWatchList;
+                
                 // When refreshing the user's own list, reset filters/page
                 activeVAFilter = null;
                 currentPage = 1;
             } else {
-                // Friend's list - sort by title ascending for simplicity in read-only view
-                currentViewedList.sort(function(a, b) { return a.anime_title.localeCompare(b.anime_title); });
+                // Friend's list - keep the fetched full list and set currentViewedUserId
+                currentViewedList = listData.filter(item => item.status === currentListType); // Filter friend's list by current list type
+                currentViewedUserId = targetUserId;
+                // Sort by title ascending for simplicity in read-only view
+                sortList(currentViewedList, 'title-asc'); 
                 currentPage = 1; // Reset page when viewing a friend's list
             }
             
-            // Only render if we are currently looking at the watched view or a friend's list
-            if (currentListType === 'watched' || !isCurrentUser) {
-                renderWatchedList();
-            }
+            // Render the list using the new global state
+            renderWatchedList();
 
         } else {
-            if (isCurrentUser && currentListType === 'watched') {
-                targetListEl.innerHTML = '<li style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: #f44336;">Error loading list: ' + data.error + '</li>';
-            }
+            document.getElementById('watched-list').innerHTML = '<li style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: #f44336;">Error loading list: ' + data.error + '</li>';
         }
 
     } catch (e) {
         console.error('Network error fetching watched anime:', e);
-        if (isCurrentUser && currentListType === 'watched') {
-            document.getElementById('watched-list').innerHTML = '<li style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: #f44336;">Network error.</li>';
-        }
+        document.getElementById('watched-list').innerHTML = '<li style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: #f44336;">Network error.</li>';
     }
 }
 
-/**
- * Fetches the to-watch (planning) list for a given user ID and updates the display. (Goal 2)
- */
-async function fetchToWatchList(targetUserId) {
-    if (!targetUserId) return;
-    try {
-        var res = await fetch('/watched/' + targetUserId + '?status=planning'); // Assuming API supports status query
-        var data = await res.json();
-        
-        if (data.success) {
-            toWatchList = data.data.map(function(item) {
-                return {
-                    ...item,
-                    voice_actors_parsed: parseVoiceActors(item.voice_actors), 
-                    rating: parseFloat(item.rating)
-                };
-            });
-            // If the user is currently viewing the to-watch list, re-render
-            if (currentListType === 'to-watch' && String(currentViewedUserId) === String(userId)) {
-                currentViewedList = toWatchList;
-                renderWatchedList();
-            }
-        } else {
-            console.error('Error loading to-watch list:', data.error);
-        }
-
-    } catch (e) {
-        console.error('Network error fetching to-watch anime:', e);
-    }
-}
 
 /**
- * Sorts the global 'watched' array based on the current sort criteria.
- */
-function sortWatchedList(sortType) {
-    switch (sortType) {
-        case 'rating-desc':
-            watched.sort(function(a, b) { return b.rating - a.rating; });
-            break;
-        case 'rating-asc':
-            watched.sort(function(a, b) { return a.rating - b.rating; });
-            break;
-        case 'title-asc':
-            watched.sort(function(a, b) { return a.anime_title.localeCompare(b.anime_title); });
-            break;
-        case 'recent':
-        default:
-            watched.sort(function(a, b) { return b.id - a.id; });
-            break;
-    }
-}
-
-/**
- * Applies active text search and VA filters to the current user's list.
+ * Applies active text search and VA filters to the current viewed list.
  * Accepts the list to filter as an argument.
  */
 function getFilteredWatchedList(listToFilter) {
     var filtered = listToFilter;
     var search = listSearchInput?.value.toLowerCase().trim() || '';
     var vaLang = document.getElementById('va-lang')?.value || 'japanese';
-    
-    // NEW: Skip filtering/VA logic for 'to-watch' list
-    if (currentListType === 'to-watch') return filtered; 
 
-    // 1. Apply VA Filter
-    if (activeVAFilter) {
+    // 1. Apply VA Filter (Only relevant if viewing OWN watched list)
+    if (activeVAFilter && currentListType === 'watched' && String(currentViewedUserId) === String(userId)) {
         filtered = filtered.filter(function(anime) {
             var vaString = anime.voice_actors_parsed[vaLang];
             var vaNames = vaString.split('|').map(function(entry) { return entry.split(':').pop().trim(); });
             return vaNames.includes(activeVAFilter);
         });
     }
-
+    
     // 2. Apply Text Search
     if (search) {
         filtered = filtered.filter(function(anime) {
@@ -637,23 +712,32 @@ function renderWatchedList() {
     var listToRender = currentViewedList;
     var ownerId = currentViewedUserId;
     
-    if (!listToRender || !ownerId) return;
+    if (!listToRender || !ownerId) {
+        document.getElementById('watched-list').innerHTML = '<li style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: var(--color-text-subtle);">Select a list type or user.</li>';
+        return;
+    }
 
     var listEl = document.getElementById('watched-list');
     var isCurrentUser = String(ownerId) === String(userId);
-    // NEW: Determine if it's the current user's watched list (which has VA/Rating features)
-    var isCurrentUsersWatchedList = isCurrentUser && currentListType === 'watched';
     
-    // Filtering logic: Only apply filters/search if viewing the current user's watched list
-    var filtered = isCurrentUsersWatchedList ? getFilteredWatchedList(listToRender) : listToRender;
+    // Filtering logic: Only apply filters/search if viewing the current user's list
+    var filtered = isCurrentUser ? getFilteredWatchedList(listToRender) : listToRender;
     var totalItems = filtered.length;
     var maxPage = Math.ceil(totalItems / itemsPerPage);
     
     // Toggle list controls visibility
     var listControls = document.getElementById('list-controls');
     if (listControls) {
-        listControls.style.display = isCurrentUsersWatchedList ? 'grid' : 'none';
+        // Controls only show for the current user AND if viewing the watched list (where VA filter and rating sort are relevant)
+        listControls.style.display = isCurrentUser && currentListType === 'watched' ? 'grid' : 'none';
+        
+        // Hide VA filter if not in watched view
+        var vaControl = document.getElementById('va-filter-control');
+        if (vaControl) {
+            vaControl.style.display = currentListType === 'watched' ? 'block' : 'none';
+        }
     }
+
 
     // Handle pagination boundaries
     if (currentPage > maxPage && maxPage > 0) currentPage = maxPage;
@@ -665,36 +749,28 @@ function renderWatchedList() {
 
     listEl.innerHTML = '';
     if (paginatedItems.length === 0) {
-        var emptyMessage;
-        if (isCurrentUsersWatchedList) {
-            emptyMessage = activeVAFilter ? 'No anime found matching your filter.' : 'Your watched list is empty. Start adding anime!';
-        } else if (currentListType === 'to-watch') {
-            emptyMessage = 'Your To Watch list is empty. Start adding anime!';
-        } else {
-            emptyMessage = "This user's list is empty.";
-        }
-        
-        listEl.innerHTML = '<li style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: var(--color-text-subtle);">\n' + emptyMessage + '</li>';
+        listEl.innerHTML = '<li style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: var(--color-text-subtle);">\n' +
+            (isCurrentUser ?
+(activeVAFilter ? 'No anime found matching your filter.' : 'Your ' + currentListType + ' list is empty.') : "This user's list is empty.") +
+        '</li>';
     }
 
-    var vaLang = isCurrentUsersWatchedList ? (document.getElementById('va-lang')?.value || 'japanese') : 'japanese';
-    
+    var vaLang = isCurrentUser ? (document.getElementById('va-lang')?.value || 'japanese') : 'japanese';
     paginatedItems.forEach(function(anime) {
-        // Prepare VA Tags: Only calculate/show for the watched list
+        // Prepare VA Tags (Only for watched list)
         var vaTags = '';
-        if (currentListType === 'watched') {
-            var vaString = anime.voice_actors_parsed[vaLang];
-            vaTags = vaString.split('|').map(function(entry) {
+        if (anime.status === 'watched') {
+             vaTags = (anime.voice_actors_parsed[vaLang] || '').split('|').map(function(entry) {
                 if (!entry.trim()) return '';
 
                 var parts = entry.split(':');
                 var charNames = parts[0].trim();
                 var vaName = parts.length > 1 
-    ? parts[1].trim() : parts[0].trim();
+? parts[1].trim() : parts[0].trim();
                 
                 var classes = [];
                 
-                if (isCurrentUsersWatchedList) {
+                if (isCurrentUser) {
                     // 1. Check if the VA appears more than once (count > 1) to be highlighted and clickable
                     if (vaCounts[vaName] > 1) {
                         classes.push('highlight'); // Add the highlight style
@@ -703,6 +779,7 @@ function renderWatchedList() {
                     
                     // 2. Check if the VA is the currently active filter
                     if (vaName === activeVAFilter) {
+                        // The active filter should always be highlighted, even if its count is 1
                         if (!classes.includes('highlight')) {
                             classes.push('highlight');
                         }
@@ -712,64 +789,31 @@ function renderWatchedList() {
 
                 var finalClasses = classes.join(' ');
 
+                // The inner span now only uses the computed classes. The hardcoded 'highlight' is removed.
                 return '<span class="va"><span class="' + finalClasses + '" data-va-name="' + vaName + '">' + vaName + '</span> (' + charNames + ')</span>';
             }).join('');
         }
+
 
         var displayDescription = anime.description || 'No description \navailable.';
         var isClipped = displayDescription.length > 200;
         var coverImageUrl = anime.coverimage || anime.coverImage ||
 PLACEHOLDER_IMAGE;
         
-        // GOAL 3: Notes/Dates/Rating Display
-        var ratingDisplay = '';
-        var datesDisplay = '';
-        var notesReadonlyDisplay = ''; // GOAL 4: Friend notes viewing
+        // Conditional Display based on status
+        var statusLabel = anime.status === 'watched' ? 'Rating' : 'Status';
+        var statusValue = anime.status === 'watched' 
+            ? anime.rating.toFixed(1) + ' / 10' 
+            : '<span style="color: #ffc107; font-weight: bold;">Planning</span>';
+        var statusColor = anime.status === 'watched' 
+            ? (anime.rating >= 8.5 ? '#4CAF50' : (anime.rating >= 7.0 ? '#FFC107' : '#F44336'))
+            : '#03A9F4'; // Blue for planning
 
-        if (currentListType === 'watched') {
-            ratingDisplay = `
-                <p style="color: ${anime.rating >= 8.5 ? '#4CAF50' : (anime.rating >= 7.0 ? '#FFC107' : '#F44336')}; font-weight: bold; margin: 5px 0 10px 0;">
-                    Rating: ${anime.rating.toFixed(1)} / 10
-                </p>
-            `;
-            if (anime.date_started || anime.date_finished) {
-                 datesDisplay = `
-                    <p style="color: var(--color-text-subtle); font-size: 0.85em; margin: 5px 0 5px 0;">
-                        ${anime.date_started ? 'Started: ' + anime.date_started : ''}
-                        ${anime.date_started && anime.date_finished ? ' | ' : ''}
-                        ${anime.date_finished ? 'Finished: ' + anime.date_finished : ''}
-                    </p>
-                 `;
-            }
-
-            // GOAL 4: Show friend notes/dates in a read-only manner
-            if (!isCurrentUser && anime.notes) {
-                notesReadonlyDisplay = `
-                    <div style="margin-top: 10px; padding: 10px; border: 1px solid var(--color-background-secondary); border-radius: 5px;">
-                        <h4 style="margin: 0 0 5px 0; color: var(--color-accent-highlight);">Friend's Notes</h4>
-                        <p style="white-space: pre-wrap; margin: 0; font-size: 0.9em; color: var(--color-text-main);">${anime.notes}</p>
-                    </div>
-                `;
-            }
-        } else {
-             // To-Watch list: No rating, just a status
-             ratingDisplay = `
-                <p style="color: var(--color-accent-highlight); font-weight: bold; margin: 5px 0 10px 0;">
-                    Status: Planning
-                </p>
-            `;
-        }
-        
         var listItem = document.createElement('li');
         listItem.dataset.id = anime.id;
         listItem.dataset.animeId = anime.anime_id;
-        
-        // GOAL 7: Update Notes button text based on list type
-        var buttonData = {
-            text: currentListType === 'watched' ? 'Rating/Dates/Notes' : 'Move to Watched',
-            action: currentListType === 'watched' ? 'open-notes' : 'move-to-watched',
-            removeText: currentListType === 'watched' ? 'Remove from Watched' : 'Remove from To Watch'
-        };
+        // Add a class for different statuses for specific styling if needed
+        listItem.classList.add('anime-status-' + anime.status);
 
         listItem.innerHTML = `
             <div class="anime-cover-container">
@@ -778,30 +822,40 @@ PLACEHOLDER_IMAGE;
             <div class="anime-info">
                 <div>
                     <b>${anime.anime_title}</b>
-                    ${ratingDisplay}
-                    ${datesDisplay}
+  
+                    <p style="color: ${statusColor}; font-weight: bold; margin: 5px 0 10px 0;">
+                        ${statusLabel}: ${statusValue}
+                    </p>
               
                     <div class="description-wrapper">
                         <span class="anime-description-text">${displayDescription}</span>
                         ${isClipped ?
 '<button class="read-more-btn" data-action="toggle-desc">Read More</button>' : ''}
                     </div>
-                    ${notesReadonlyDisplay} 
                 </div>
-                ${currentListType === 'watched' ? `<div class="va-tags-container">${vaTags}</div>` : ''}
+                ${anime.status === 'watched' ? `
+                    <div class="va-tags-container">
+                        ${vaTags}
+                    </div>
+                ` : ''}
       
                 ${isCurrentUser ?
 `
                     <div class="action-buttons">
-                        <button class="notes-btn" data-action="${buttonData.action}" 
-                                data-title="${anime.anime_title}" 
-                                data-anime-id="${anime.anime_id}" 
-                                data-notes="${escapeHtml(anime.notes || '')}"
-                                data-rating="${anime.rating}"
-                                data-date-started="${anime.date_started || ''}"
-                                data-date-finished="${anime.date_finished || ''}"
-                                >${buttonData.text}</button>
-                        <button class="remove-btn" data-action="remove-anime" data-anime-id="${anime.anime_id}" data-list-type="${currentListType}">${buttonData.removeText}</button>
+                        <button class="notes-btn" data-action="open-notes" 
+                            data-title="${anime.anime_title}" 
+                            data-anime-id="${anime.anime_id}" 
+                            data-status="${anime.status}"
+                            data-notes="${escapeHtml(anime.notes || '')}"
+                            data-rating="${anime.rating || 0}"
+                            data-date-started="${anime.date_started || ''}"
+                            data-date-finished="${anime.date_finished || ''}"
+                        >
+                            Notes & Details
+                        </button>
+                        <button class="remove-btn" data-action="remove-anime" data-anime-id="${anime.anime_id}">
+                            Remove
+                        </button>
                     </div>
  
                 ` : ''}
@@ -815,6 +869,7 @@ PLACEHOLDER_IMAGE;
 currentPage : 0) + ' of ' + maxPage;
     document.getElementById('prev-page').disabled = currentPage <= 1;
     document.getElementById('next-page').disabled = currentPage >= maxPage;
+    
     // Setup listeners only for the current user's list
     if (isCurrentUser) {
         setupCardListeners(listEl);
@@ -867,23 +922,18 @@ e.target.closest('.description-wrapper');
         });
     });
 
-    // Remove Anime Listener (handles both watched and to-watch lists)
+    // Remove Anime Listener
     container.querySelectorAll('[data-action="remove-anime"]').forEach(function(button) {
         button.addEventListener('click', handleRemoveAnime);
     });
-    // Notes Button Listener (for 'watched' items)
+    // Notes Button Listener
     container.querySelectorAll('[data-action="open-notes"]').forEach(function(button) {
         button.addEventListener('click', handleOpenNotesModal);
-    });
-    // NEW: Move to Watched List Listener (for 'to-watch' items)
-    container.querySelectorAll('[data-action="move-to-watched"]').forEach(function(button) {
-        button.addEventListener('click', handleMoveToWatched);
     });
 }
 
 async function handleRemoveAnime(e) {
     var animeId = e.target.dataset.animeId;
-    var listType = e.target.dataset.listType; // NEW: Get list type from button
     var animeTitle = e.target.closest('li').querySelector('.anime-info b').textContent;
     if (!confirm("Are you sure you want to remove \"" + animeTitle + "\" from your list?")) return;
     try {
@@ -894,18 +944,11 @@ async function handleRemoveAnime(e) {
         if (data.success) {
             alert(animeTitle + " removed successfully.");
             
-            if (listType === 'watched') {
-                watched = watched.filter(function(anime) { return anime.anime_id !== parseInt(animeId); });
-                currentViewedList = watched; 
-                getVoiceActorCounts(); // Recalculate VA counts after removal
-                calculateAndRenderStats();
-            } else if (listType === 'to-watch') {
-                toWatchList = toWatchList.filter(function(anime) { return anime.anime_id !== parseInt(animeId); });
-                currentViewedList = toWatchList;
-            }
-            
-            renderWatchedList();
-            
+            // Re-fetch ALL lists to ensure local data is consistent, especially if status changed
+            fetchUserLists(userId);
+
+            // No need to manually filter local arrays as fetchUserLists handles it
+            calculateAndRenderStats();
         } else {
             alert("Failed to remove anime: " + data.error);
         }
@@ -915,50 +958,9 @@ async function handleRemoveAnime(e) {
     }
 }
 
-async function handleMoveToWatched(e) {
-    var button = e.target;
-    var animeId = button.dataset.animeId;
-    var animeTitle = button.dataset.title;
-    if (!confirm("Are you sure you want to move \"" + animeTitle + "\" to your Watched list? It will be automatically added with a 0 rating. You can update details after.")) return;
-
-    // Remove from the current to-watch list
-    toWatchList = toWatchList.filter(function(anime) { return String(anime.anime_id) !== String(animeId); });
-    currentViewedList = toWatchList;
-
-    try {
-        // ASSUMPTION: The server API is updated to handle status updates
-        var res = await fetch('/update-status', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                userId: userId,
-                animeId: animeId,
-                status: 'watched',
-                rating: 0 // Reset rating on move
-            })
-        });
-
-        var data = await res.json();
-        
-        if (data.success) {
-            alert(animeTitle + " moved to Watched list successfully. Use the 'Rating/Dates/Notes' button there to add your details.");
-            
-            // Re-render the to-watch list (now smaller)
-            renderWatchedList(); 
-            // Re-fetch the watched list in the background to keep it up to date
-            fetchWatchedAnime(userId); 
-        } else {
-            alert("Failed to move anime: " + data.error);
-        }
-    } catch (e) {
-        console.error("Move anime failed:", e);
-        alert("An error occurred while moving the anime.");
-    }
-}
-
 
 // =================================================================================
-// 5. NOTES MODAL LOGIC (Goals 1, 3, 7)
+// 5. NOTES MODAL LOGIC (UPDATED)
 // =================================================================================
 
 var notesModal = document.getElementById('notes-modal');
@@ -966,6 +968,7 @@ var closeButton = document.querySelector('.close-button');
 var saveNotesBtn = document.getElementById('save-notes-btn');
 var notesTextarea = document.getElementById('notes-textarea');
 var currentAnimeId = null;
+var currentStatus = null; // New global to track item status for saving
 function setupModalListeners() {
     if (closeButton) closeButton.onclick = function() { notesModal.style.display = 'none'; };
     if (notesModal) {
@@ -979,28 +982,31 @@ function setupModalListeners() {
 }
 
 function handleOpenNotesModal(e) {
-    // This button only appears for the current user's 'watched' list
-    if (String(currentViewedUserId) !== String(userId)) return; 
+    // Only allow notes modal if viewing own list (buttons are already conditionally rendered)
+    if (String(currentViewedUserId) !== String(userId)) return;
 
-    var button = e.target;
+    var button = e.target.closest('[data-action="open-notes"]');
     var title = button.dataset.title;
-    var notes = button.dataset.notes ?
-unescapeHtml(button.dataset.notes) : '';
-    
-    // NEW: Get Rating and Dates from dataset
-    var rating = button.dataset.rating;
-    var dateStarted = button.dataset.dateStarted;
-    var dateFinished = button.dataset.dateFinished;
-    
+    var notes = button.dataset.notes ? unescapeHtml(button.dataset.notes) : '';
+    var rating = button.dataset.rating || 0;
+    var dateStarted = button.dataset.dateStarted || '';
+    var dateFinished = button.dataset.dateFinished || '';
+    var status = button.dataset.status;
+
     currentAnimeId = button.dataset.animeId;
+    currentStatus = status; // Store status for saving
 
     document.getElementById('modal-anime-title').textContent = title;
     notesTextarea.value = notes;
+    notesRatingInput.value = rating;
+    notesDateStartedInput.value = dateStarted;
+    notesDateFinishedInput.value = dateFinished;
     
-    // NEW: Populate new fields (make sure they exist in your HTML)
-    if(notesRatingInput) notesRatingInput.value = rating;
-    if(notesDateStartedInput) notesDateStartedInput.value = dateStarted;
-    if(notesDateFinishedInput) notesDateFinishedInput.value = dateFinished;
+    // Show/Hide rating and date fields based on status
+    var watchedFields = document.getElementById('watched-fields');
+    if (watchedFields) {
+        watchedFields.style.display = status === 'watched' ? 'grid' : 'none';
+    }
 
     notesModal.style.display = 'block';
 }
@@ -1020,19 +1026,31 @@ function unescapeHtml(text) {
 
 async function handleSaveNotes() {
     var notes = notesTextarea.value;
-    // NEW: Get rating and dates
-    var rating = parseFloat(notesRatingInput.value);
-    var dateStarted = notesDateStartedInput.value;
-    var dateFinished = notesDateFinishedInput.value;
-    
-    // Basic validation
-    if (isNaN(rating) || rating < 0 || rating > 10) {
-        alert("Invalid rating. Please enter a rating between 0 and 10.");
+    var rating = currentStatus === 'watched' ? parseFloat(notesRatingInput.value) : 0;
+    var dateStarted = currentStatus === 'watched' ? notesDateStartedInput.value : null;
+    var dateFinished = currentStatus === 'watched' ? notesDateFinishedInput.value : null;
+
+    // Basic validation for rating
+    if (currentStatus === 'watched' && (isNaN(rating) || rating < 0 || rating > 10)) {
+        alert("Please enter a valid rating between 0 and 10.");
         return;
     }
     
+    // Determine the status to save (If moving from planning to watched, update status)
+    var newStatus = currentStatus;
+    // Check if the item is planning AND the user entered a finished date
+    if (currentStatus === 'planning' && dateFinished) {
+         if (confirm("Setting a finished date will move this anime to your Watched list. Proceed?")) {
+            newStatus = 'watched';
+         } else {
+             // If user cancels, clear the date finished so it remains in planning
+             dateFinished = null; 
+         }
+    }
+
+
     try {
-        var res = await fetch('/update-notes', {
+        var res = await fetch('/update-list-item', { // Using a more general endpoint
             method: 'PATCH',
          
             headers: { 'Content-Type': 'application/json' },
@@ -1040,36 +1058,22 @@ async function handleSaveNotes() {
                 userId: userId,
                 animeId: currentAnimeId,
                 notes: notes,
-                rating: rating, // NEW
-                date_started: dateStarted, // NEW
-                date_finished: dateFinished // NEW
+                rating: rating,
+                date_started: dateStarted,
+                date_finished: dateFinished,
+                status: newStatus // Pass new status
             })
         });
 
-        var 
-data = await res.json();
+        var data = await res.json();
         
         if (data.success) {
             alert("Details saved successfully!");
             notesModal.style.display = 'none';
             
-            // Update the local 'watched' array (user's permanent list)
-            var index = watched.findIndex(function(a) { return String(a.anime_id) 
-=== String(currentAnimeId); });
-            if (index !== -1) {
-                watched[index].notes = notes;
-                watched[index].rating = rating; 
-                watched[index].date_started = dateStarted; 
-                watched[index].date_finished = dateFinished; 
-                
-                // Also update the current view list if it's the user's own list
-                if (String(currentViewedUserId) === String(userId)) {
-                    currentViewedList = watched; 
-                    getVoiceActorCounts(); // Recalculate if rating change affects stats/sorting
-                    calculateAndRenderStats(); // Update stats
-                }
-                renderWatchedList();
-            }
+            // Re-fetch ALL lists to ensure local data is consistent, especially if status changed
+            fetchUserLists(userId, newStatus === 'watched' ? 'watched' : 'to-watch');
+
         } else {
             alert("Failed to save details: " + data.error);
         }
@@ -1090,12 +1094,13 @@ function calculateAndRenderStats() {
 
     // Stats always use the current user's (watched) list
     if (watched.length === 0) {
-        statsContainer.innerHTML = '<p class="stats-message">Your list is empty.\n\nAdd some anime to see stats!</p>';
+        statsContainer.innerHTML = '<p class="stats-message">Your watched list is empty. Add some anime to see stats!</p>';
         return;
     }
 
     // --- 1. Total Anime ---
-    var totalAnime = watched.length;
+    var totalWatchedAnime = watched.length;
+    var totalPlanningAnime = toWatchList.length;
     // --- 2. Average Rating ---
     var ratedAnime = watched.filter(function(anime) { return anime.rating > 0; });
     var totalRating = ratedAnime.reduce(function(sum, anime) { return sum + anime.rating; }, 0);
@@ -1123,13 +1128,17 @@ watched[0].anime_title : 'N/A';
     statsContainer.innerHTML = `
         <div class="stats-group">
             <div class="stat-item">
-                <span class="stat-value">${totalAnime}</span>
+                <span class="stat-value">${totalWatchedAnime}</span>
                 <span class="stat-label">Total Watched Titles</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">${totalPlanningAnime}</span>
+                <span class="stat-label">Total To Watch Titles</span>
             </div>
             <div class="stat-item">
    
                 <span class="stat-value">${avgRating.toFixed(2)} / 10</span>
-                <span class="stat-label">Average Rating</span>
+                <span class="stat-label">Average Rating (Watched)</span>
             </div>
             <div class="stat-item">
                 <span class="stat-value">${topVA.name}</span>
@@ -1138,7 +1147,7 @@ watched[0].anime_title : 'N/A';
             </div>
             <div class="stat-item">
                 <span class="stat-value">${mostRecent}</span>
-                <span class="stat-label">Most Recently Added</span>
+                <span class="stat-label">Most Recently Added (Watched)</span>
             </div>
         </div>
     `;
@@ -1148,7 +1157,6 @@ watched[0].anime_title : 'N/A';
 // =================================================================================
 // 7. FRIEND SYSTEM LOGIC
 // =================================================================================
-// ... (rest of the friend logic is unchanged, but ensures 'page-watched' reset) ...
 
 function setupFriendSearchListeners() {
     document.getElementById('friend-search-input')?.addEventListener('input', debounce(handleFriendSearch, 300));
@@ -1169,8 +1177,9 @@ function setupFriendSearchListeners() {
     });
     document.getElementById('confirmed-friends-list')?.addEventListener('click', function(e) {
         var target = e.target;
-        if (target.dataset.action === 'view-friend-list') {
-            viewFriendWatchedList(target.dataset.friendId, target.dataset.friendUsername);
+        if (e.target.dataset.action === 'view-friend-list') {
+            // Default to viewing a friend's 'watched' list
+            viewFriendWatchedList(target.dataset.friendId, target.dataset.friendUsername, 'watched'); 
         }
     });
 }
@@ -1409,14 +1418,15 @@ function renderConfirmedFriendsList() {
     });
 }
 
-function viewFriendWatchedList(friendId, friendUsername) {
-    // 1. Switch to the 'watched' section
-    showSubView('page-watched');
-    // 2. Update the list title
-    document.getElementById('watched-list-title').textContent = friendUsername + "'s Watched List";
-    // 3. Load the friend's list (this will update currentViewedList and currentViewedUserId)
-    fetchWatchedAnime(friendId);
-    // 4. Add a "Back to My List" button
+function viewFriendWatchedList(friendId, friendUsername, listType) {
+    // 1. Switch to the 'watched' section, passing the listType ('watched' or 'to-watch')
+    showSubView('page-watched', listType);
+    
+    // 2. Set currentViewedUserId and load the friend's list 
+    currentViewedUserId = friendId;
+    fetchUserLists(friendId, listType);
+    
+    // 3. Add a "Back to My List" button
     var watchedHeader = document.getElementById('watched-list-header');
     if (!watchedHeader) return;
     var backBtn = document.getElementById('back-to-my-list-btn');
@@ -1436,6 +1446,7 @@ function viewFriendWatchedList(friendId, friendUsername) {
     backBtn.addEventListener('click', function() {
         // Navigating back to the watched page triggers the showSubView('page-watched') logic
         // which resets the title, removes the back button, and calls fetchWatchedAnime(userId).
-        showSubView('page-watched');
+        currentViewedUserId = userId; // Reset to self
+        showSubView('page-watched', currentListType); // Re-render own list of current type
     });
 }
