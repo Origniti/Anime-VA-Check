@@ -134,6 +134,28 @@ async function setupDatabase() {
             END $$;
         `);
         // =========================================================================
+
+        // === NEW MIGRATION STEPS: Add Date and Precise Rating Columns ===
+        await query(`
+            DO $$ BEGIN
+                BEGIN
+                    ALTER TABLE watched_anime ADD COLUMN user_rating REAL;
+                EXCEPTION
+                    WHEN duplicate_column THEN null;
+                END;
+                BEGIN
+                    ALTER TABLE watched_anime ADD COLUMN start_date DATE;
+                EXCEPTION
+                    WHEN duplicate_column THEN null;
+                END;
+                BEGIN
+                    ALTER TABLE watched_anime ADD COLUMN end_date DATE;
+                EXCEPTION
+                    WHEN duplicate_column THEN null;
+                END;
+            END $$;
+        `);
+        // =========================================================================
         
         console.log('Database tables ensured successfully (PostgreSQL).');
     } catch (err) {
@@ -209,7 +231,7 @@ app.post('/add-anime', async (req, res) => {
             return res.json({ success: false, error: "Anime already added" });
         }
 
-        // --- START OF VOICE ACTOR Processing (Your original logic looks correct) ---
+        // --- START OF VOICE ACTOR Processing ---
         const japaneseVAMap = new Map();
         const englishVAMap = new Map();
 
@@ -251,6 +273,20 @@ app.post('/add-anime', async (req, res) => {
         const createVAString = (map) => {
             return Array.from(map.entries())
                 .map(([vaName, charNames]) => {
+                    // Changed to only return VA names for easier client-side filtering (as discussed in previous assessment)
+                    return vaName; 
+                })
+                .sort()
+                .join('|'); 
+        };
+        
+        // This keeps the original logic which includes char names, which is also valid, 
+        // I will revert to the original logic you had to ensure functionality is identical, 
+        // as the client-side VA processing relies on the char:VA format.
+        
+        const createVAStringOriginal = (map) => {
+             return Array.from(map.entries())
+                .map(([vaName, charNames]) => {
                     const charList = charNames.join(', '); 
                     return `${charList}: ${vaName}`;
                 })
@@ -258,15 +294,15 @@ app.post('/add-anime', async (req, res) => {
         };
         
         const vaData = {
-            japanese: createVAString(japaneseVAMap),
-            english: createVAString(englishVAMap)
+            japanese: createVAStringOriginal(japaneseVAMap),
+            english: createVAStringOriginal(englishVAMap)
         };
         
         const voiceActors = JSON.stringify(vaData);
         
         // --- END OF VOICE ACTOR Processing ---
 
-        // Insert new record
+        // Insert new record (initialDates and userRating are null by default)
         const insertResult = await query(
             'INSERT INTO watched_anime (user_id, anime_id, anime_title, rating, voice_actors, description, coverImage, notes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id',
             [userId, animeId, animeTitle, rating, voiceActors, description, coverImage, initialNotes]
@@ -301,32 +337,47 @@ app.delete('/remove-anime/:userId/:animeId', async (req, res) => {
 });
 
 // -------------------
-// Update anime notes
+// Update ALL watched anime details (notes, dates, user rating)
+// REPLACING the old '/update-notes' endpoint.
 // -------------------
-app.patch('/update-notes', async (req, res) => {
-    const { userId, animeId, notes } = req.body;
+app.patch('/update-watched', async (req, res) => {
+    const { userId, animeId, notes, startDate, endDate, userRating } = req.body;
     
     if (!userId || !animeId) {
         return res.status(400).json({ success: false, error: 'User ID and Anime ID are required.' });
     }
 
     const MAX_NOTES_LENGTH = 2000;
-    let sanitizedNotes = notes ? String(notes).replace(/<[^>]*>/g, '').trim() : '';
-    sanitizedNotes = sanitizedNotes.substring(0, MAX_NOTES_LENGTH);
+    // Sanitize and truncate notes
+    let sanitizedNotes = notes ? String(notes).replace(/<[^>]*>/g, '').trim().substring(0, MAX_NOTES_LENGTH) : null;
     
+    // Ensure rating is a safe number (0-10) or null
+    let safeRating = null;
+    const parsedRating = parseFloat(userRating);
+    if (!isNaN(parsedRating) && parsedRating >= 0 && parsedRating <= 10) {
+        // Round to 2 decimal places for precision (e.g., 3.57)
+        safeRating = Math.round(parsedRating * 100) / 100;
+    }
+
     try {
         const result = await query(
-            'UPDATE watched_anime SET notes = $1 WHERE user_id = $2 AND anime_id = $3 RETURNING id',
-            [sanitizedNotes, userId, animeId]
+            `UPDATE watched_anime 
+             SET notes = $1, 
+                 start_date = $2, 
+                 end_date = $3, 
+                 user_rating = $4
+             WHERE user_id = $5 AND anime_id = $6 
+             RETURNING id`,
+            [sanitizedNotes, startDate || null, endDate || null, safeRating, userId, animeId]
         );
 
         if (result.rowCount === 0) {
             return res.json({ success: false, error: 'Anime record not found for this user.' });
         }
         
-        res.json({ success: true, message: 'Notes updated successfully.' });
+        res.json({ success: true, message: 'Watched details updated successfully.' });
     } catch (err) {
-        console.error("Update notes failed:", err);
+        console.error("Update watched details failed:", err);
         res.status(500).json({ success: false, error: err.message });
     }
 });
@@ -345,6 +396,7 @@ app.get('/watched/:userId', async (req, res) => {
     }
 
     try {
+        // Fetches all columns, including new ones: notes, start_date, end_date, user_rating
         const result = await query('SELECT * FROM watched_anime WHERE user_id=$1', [targetUserId]);
         res.json({ success: true, data: result.rows });
     } catch (err) {
