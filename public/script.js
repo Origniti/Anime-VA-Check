@@ -11,7 +11,8 @@ var watched = []; // Stores the current user's (your) permanent list data
 var currentViewedList = []; // Stores the list data currently being rendered (yours or a friend's)
 var currentViewedUserId = null; // Stores the ID of the user whose list is currently being rendered
 var vaCounts = {}; // Stores counts of all VAs in the current user's list (for filtering/highlighting)
-var friendRequests = []; // Stores pending requests for the current user
+var friendRequests = [];
+// Stores pending requests for the current user
 var friendsList = []; // Stores confirmed friends
 var currentPage = 1;
 var itemsPerPage = 6;
@@ -27,946 +28,1148 @@ var listSearchInput = document.getElementById('list-search');
 // =================================================================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Check for existing token/session
-    if (localStorage.getItem('token')) {
-        // If logged in, go to dashboard
-        showView('dashboard');
-        loadUserProfile();
-        fetchWatchedAnime(userId); 
-        fetchFriendRequests();
-        fetchFriendsList();
+    // --- Session Check ---
+    userId = localStorage.getItem('animeTrackerUserId');
+    username = localStorage.getItem('animeTrackerUsername');
+    
+    if (userId) {
+        userId = String(userId);
+        currentViewedUserId = userId; // Initialize current view ID to self
+        document.getElementById('profile-username').textContent = username;
+        showView('app-main');
+        fetchWatchedAnime(userId); // Load user's own list initially
+        fetchPendingRequests(); // Load pending requests immediately
+     
+        fetchFriendsList(); // Load confirmed friends list immediately
     } else {
-        // If not logged in, go to auth
         showView('auth');
     }
-    
-    // Attach event listeners for main navigation
-    document.getElementById('nav-search-btn').addEventListener('click', () => showSubView('page-search'));
-    document.getElementById('nav-watched-btn').addEventListener('click', () => {
-        showSubView('page-watched');
-        // Reset to user's own list when navigating back to watched
-        document.getElementById('watched-list-title').textContent = "My Watched List";
-        document.getElementById('va-filter-display').style.display = 'none';
-        activeVAFilter = null;
-        fetchWatchedAnime(userId); // Fetches and displays current user's list
-        
-        // Remove friend back button if it exists
-        var backBtn = document.getElementById('back-to-my-list-btn');
-        if (backBtn) { backBtn.remove(); }
-    });
-    document.getElementById('nav-friends-btn').addEventListener('click', () => showSubView('page-friends'));
 
-    // Attach profile/logout listeners
-    document.querySelector('.profile-button').addEventListener('click', toggleProfileSidebar);
-    document.getElementById('logout-btn').addEventListener('click', logout);
-
-    // Initial subview display for dashboard
-    showSubView('page-watched');
-    
-    // Search listener
-    document.getElementById('anime-search-btn').addEventListener('click', searchAnime);
-    document.getElementById('anime-search-input').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            searchAnime();
-        }
-    });
-
-    // Watched list control listeners
-    document.getElementById('sort-select').addEventListener('change', (e) => {
-        currentSort = e.target.value;
-        renderWatchedList(currentViewedList);
-    });
-    document.getElementById('prev-page-btn').addEventListener('click', () => paginateList(currentPage - 1));
-    document.getElementById('next-page-btn').addEventListener('click', () => paginateList(currentPage + 1));
-
-    // Friend Management Listeners
-    document.getElementById('add-friend-btn').addEventListener('click', sendFriendRequest);
-    
-    // Notes Modal Listeners
-    document.querySelector('#notes-modal .close-button').addEventListener('click', hideNotesModal);
-    document.getElementById('save-notes-btn').addEventListener('click', saveNotes);
-    window.addEventListener('click', (event) => {
-        var modal = document.getElementById('notes-modal');
-        if (event.target === modal) {
-            hideNotesModal();
-        }
-    });
+    // --- Setup Listeners ---
+    setupAuthListeners();
+    setupMainAppListeners();
+    setupModalListeners();
+    setupFriendSearchListeners();
 });
-
-// Function to switch between main views (auth, dashboard)
+/**
+ * Helper to switch between Auth and App main views.
+ */
 function showView(viewId) {
-    var views = document.querySelectorAll('.view');
-    views.forEach(function(view) {
-        if (view) { // FIX: Added null check to prevent "Cannot read properties of null (reading 'style')"
-            view.style.display = 'none';
-            view.classList.remove('active');
+    document.querySelectorAll('.view').forEach(function(view) {
+        view.style.display = 'none';
+    });
+    document.getElementById(viewId).style.display = 'block';
+
+    var profileContainer = document.getElementById('profile-container');
+    if (profileContainer) {
+        profileContainer.style.display = (viewId === 'app-main' ? 'block' : 'none');
+    }
+}
+
+/**
+ * Helper to switch between Watched, Search, and Find Friends sub-views.
+ */
+function showSubView(subViewId) {
+    document.querySelectorAll('#app-main .sub-view').forEach(function(view) {
+        view.style.display = 'none';
+    });
+    document.getElementById(subViewId).style.display = 'block';
+
+    // Update navigation active state
+    document.querySelectorAll('.navbar button').forEach(function(button) {
+        button.classList.remove('active');
+        var viewName = subViewId.replace('page-', '');
+        if (button.dataset.view === viewName) {
+            button.classList.add('active');
         }
     });
-
-    var activeView = document.getElementById(viewId);
-    if (activeView) {
-        activeView.style.display = 'block';
-        activeView.classList.add('active');
-    }
-
-    // Adjust profile sidebar visibility
-    var profileSidebar = document.getElementById('profile-sidebar');
-    if (viewId === 'dashboard') {
-        if (profileSidebar) {
-            profileSidebar.style.display = 'flex';
+    // Logic to reset the watched view if a friend's list was being viewed
+    if (subViewId === 'page-watched') {
+        var watchedHeader = document.getElementById('watched-list-header');
+        // Restore current user's list view settings
+        var backBtn = document.getElementById('back-to-my-list-btn');
+        if (backBtn) backBtn.remove();
+        document.getElementById('watched-list-title').textContent = username + "'s Watched List";
+        document.getElementById('list-controls').style.display = 'grid';
+        
+        // Only re-fetch if we are currently NOT viewing the current user's list
+        if (String(currentViewedUserId) !== String(userId)) {
+             // Ensure the current user's list is loaded when navigating back to 'page-watched'
+            fetchWatchedAnime(userId);
+        } else {
+            // Re-render quickly if we were already viewing our own list
+            renderWatchedList(); 
         }
-    } else {
-        if (profileSidebar) {
-            profileSidebar.style.display = 'none';
-        }
+
+    } else if (subViewId === 'page-find-friends') {
+        fetchPendingRequests();
+        fetchFriendsList();
+        renderConfirmedFriendsList();
     }
 }
 
-// Function to switch between dashboard subviews (search, watched, friends)
-function showSubView(subviewId) {
-    // 1. Hide all subviews
-    var subviews = document.querySelectorAll('.subview');
-    subviews.forEach(view => view.style.display = 'none');
-    
-    // 2. Show the active subview
-    var activeSubView = document.getElementById(subviewId);
-    if (activeSubView) {
-        activeSubView.style.display = 'block';
+function setupMainAppListeners() {
+    // Navigation buttons
+    document.querySelectorAll('.navbar button').forEach(function(button) {
+        button.addEventListener('click', function(e) {
+            var view = e.target.dataset.view;
+            showSubView('page-' + view);
+            // Close sidebar whenever a main navigation button is clicked
+            if (profileSidebar && profileSidebar.classList.contains('active')) {
+          
+                profileSidebar.classList.remove('active');
+            }
+        });
+    });
+    // Profile Button Handler (Toggle sidebar)
+    var profileButton = document.querySelector('.profile-button');
+    if (profileButton) {
+        profileButton.addEventListener('click', toggleProfileSidebar);
     }
 
-    // 3. Update active nav button
-    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById('nav-' + subviewId.replace('page-', '') + '-btn').classList.add('active');
+    // Close sidebar if user clicks outside
+    document.addEventListener('click', function(event) {
+        if (profileSidebar && profileSidebar.classList.contains('active') && !profileSidebar.contains(event.target) && !profileButton.contains(event.target)) {
+            profileSidebar.classList.remove('active');
+        }
+    });
+    // Logout Handler
+    document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
+
+    // VA Language Selector
+    document.getElementById('va-lang')?.addEventListener('change', function() {
+        if (String(currentViewedUserId) === String(userId)) {
+            getVoiceActorCounts(); // Recalculate counts when language changes
+        }
+        // Use renderWatchedList without arguments to use the current state
+        renderWatchedList();
+    });
+    // Sort By Selector
+    document.getElementById('sort-by')?.addEventListener('change', function(e) {
+        currentSort = e.target.value;
+        // Only sort the main 'watched' array if we are viewing our own list
+        if (String(currentViewedUserId) === String(userId)) {
+            sortWatchedList(currentSort);
+        }
+        renderWatchedList();
+    });
+    // List Search Input
+    if (listSearchInput) {
+        listSearchInput.addEventListener('input', function() {
+            // Only apply search/filter reset if viewing current user's list
+            if (String(currentViewedUserId) === String(userId)) {
+                activeVAFilter = null;
+                currentPage = 1;
+            }
+            renderWatchedList();
+        });
+    }
+
+    // Pagination Listeners
+    document.getElementById('prev-page')?.addEventListener('click', function() {
+        if (currentPage > 1) {
+            currentPage--;
+            renderWatchedList();
+        }
+    });
+    document.getElementById('next-page')?.addEventListener('click', function() {
+        // Use the currently viewed list for max page calculation
+        var filteredList = getFilteredWatchedList(currentViewedList); // Note: Removed ownerId argument
+        var maxPage = Math.ceil(filteredList.length / itemsPerPage);
+        if (currentPage < maxPage) {
+            currentPage++;
+            renderWatchedList();
+        }
+    });
 }
 
-// Function to toggle the profile sidebar
+/**
+ * Toggles the profile sidebar and loads stats.
+ */
 function toggleProfileSidebar() {
-    var sidebar = document.getElementById('profile-sidebar');
-    if (!sidebar) return;
-    
-    // Check the computed style if 'display' is 'none'
-    var isHidden = window.getComputedStyle(sidebar).display === 'none';
+    if (!profileSidebar) return;
+    var isActive = profileSidebar.classList.toggle('active');
 
-    if (isHidden) {
-        sidebar.style.display = 'flex';
-    } else {
-        sidebar.style.display = 'none';
+    if (isActive) {
+        calculateAndRenderStats();
     }
 }
+
+/**
+ * Handles the logout process.
+ */
+function handleLogout() {
+    localStorage.removeItem('animeTrackerUserId');
+    localStorage.removeItem('animeTrackerUsername');
+    userId = null;
+    username = null;
+    currentViewedList = []; // Clear new state
+    currentViewedUserId = null; // Clear new state
+    showView('auth');
+    watched.length = 0;
+    document.getElementById('watched-list').innerHTML = '';
+    if (profileSidebar) profileSidebar.classList.remove('active');
+}
+
 
 // =================================================================================
 // 2. AUTHENTICATION
 // =================================================================================
 
-document.getElementById('show-register-btn').addEventListener('click', function() {
-    document.getElementById('login-form').style.display = 'none';
-    document.getElementById('register-form').style.display = 'block';
-});
+function setupAuthListeners() {
+    document.getElementById('show-register-btn')?.addEventListener('click', function() {
+        document.getElementById('login-form').style.display = 'none';
+        document.getElementById('register-form').style.display = 'block';
+        document.getElementById('auth-message').textContent = '';
+    });
+    document.getElementById('show-login-btn')?.addEventListener('click', function() {
+        document.getElementById('register-form').style.display = 'none';
+        document.getElementById('login-form').style.display = 'block';
+        document.getElementById('auth-message').textContent = '';
+    });
+    document.getElementById('register-btn')?.addEventListener('click', handleRegister);
+    document.getElementById('login-btn')?.addEventListener('click', handleLogin);
+}
 
-document.getElementById('show-login-btn').addEventListener('click', function() {
-    document.getElementById('register-form').style.display = 'none';
-    document.getElementById('login-form').style.display = 'block';
-});
+async function handleRegister() {
+    var usernameInput = document.getElementById('register-username').value;
+    var passwordInput = document.getElementById('register-password').value;
+    var messageEl = document.getElementById('auth-message');
 
-document.getElementById('login-btn').addEventListener('click', login);
-document.getElementById('register-btn').addEventListener('click', register);
+    var res = await fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: usernameInput, password: passwordInput })
+    });
+    var data = await res.json();
+    
+    if (data.success) {
+        messageEl.textContent = 'Registration successful!\n\nPlease log in.';
+        document.getElementById('register-form').style.display = 'none';
+        document.getElementById('login-form').style.display = 'block';
+    } else {
+        messageEl.textContent = data.error ||
+'Registration failed.';
+    }
+}
 
-async function login() {
-    const username = document.getElementById('login-username').value;
-    const password = document.getElementById('login-password').value;
+async function handleLogin() {
+    var usernameInput = document.getElementById('login-username').value;
+    var passwordInput = document.getElementById('login-password').value;
+    var messageEl = document.getElementById('auth-message');
 
+    var res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: usernameInput, password: passwordInput })
+    });
+    var data = await res.json();
+
+    if (data.success) {
+        userId = String(data.userId);
+        username = usernameInput;
+        localStorage.setItem('animeTrackerUserId', userId);
+        localStorage.setItem('animeTrackerUsername', username);
+        document.getElementById('profile-username').textContent = username;
+        
+        currentViewedUserId = userId; // Set current view to self upon login
+        
+        showView('app-main');
+        showSubView('page-watched');
+        fetchWatchedAnime(userId);
+        fetchPendingRequests();
+        fetchFriendsList();
+    } else {
+        messageEl.textContent = data.error || 'Login failed.';
+    }
+}
+
+
+// =================================================================================
+// 3. ANILIST SEARCH AND ADD
+// =================================================================================
+
+document.getElementById('anime-search')?.addEventListener('input', debounce(handleSearch, 300));
+document.getElementById('search-results')?.addEventListener('click', handleAddAnime);
+/**
+ * Debounce utility to limit the rate of function calls.
+ */
+function debounce(func, delay) {
+    var timeout;
+    return function() {
+        var context = this;
+        var args = arguments;
+        clearTimeout(timeout);
+        timeout = setTimeout(function() { func.apply(context, args); }, delay);
+    };
+}
+
+async function handleSearch(e) {
+    var search = e.target.value.trim();
+    var searchResultsEl = document.getElementById('search-results');
+    searchResultsEl.innerHTML = '';
+    
+    if (search.length < 3) return;
+    searchResultsEl.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">Searching...</li>';
     try {
-        const response = await fetch('/login', {
+        var res = await fetch('/search-anime?q=' + encodeURIComponent(search) + '&lang=romaji');
+        var data = await res.json();
+        searchResultsEl.innerHTML = '';
+
+        if (data && data.length) {
+            data.forEach(function(anime) {
+                var coverUrl = anime.coverImage?.large || PLACEHOLDER_IMAGE;
+                var li = document.createElement('li');
+                li.dataset.anime = JSON.stringify(anime);
+                li.innerHTML = `
+   
+                    <img src="${coverUrl}" onerror="this.onerror=null; this.src='${PLACEHOLDER_IMAGE}'" style="width: 30px; height: 45px; vertical-align: middle; margin-right: 10px; border-radius: 3px;">
+                    <strong>${anime.title.romaji || anime.title.english}</strong> (Score: ${anime.averageScore || 'N/A'})
+                `;
+                document.getElementById('search-results').appendChild(li);
+            
+            });
+        } else {
+            searchResultsEl.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">No results found.</li>';
+        }
+    } catch (e) {
+        searchResultsEl.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #f44336;">Error during search.</li>';
+    }
+}
+
+async function handleAddAnime(e) {
+    var target = e.target;
+    while(target && target.tagName !== 'LI') {
+        target = target.parentNode;
+    }
+    if (!target || !target.dataset.anime) return;
+
+    var animeData = JSON.parse(target.dataset.anime);
+    var animeTitle = animeData.title.romaji || animeData.title.english;
+    var rating = prompt("Enter your rating for \"" + animeTitle + "\" (1-100):");
+    rating = parseInt(rating);
+    if (isNaN(rating) || rating < 1 || rating > 100) {
+        alert("Invalid rating. Anime not added.");
+        return;
+    }
+    
+    var coverImageURL = animeData.coverImage?.large || '';
+    try {
+        var res = await fetch('/add-anime', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({
+                userId: userId,
+                animeId: animeData.id,
+          
+                animeTitle: animeTitle,
+                rating: rating / 10, // Store as 1-10 scale
+                description: animeData.description,
+                coverImage: coverImageURL,
+                characters: animeData.characters ? animeData.characters.edges : []
+            })
+  
         });
-        
-        const data = await response.json();
 
-        if (response.ok) {
-            localStorage.setItem('token', data.token);
-            userId = data.userId;
-            window.alert('Login successful!');
-            
-            // Switch view
-            showView('dashboard');
-            loadUserProfile();
-            fetchWatchedAnime(userId); 
-            fetchFriendRequests();
-            fetchFriendsList();
+        var data = await res.json();
+        if (data.success) {
+            alert(animeTitle + " added successfully!");
+            document.getElementById('anime-search').value = '';
+            document.getElementById('search-results').innerHTML = '';
+            fetchWatchedAnime(userId);
             showSubView('page-watched');
         } else {
-            window.alert('Login failed: ' + (data.message || 'Invalid credentials'));
+            alert("Failed to add anime: " + data.error);
         }
-    } catch (error) {
-        console.error('Login error:', error);
-        window.alert('An error occurred during login.');
+    } catch (e) {
+        console.error("Add anime failed:", e);
+        alert("An error occurred while adding the anime.");
     }
 }
 
-async function register() {
-    const regUsername = document.getElementById('register-username').value;
-    const regPassword = document.getElementById('register-password').value;
-    const confirmPassword = document.getElementById('register-password-confirm').value;
-
-    if (regPassword !== confirmPassword) {
-        window.alert('Passwords do not match.');
-        return;
-    }
-
-    try {
-        const response = await fetch('/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: regUsername, password: regPassword })
-        });
-        
-        const data = await response.json();
-
-        if (response.ok) {
-            window.alert('Registration successful! Please log in.');
-            document.getElementById('register-form').style.display = 'none';
-            document.getElementById('login-form').style.display = 'block';
-        } else {
-            window.alert('Registration failed: ' + (data.message || 'User might already exist.'));
-        }
-    } catch (error) {
-        console.error('Registration error:', error);
-        window.alert('An error occurred during registration.');
-    }
-}
-
-function logout() {
-    localStorage.removeItem('token');
-    userId = null;
-    username = null;
-    watched = [];
-    currentViewedList = [];
-    currentViewedUserId = null;
-    vaCounts = {};
-    friendRequests = [];
-    friendsList = [];
-    currentPage = 1;
-    activeVAFilter = null;
-    
-    // Clear list displays
-    document.getElementById('watched-list').innerHTML = '<p class="empty-message">Your watched list is empty. Add some anime from the Search tab!</p>';
-    document.getElementById('search-results').innerHTML = '<p class="empty-message">Search for an anime to get started!</p>';
-    document.getElementById('pending-requests-list').innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">No pending friend requests.</li>';
-    document.getElementById('confirmed-friends-list').innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">You have no confirmed friends.</li>';
-
-    showView('auth');
-    toggleProfileSidebar(); // Hide the sidebar when logging out
-}
-
-async function loadUserProfile() {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
-    try {
-        const response = await fetch('/profile', {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            username = data.username;
-            userId = data.id; // Ensure userId is updated
-            document.getElementById('profile-username').textContent = username;
-            document.getElementById('welcome-username').textContent = username;
-            
-            // Fetch stats after profile is loaded
-            fetchUserStats(); 
-        } else {
-            // Token might be expired or invalid, force logout
-            logout();
-        }
-    } catch (error) {
-        console.error('Profile load error:', error);
-        logout();
-    }
-}
 
 // =================================================================================
-// 3. ANIME SEARCH & ADDING
+// 4. WATCHED ANIME LIST MANAGEMENT
 // =================================================================================
 
-async function searchAnime() {
-    const query = document.getElementById('anime-search-input').value.trim();
-    const resultsContainer = document.getElementById('search-results');
-    resultsContainer.innerHTML = '<p class="empty-message">Searching...</p>';
-
-    if (!query) {
-        resultsContainer.innerHTML = '<p class="empty-message">Please enter a title to search.</p>';
-        return;
-    }
-
+/**
+ * Helper to safely parse voice actor data string from DB.
+ */
+function parseVoiceActors(vaString) {
     try {
-        const response = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
-        const data = await response.json();
-
-        if (response.ok) {
-            renderSearchResults(data);
-        } else {
-            resultsContainer.innerHTML = `<p class="empty-message">Search failed: ${data.message || 'Server error'}</p>`;
-        }
-    } catch (error) {
-        console.error('Search error:', error);
-        resultsContainer.innerHTML = '<p class="empty-message">An error occurred during search.</p>';
+        var vaData = JSON.parse(vaString);
+        return {
+            japanese: vaData.japanese ||
+"",
+            english: vaData.english ||
+""
+        };
+    } catch (e) {
+        return { japanese: "", english: "" };
     }
 }
 
-function renderSearchResults(results) {
-    const container = document.getElementById('search-results');
-    container.innerHTML = ''; // Clear previous results
+/**
+ * Calculates the occurrence count for every voice actor in the user's list.
+ * Updates the global vaCounts object.
+ */
+function getVoiceActorCounts() {
+    vaCounts = {}; // Reset counts
+    // Uses the language selected in the UI
+    var vaLang = document.getElementById('va-lang')?.value || 'japanese';
 
-    if (!results || results.length === 0) {
-        container.innerHTML = '<p class="empty-message">No anime found matching your search.</p>';
-        return;
-    }
+    watched.forEach(function(anime) {
+        var vaString = anime.voice_actors_parsed[vaLang] || "";
+        var vaList = vaString.split('|');
+        vaList.forEach(function(vaEntry) {
+            var vaNameMatch = vaEntry.match(/: (.*)$/);
+            // Use the VA name, handling both 'Char Name: VA Name' and just 'VA Name' formats
+            var vaName = vaNameMatch ? vaNameMatch[1].trim() : vaEntry.trim();
 
-    results.forEach(anime => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-            <div class="anime-cover-container">
-                <img src="${anime.coverImage || PLACEHOLDER_IMAGE}" alt="${anime.title}" class="anime-cover">
-            </div>
-            <span class="anime-score">${anime.averageScore || 'N/A'}%</span>
-            <div class="anime-title">${anime.title}</div>
-            <p class="anime-description-text">${anime.description || 'No description available.'}</p>
-            ${renderVoiceActors(anime.characters)}
-            <button class="add-btn" data-anime-id="${anime.id}" data-anime-title="${anime.title}">Add to Watched</button>
-        `;
-        container.appendChild(li);
-        
-        // Add event listener to the Add button
-        li.querySelector('.add-btn').addEventListener('click', handleAddToWatched);
-    });
-}
-
-async function handleAddToWatched(event) {
-    const button = event.target;
-    const animeId = button.dataset.animeId;
-    const animeTitle = button.dataset.animeTitle;
-    const token = localStorage.getItem('token');
-
-    if (!token || !userId) {
-        alert('You must be logged in to add anime.');
-        return;
-    }
-
-    try {
-        const response = await fetch('/api/watched/add', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ animeId, animeTitle })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            alert(`"${animeTitle}" added to your watched list!`);
-            // Refresh the user's main watched list after adding
-            fetchWatchedAnime(userId); 
-            // Update stats
-            fetchUserStats();
-        } else {
-            alert('Failed to add anime: ' + (data.message || 'Server error.'));
-        }
-    } catch (error) {
-        console.error('Add to watched error:', error);
-        alert('An error occurred while adding the anime.');
-    }
-}
-
-// Helper function to format voice actors for display
-function renderVoiceActors(characters) {
-    if (!characters || characters.length === 0) return '';
-    
-    let html = '<h4>Main Voice Actors:</h4><ul class="anime-va-list">';
-    const uniqueVAs = new Map();
-
-    // Collect up to 3 unique Japanese VAs per anime
-    for (const charEdge of characters) {
-        for (const va of charEdge.voiceActors) {
-            if (va.language === 'Japanese' && !uniqueVAs.has(va.name.full)) {
-                uniqueVAs.set(va.name.full, true);
-                // Limit to 3 VAs
-                if (uniqueVAs.size >= 3) break;
+            if (vaName) {
+                vaCounts[vaName] = (vaCounts[vaName] || 0) + 1;
             }
-        }
-        if (uniqueVAs.size >= 3) break;
-    }
-
-    uniqueVAs.forEach((_, vaName) => {
-        // Voice actors are not highlighted/clickable in the search view
-        html += `<li>${vaName}</li>`;
+        });
     });
-    
-    html += '</ul>';
-    return html;
 }
 
-// =================================================================================
-// 4. WATCHED LIST MANAGEMENT
-// =================================================================================
 
+/**
+ * Fetches the watched list for a given user ID and updates the display.
+ */
 async function fetchWatchedAnime(targetUserId) {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
-    currentViewedUserId = targetUserId;
-    
-    // Check if we are viewing the current user's list
-    if (targetUserId === userId) {
-        // Fetch the user's permanent list data
-        try {
-            const response = await fetch('/api/watched', {
-                method: 'GET',
-                headers: { 'Authorization': `Bearer ${token}` }
+    if (!targetUserId) return;
+    document.getElementById('watched-list').innerHTML = '<li style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: var(--color-text-subtle);">Loading...</li>';
+    try {
+        var res = await fetch('/watched/' + targetUserId);
+        var data = await res.json();
+        
+        var isCurrentUser = String(targetUserId) === String(userId);
+        
+        if (data.success) {
+            var listData = data.data.map(function(item) {
+                return {
+                    ...item,
+                    voice_actors_parsed: parseVoiceActors(item.voice_actors),
+                    rating: parseFloat(item.rating)
+                };
             });
+
+            // --- Set Global State for Current View ---
+            currentViewedList = listData;
+            currentViewedUserId = targetUserId;
+
+            if (isCurrentUser) {
+                watched = listData; // Update permanent user list
+                sortWatchedList(currentSort); // Sort the permanent list
+                getVoiceActorCounts(); // NEW CALL: Calculate VA counts
+                calculateAndRenderStats(); 
+                // When refreshing the user's own list, reset filters/page
+                activeVAFilter = null;
+                currentPage = 1;
+            } else {
+                // Friend's list - sort by title ascending for simplicity in read-only view
+                currentViewedList.sort(function(a, b) { return a.anime_title.localeCompare(b.anime_title); });
+                currentPage = 1; // Reset page when viewing a friend's list
+            }
             
-            if (response.ok) {
-                const data = await response.json();
-                watched = data; // Update the user's permanent list
-                currentViewedList = data; // Set the viewed list to the user's list
-                
-                // Only count VAs for the *current user's* list
-                vaCounts = calculateVACounts(watched); 
-                
-                // Re-render the list based on the new data
-                renderWatchedList(currentViewedList); 
-            } else {
-                console.error('Failed to fetch watched list:', response.status);
-                currentViewedList = [];
-                renderWatchedList([]);
-            }
-        } catch (error) {
-            console.error('Fetch watched error:', error);
-            currentViewedList = [];
-            renderWatchedList([]);
-        }
-    } else {
-        // Fetch a friend's list
-        try {
-            const response = await fetch(`/api/watched/friend/${targetUserId}`, {
-                method: 'GET',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            // Render the list using the new global state
+            renderWatchedList();
 
-            if (response.ok) {
-                const data = await response.json();
-                currentViewedList = data; // Set the viewed list to the friend's list
-                
-                // Do NOT update vaCounts for friend's list, only for highlighting
-                renderWatchedList(currentViewedList);
-            } else {
-                alert('Failed to fetch friend\'s list.');
-                currentViewedList = [];
-                renderWatchedList([]);
-                // Fallback to user's list if friend fetch fails
-                fetchWatchedAnime(userId); 
-            }
-        } catch (error) {
-            console.error('Fetch friend watched error:', error);
-            alert('An error occurred while fetching friend\'s list.');
-            fetchWatchedAnime(userId); 
+        } else {
+            document.getElementById('watched-list').innerHTML = '<li style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: #f44336;">Error loading list: ' + data.error + '</li>';
         }
+
+    } catch (e) {
+        console.error('Network error fetching watched anime:', e);
+        document.getElementById('watched-list').innerHTML = '<li style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: #f44336;">Network error.</li>';
     }
 }
 
-function calculateVACounts(list) {
-    const counts = {};
-    list.forEach(item => {
-        (item.voiceActors || []).forEach(va => {
-            counts[va] = (counts[va] || 0) + 1;
+/**
+ * Sorts the global 'watched' array based on the current sort criteria.
+ */
+function sortWatchedList(sortType) {
+    switch (sortType) {
+        case 'rating-desc':
+            watched.sort(function(a, b) { return b.rating - a.rating; });
+            break;
+        case 'rating-asc':
+            watched.sort(function(a, b) { return a.rating - b.rating; });
+            break;
+        case 'title-asc':
+            watched.sort(function(a, b) { return a.anime_title.localeCompare(b.anime_title); });
+            break;
+        case 'recent':
+        default:
+            watched.sort(function(a, b) { return b.id - a.id; });
+            break;
+    }
+}
+
+/**
+ * Applies active text search and VA filters to the current user's list.
+ * Accepts the list to filter as an argument.
+ */
+function getFilteredWatchedList(listToFilter) {
+    var filtered = listToFilter;
+    var search = listSearchInput?.value.toLowerCase().trim() || '';
+    var vaLang = document.getElementById('va-lang')?.value || 'japanese';
+
+    // 1. Apply VA Filter
+    if (activeVAFilter) {
+        filtered = filtered.filter(function(anime) {
+            var vaString = anime.voice_actors_parsed[vaLang];
+            var vaNames = vaString.split('|').map(function(entry) { return entry.split(':').pop().trim(); });
+            return vaNames.includes(activeVAFilter);
+        });
+    }
+
+    // 2. Apply Text Search
+    if (search) {
+        filtered = filtered.filter(function(anime) {
+            var vaString = anime.voice_actors_parsed[vaLang];
+            return anime.anime_title.toLowerCase().includes(search) || vaString.toLowerCase().includes(search);
+        });
+    }
+
+    return filtered;
+}
+
+/**
+ * Renders the list items to the DOM, handling pagination and view modes (user vs. friend).
+ * Now uses the global state (currentViewedList, currentViewedUserId) by default.
+ */
+function renderWatchedList() {
+    // Use global state variables for the list to render and owner ID
+    var listToRender = currentViewedList;
+    var ownerId = currentViewedUserId;
+    
+    if (!listToRender || !ownerId) return;
+
+    var listEl = document.getElementById('watched-list');
+    var isCurrentUser = String(ownerId) === String(userId);
+    
+    // Filtering logic: Only apply filters/search if viewing the current user's list
+    var filtered = isCurrentUser ? getFilteredWatchedList(listToRender) : listToRender;
+    var totalItems = filtered.length;
+    var maxPage = Math.ceil(totalItems / itemsPerPage);
+    
+    // Toggle list controls visibility
+    var listControls = document.getElementById('list-controls');
+    if (listControls) {
+        listControls.style.display = isCurrentUser ? 'grid' : 'none';
+    }
+
+    // Handle pagination boundaries
+    if (currentPage > maxPage && maxPage > 0) currentPage = maxPage;
+    else if (currentPage < 1 && maxPage > 0) currentPage = 1;
+
+    var start = (currentPage - 1) * itemsPerPage;
+    var end = start + itemsPerPage;
+    var paginatedItems = filtered.slice(start, end);
+
+    listEl.innerHTML = '';
+    if (paginatedItems.length === 0) {
+        listEl.innerHTML = '<li style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: var(--color-text-subtle);">\n' +
+            (isCurrentUser ?
+(activeVAFilter ? 'No anime found matching your filter.' : 'Your watched list is empty.') : "This user's list is empty.") +
+        '</li>';
+    }
+
+    var vaLang = isCurrentUser ? (document.getElementById('va-lang')?.value || 'japanese') : 'japanese';
+    paginatedItems.forEach(function(anime) {
+        // Prepare VA Tags
+        var vaString = anime.voice_actors_parsed[vaLang];
+        var vaTags = vaString.split('|').map(function(entry) {
+            if (!entry.trim()) return '';
+
+            var parts = entry.split(':');
+            var charNames = parts[0].trim();
+            var vaName = parts.length > 1 
+? parts[1].trim() : parts[0].trim();
+            
+            var classes = [];
+            
+            if (isCurrentUser) {
+                // 1. Check if the VA appears more than once (count > 1) to be highlighted and clickable
+                if (vaCounts[vaName] > 1) {
+                    classes.push('highlight'); // Add the highlight style
+                    classes.push('clickable'); // Add the click listener
+                }
+                
+                // 2. Check if the VA is the currently active filter
+                if (vaName === activeVAFilter) {
+                    // The active filter should always be highlighted, even if its count is 1
+                    if (!classes.includes('highlight')) {
+                        classes.push('highlight');
+                    }
+                    classes.push('active-filter');
+                }
+            }
+
+            var finalClasses = classes.join(' ');
+
+            // The inner span now only uses the computed classes. The hardcoded 'highlight' is removed.
+            return '<span class="va"><span class="' + finalClasses + '" data-va-name="' + vaName + '">' + vaName + '</span> (' + charNames + ')</span>';
+        }).join('');
+
+        var displayDescription = anime.description || 'No description \navailable.';
+        var isClipped = displayDescription.length > 200;
+        var coverImageUrl = anime.coverimage || anime.coverImage ||
+PLACEHOLDER_IMAGE;
+
+        var listItem = document.createElement('li');
+        listItem.dataset.id = anime.id;
+        listItem.dataset.animeId = anime.anime_id;
+        listItem.innerHTML = `
+            <div class="anime-cover-container">
+                <img src="${coverImageUrl}" onerror="this.onerror=null; this.src='${PLACEHOLDER_IMAGE}'" alt="${anime.anime_title} cover" class="anime-cover">
+            </div>
+            <div class="anime-info">
+                <div>
+                    <b>${anime.anime_title}</b>
+  
+                    <p style="color: ${anime.rating >= 8.5 ? '#4CAF50' : (anime.rating >= 7.0 ? '#FFC107' : '#F44336')}; font-weight: bold; margin: 5px 0 10px 0;">
+                        Rating: ${anime.rating.toFixed(1)} / 10
+                    </p>
+              
+                    <div class="description-wrapper">
+                        <span class="anime-description-text">${displayDescription}</span>
+                        ${isClipped ?
+'<button class="read-more-btn" data-action="toggle-desc">Read More</button>' : ''}
+                    </div>
+                </div>
+                <div class="va-tags-container">
+                    ${vaTags}
+                </div>
+      
+                ${isCurrentUser ?
+`
+                    <div class="action-buttons">
+                        <button class="notes-btn" data-action="open-notes" data-title="${anime.anime_title}" data-anime-id="${anime.anime_id}" data-notes="${escapeHtml(anime.notes || '')}">Notes</button>
+                        <button class="remove-btn" data-action="remove-anime" data-anime-id="${anime.anime_id}">Remove</button>
+                    </div>
+ 
+                ` : ''}
+            </div>
+        `;
+        listEl.appendChild(listItem);
+    });
+
+    // Update Pagination Controls
+    document.getElementById('page-info').textContent = 'Page ' + (maxPage > 0 ?
+currentPage : 0) + ' of ' + maxPage;
+    document.getElementById('prev-page').disabled = currentPage <= 1;
+    document.getElementById('next-page').disabled = currentPage >= maxPage;
+    // Setup listeners only for the current user's list
+    if (isCurrentUser) {
+        setupCardListeners(listEl);
+    }
+}
+
+/**
+ * Escapes HTML characters for safe use in dataset attributes.
+ */
+function escapeHtml(text) {
+    if (!text) return '';
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+/**
+ * Sets up listeners for Read More/Less, VA Filter, Remove, and Notes buttons.
+ */
+function setupCardListeners(container) {
+    // Read More/Less
+    container.querySelectorAll('[data-action="toggle-desc"]').forEach(function(button) {
+        button.addEventListener('click', function(e) {
+            var descWrapper = 
+e.target.closest('.description-wrapper');
+            descWrapper.classList.toggle('expanded');
+            e.target.textContent = descWrapper.classList.contains('expanded') ? 'Read Less' : 'Read More';
         });
     });
-    return counts;
+
+    // VA Filter Listener
+    // Note: Only VAs that appear more than once get the 'clickable' class
+    container.querySelectorAll('.clickable').forEach(function(vaTag) {
+        vaTag.addEventListener('click', function(e) {
+            var vaName = e.target.dataset.vaName;
+            
+     
+            if (activeVAFilter === vaName) {
+                activeVAFilter = null;
+            } else {
+                activeVAFilter = vaName;
+                listSearchInput.value = '';
+            }
+            
+            currentPage = 1;
+            renderWatchedList();
+        });
+    });
+
+    // Remove Anime Listener
+    container.querySelectorAll('[data-action="remove-anime"]').forEach(function(button) {
+        button.addEventListener('click', handleRemoveAnime);
+    });
+    // Notes Button Listener
+    container.querySelectorAll('[data-action="open-notes"]').forEach(function(button) {
+        button.addEventListener('click', handleOpenNotesModal);
+    });
 }
 
-function renderWatchedList(list) {
-    // 1. Apply Filtering (only if viewing the user's own list)
-    let filteredList = list;
-    if (activeVAFilter && currentViewedUserId === userId) {
-        filteredList = list.filter(anime => 
-            (anime.voiceActors || []).includes(activeVAFilter)
-        );
+async function handleRemoveAnime(e) {
+    var animeId = e.target.dataset.animeId;
+    var animeTitle = e.target.closest('li').querySelector('.anime-info b').textContent;
+    if (!confirm("Are you sure you want to remove \"" + animeTitle + "\" from your watched list?")) return;
+    try {
+        var res = await fetch('/remove-anime/' + userId + '/' + animeId, {
+            method: 'DELETE'
+        });
+        var data = await res.json();
+        if (data.success) {
+            alert(animeTitle + " removed successfully.");
+            watched = watched.filter(function(anime) { return anime.anime_id !== parseInt(animeId); });
+            // Also update the current view list if it's the user's own list
+            if (String(currentViewedUserId) === String(userId)) {
+                currentViewedList = watched; 
+                getVoiceActorCounts(); // Recalculate VA counts after removal
+            }
+            renderWatchedList();
+            calculateAndRenderStats();
+        } else {
+            alert("Failed to remove anime: " + data.error);
+        }
+    } catch (e) {
+        console.error("Remove anime failed:", e);
+        alert("An error occurred while removing the anime.");
     }
+}
+
+
+// =================================================================================
+// 5. NOTES MODAL LOGIC
+// =================================================================================
+
+var notesModal = document.getElementById('notes-modal');
+var closeButton = document.querySelector('.close-button');
+var saveNotesBtn = document.getElementById('save-notes-btn');
+var notesTextarea = document.getElementById('notes-textarea');
+var currentAnimeId = null;
+function setupModalListeners() {
+    if (closeButton) closeButton.onclick = function() { notesModal.style.display = 'none'; };
+    if (notesModal) {
+        window.onclick = function(event) {
+            if (event.target == notesModal) {
+                notesModal.style.display = 'none';
+            }
+        };
+    }
+    if (saveNotesBtn) saveNotesBtn.onclick = handleSaveNotes;
+}
+
+function handleOpenNotesModal(e) {
+    // Only allow notes modal if viewing own list (buttons are already conditionally rendered)
+    if (String(currentViewedUserId) !== String(userId)) return;
+
+    var button = e.target;
+    var title = button.dataset.title;
+    var notes = button.dataset.notes ?
+unescapeHtml(button.dataset.notes) : '';
+    currentAnimeId = button.dataset.animeId;
+
+    document.getElementById('modal-anime-title').textContent = title;
+    notesTextarea.value = notes;
+    notesModal.style.display = 'block';
+}
+
+/**
+ * Unescapes HTML characters read from dataset attributes.
+ */
+function unescapeHtml(text) {
+    if (!text) return '';
+    return text
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, "\"")
+        .replace(/&#039;/g, "'");
+}
+
+async function handleSaveNotes() {
+    var notes = notesTextarea.value;
     
-    // 2. Apply Sorting
-    filteredList.sort((a, b) => {
-        if (currentSort === 'title') {
-            return a.title.localeCompare(b.title);
-        }
-        if (currentSort === 'score') {
-            return (b.score || 0) - (a.score || 0);
-        }
-        if (currentSort === 'recent') {
-            // Sort by the 'added_at' timestamp (descending for recent)
-            return new Date(b.added_at) - new Date(a.added_at);
-        }
-        if (currentSort === 'vas') {
-            // Sort by the count of VAs in the list (most VAs first)
-            const countA = (a.voiceActors || []).length;
-            const countB = (b.voiceActors || []).length;
-            return countB - countA;
-        }
-        return 0;
-    });
-    
-    // 3. Apply Pagination
-    const totalItems = filteredList.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-    
-    currentPage = Math.max(1, Math.min(currentPage, totalPages)); // Clamp page
-    if (totalPages === 0) currentPage = 1;
+    try {
+        var res = await fetch('/update-notes', {
+            method: 'PATCH',
+         
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: userId,
+                animeId: currentAnimeId,
+                notes: notes
+            })
+        });
 
-    const start = (currentPage - 1) * itemsPerPage;
-    const paginatedList = filteredList.slice(start, start + itemsPerPage);
+        var 
+data = await res.json();
+        
+        if (data.success) {
+            alert("Notes saved successfully!");
+            notesModal.style.display = 'none';
+            
+            // Update the local 'watched' array (user's permanent list)
+            var index = watched.findIndex(function(a) { return String(a.anime_id) 
+=== String(currentAnimeId); });
+            if (index !== -1) {
+                watched[index].notes = notes;
+                // Also update the current view list if it's the user's own list
+                if (String(currentViewedUserId) === String(userId)) {
+                    currentViewedList = watched; 
+                }
+                renderWatchedList();
+            }
+        } else {
+            alert("Failed to save notes: " + data.error);
+        }
+    } catch (e) {
+        console.error("Save notes failed:", e);
+        alert("An error occurred while saving notes.");
+    }
+}
 
-    // 4. Update Pagination Display
-    document.getElementById('current-page-display').textContent = currentPage;
-    document.getElementById('total-pages-display').textContent = totalPages;
-    document.getElementById('prev-page-btn').disabled = currentPage === 1 || totalPages === 0;
-    document.getElementById('next-page-btn').disabled = currentPage === totalPages || totalPages === 0;
 
-    // 5. Render List Items
-    const container = document.getElementById('watched-list');
-    container.innerHTML = ''; 
+// =================================================================================
+// 6. STATS LOGIC
+// =================================================================================
 
-    if (!paginatedList || paginatedList.length === 0) {
-        container.innerHTML = filteredList.length > 0 && activeVAFilter 
-            ? '<p class="empty-message">No anime found for this Voice Actor filter.</p>'
-            : '<p class="empty-message">Your watched list is empty. Add some anime from the Search tab!</p>';
+function calculateAndRenderStats() {
+    var statsContainer = document.getElementById('stats-content');
+    if (!statsContainer) return;
+
+    // Stats always use the current user's (watched) list
+    if (watched.length === 0) {
+        statsContainer.innerHTML = '<p class="stats-message">Your list is empty.\n\nAdd some anime to see stats!</p>';
         return;
     }
 
-    paginatedList.forEach(anime => {
-        const li = document.createElement('li');
-        
-        // Determine if it's the user's list for action buttons
-        const isUserList = currentViewedUserId === userId;
+    // --- 1. Total Anime ---
+    var totalAnime = watched.length;
+    // --- 2. Average Rating ---
+    var ratedAnime = watched.filter(function(anime) { return anime.rating > 0; });
+    var totalRating = ratedAnime.reduce(function(sum, anime) { return sum + anime.rating; }, 0);
+    var avgRating = ratedAnime.length > 0 ?
+totalRating / ratedAnime.length : 0;
 
-        // Render VAs for the watched list (clickable only if it's the user's own list)
-        const vaHtml = renderWatchedListVoiceActors(anime.voiceActors, isUserList);
+    // --- 3. Top Voice Actor ---
+    // Recalculate counts to ensure the language selection is honored
+    getVoiceActorCounts(); 
+    var vaLang = document.getElementById('va-lang')?.value || 'japanese';
 
-        li.innerHTML = `
-            <span class="anime-score">${anime.score || 'N/A'}%</span>
-            <div class="anime-cover-container">
-                <img src="${anime.coverImage || PLACEHOLDER_IMAGE}" alt="${anime.title}" class="anime-cover">
+    var topVA = { name: 'N/A', count: 0 };
+    for (var name in vaCounts) {
+        if (vaCounts[name] > topVA.count) {
+            topVA = { name: name, count: vaCounts[name] };
+        }
+    }
+    
+    // --- 4. Most Recent Watch ---
+    // The list is sorted by recent (descending id) by default during fetch
+    var mostRecent = watched.length > 0 ?
+watched[0].anime_title : 'N/A';
+
+    // --- Render the Stats ---
+    statsContainer.innerHTML = `
+        <div class="stats-group">
+            <div class="stat-item">
+                <span class="stat-value">${totalAnime}</span>
+                <span class="stat-label">Total Watched Titles</span>
             </div>
-            <div class="anime-title">${anime.title}</div>
-            <p class="anime-description-text">${anime.description || 'No description available.'}</p>
-            ${vaHtml}
-            ${isUserList ? `
-                <div class="list-actions">
-                    <button class="notes-btn" data-anime-id="${anime.animeId}" data-anime-title="${anime.title}" data-notes="${anime.notes || ''}">📝 Notes</button>
-                    <button class="remove-btn" data-anime-id="${anime.animeId}" data-anime-title="${anime.title}">❌ Remove</button>
-                </div>
-            ` : ''}
-        `;
-        container.appendChild(li);
-
-        // Attach listeners for user's list actions
-        if (isUserList) {
-            li.querySelector('.notes-btn').addEventListener('click', showNotesModal);
-            li.querySelector('.remove-btn').addEventListener('click', handleRemoveFromWatched);
-            
-            // Attach VA filter listener
-            li.querySelectorAll('.va-highlight').forEach(vaEl => {
-                vaEl.addEventListener('click', handleVAFilterClick);
-            });
-        }
-    });
-    
-    // Re-apply list search filter after rendering
-    filterWatchedList();
-}
-
-// Function to handle pagination
-function paginateList(newPage) {
-    currentPage = newPage;
-    renderWatchedList(currentViewedList);
-}
-
-// Function to handle client-side search filtering
-function filterWatchedList() {
-    const searchTerm = document.getElementById('list-search').value.toLowerCase();
-    const listItems = document.getElementById('watched-list').querySelectorAll('li');
-
-    // Only filter if we are viewing the current user's list (to keep it simple)
-    if (currentViewedUserId === userId) {
-        listItems.forEach(li => {
-            const title = li.querySelector('.anime-title')?.textContent.toLowerCase() || '';
-            
-            if (title.includes(searchTerm)) {
-                li.style.display = 'flex'; // Show the item
-            } else {
-                li.style.display = 'none'; // Hide the item
-            }
-        });
-    } else {
-        // If viewing a friend's list, search is disabled/unnecessary
-        listItems.forEach(li => li.style.display = 'flex');
-    }
-}
-
-// Helper function to format voice actors for watched list display
-function renderWatchedListVoiceActors(vas, isUserList) {
-    if (!vas || vas.length === 0) return '';
-    
-    let html = '<h4>Voice Actors:</h4><ul class="anime-va-list">';
-    
-    vas.forEach(vaName => {
-        // Highlighting logic: Count in user's list must be >= 3 AND we must be viewing the user's list
-        const isHighlight = isUserList && vaCounts[vaName] >= 3;
-        const vaClass = isHighlight ? 'va-highlight' : '';
-
-        html += `<li><span class="${vaClass}">${vaName}</span> (${vaCounts[vaName] || 0})</li>`;
-    });
-    
-    html += '</ul>';
-    return html;
-}
-
-// Function to handle VA filter click
-function handleVAFilterClick(event) {
-    const vaName = event.target.textContent.split('(')[0].trim(); // Get the name without the count
-    
-    if (activeVAFilter === vaName) {
-        // Clear filter
-        activeVAFilter = null;
-        document.getElementById('va-filter-display').style.display = 'none';
-        document.getElementById('va-filter-display').textContent = '';
-    } else {
-        // Apply new filter
-        activeVAFilter = vaName;
-        document.getElementById('va-filter-display').style.display = 'inline-block';
-        document.getElementById('va-filter-display').textContent = `VA Filter: ${vaName}`;
-    }
-    // Always reset to page 1 and re-render
-    currentPage = 1;
-    renderWatchedList(currentViewedList);
-}
-
-async function handleRemoveFromWatched(event) {
-    const button = event.target;
-    const animeId = button.dataset.animeId;
-    const animeTitle = button.dataset.animeTitle;
-    const token = localStorage.getItem('token');
-
-    if (!confirm(`Are you sure you want to remove "${animeTitle}" from your list?`)) return;
-
-    try {
-        const response = await fetch('/api/watched/remove', {
-            method: 'DELETE',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ animeId })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            alert(`"${animeTitle}" removed.`);
-            // Refresh the list and stats
-            fetchWatchedAnime(userId); 
-            fetchUserStats();
-        } else {
-            alert('Failed to remove anime: ' + (data.message || 'Server error.'));
-        }
-    } catch (error) {
-        console.error('Remove from watched error:', error);
-        alert('An error occurred while removing the anime.');
-    }
-}
-
-// =================================================================================
-// 5. NOTES MODAL
-// =================================================================================
-
-var currentNoteAnimeId = null;
-
-function showNotesModal(event) {
-    const button = event.target;
-    currentNoteAnimeId = button.dataset.animeId;
-    const animeTitle = button.dataset.animeTitle;
-    // Notes are retrieved from the button's data-notes attribute when opened
-    const notes = button.dataset.notes || ''; 
-
-    document.getElementById('modal-anime-title').textContent = animeTitle;
-    document.getElementById('notes-textarea').value = notes;
-    document.getElementById('notes-modal').style.display = 'block';
-}
-
-function hideNotesModal() {
-    document.getElementById('notes-modal').style.display = 'none';
-    currentNoteAnimeId = null;
-    document.getElementById('notes-textarea').value = ''; // Clear textarea on close
-}
-
-async function saveNotes() {
-    if (!currentNoteAnimeId) return;
-
-    const token = localStorage.getItem('token');
-    const notes = document.getElementById('notes-textarea').value.trim();
-
-    try {
-        const response = await fetch('/api/watched/notes', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ animeId: currentNoteAnimeId, notes: notes })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            alert('Notes saved successfully!');
-            hideNotesModal();
-            // Refresh the watched list to update the notes button data-attribute
-            fetchWatchedAnime(userId); 
-        } else {
-            alert('Failed to save notes: ' + (data.message || 'Server error.'));
-        }
-    } catch (error) {
-        console.error('Save notes error:', error);
-        alert('An error occurred while saving notes.');
-    }
-}
-
-// =================================================================================
-// 6. FRIENDS & STATS
-// =================================================================================
-
-async function fetchUserStats() {
-    const token = localStorage.getItem('token');
-    const statsContainer = document.getElementById('stats-content');
-    statsContainer.innerHTML = '<p class="stats-message">Loading statistics...</p>';
-
-    try {
-        const response = await fetch('/api/stats', {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        if (response.ok) {
-            const stats = await response.json();
-            renderUserStats(stats);
-        } else {
-            statsContainer.innerHTML = '<p class="stats-message">Could not load stats.</p>';
-        }
-    } catch (error) {
-        console.error('Fetch stats error:', error);
-        statsContainer.innerHTML = '<p class="stats-message">An error occurred.</p>';
-    }
-}
-
-function renderUserStats(stats) {
-    const container = document.getElementById('stats-content');
-    container.innerHTML = `
-        <p><strong>Total Anime Watched:</strong> ${stats.totalAnime}</p>
-        <p><strong>Total Unique VAs:</strong> ${stats.totalVAs}</p>
-        <p><strong>Average Score:</strong> ${stats.averageScore.toFixed(1)}%</p>
-        
-        <h4>Top 3 Voice Actors:</h4>
-        <ul style="list-style: none; padding: 0;">
-            ${stats.topVAs.map(va => 
-                `<li style="margin-bottom: 5px;">${va.name} (${va.count} anime)</li>`
-            ).join('')}
-        </ul>
-
-        <h4>Last 3 Added:</h4>
-        <ul style="list-style: none; padding: 0;">
-            ${stats.lastAdded.map(anime => 
-                `<li style="margin-bottom: 5px; color: var(--color-accent-primary); font-style: italic;">${anime.title}</li>`
-            ).join('')}
-        </ul>
+            <div class="stat-item">
+   
+                <span class="stat-value">${avgRating.toFixed(2)} / 10</span>
+                <span class="stat-label">Average Rating</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">${topVA.name}</span>
+                <span class="stat-label">Top ${vaLang.charAt(0).toUpperCase() + vaLang.slice(1)} VA (${topVA.count} titles)</span>
+ 
+            </div>
+            <div class="stat-item">
+                <span class="stat-value">${mostRecent}</span>
+                <span class="stat-label">Most Recently Added</span>
+            </div>
+        </div>
     `;
 }
 
-// Friend Request Functions
 
-async function sendFriendRequest() {
-    const friendUsername = document.getElementById('add-friend-username').value.trim();
-    const messageEl = document.getElementById('add-friend-message');
-    const token = localStorage.getItem('token');
+// =================================================================================
+// 7. FRIEND SYSTEM LOGIC
+// =================================================================================
 
-    messageEl.textContent = ''; // Clear previous message
-    
-    if (!friendUsername) {
-        messageEl.textContent = 'Please enter a username.';
-        return;
-    }
-    
-    if (friendUsername === username) {
-        messageEl.textContent = 'You cannot send a request to yourself.';
-        return;
-    }
-
-    try {
-        const response = await fetch('/api/friends/request', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ friendUsername })
-        });
-        
-        const data = await response.json();
-
-        if (response.ok) {
-            messageEl.textContent = `Request sent to ${friendUsername}!`;
-            document.getElementById('add-friend-username').value = '';
-        } else {
-            messageEl.textContent = 'Failed: ' + (data.message || 'Server error.');
+function setupFriendSearchListeners() {
+    document.getElementById('friend-search-input')?.addEventListener('input', debounce(handleFriendSearch, 300));
+    document.getElementById('friend-search-results')?.addEventListener('click', function(e) {
+        if (e.target.dataset.action === 'send-request') {
+            var recipientId = e.target.dataset.recipientId;
+            handleSendFriendRequest(recipientId, e.target);
         }
-    } catch (error) {
-        console.error('Send request error:', error);
-        messageEl.textContent = 'An error occurred while sending the request.';
-    }
-}
-
-async function fetchFriendRequests() {
-    const token = localStorage.getItem('token');
-    const listContainer = document.getElementById('pending-requests-list');
-    listContainer.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">Loading...</li>';
-
-    try {
-        const response = await fetch('/api/friends/pending', {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        if (response.ok) {
-            friendRequests = await response.json();
-            renderFriendRequests(friendRequests);
-            
-            // Show notification if there are pending requests
-            document.querySelector('.notification-icon').style.display = friendRequests.length > 0 ? 'inline' : 'none';
-        } else {
-            friendRequests = [];
-            renderFriendRequests([]);
+    });
+    document.getElementById('pending-requests-list')?.addEventListener('click', function(e) {
+        var target = e.target;
+        if (target.dataset.action === 'accept-request') {
+            handleRequestAction(target.dataset.requestId, 'accept', target);
         }
-    } catch (error) {
-        console.error('Fetch requests error:', error);
-        renderFriendRequests([]);
-    }
-}
-
-function renderFriendRequests(requests) {
-    const listContainer = document.getElementById('pending-requests-list');
-    listContainer.innerHTML = '';
-    
-    if (!requests || requests.length === 0) {
-        listContainer.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">No pending friend requests.</li>';
-        return;
-    }
-
-    requests.forEach(req => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-            <span>${req.username}</span>
-            <div class="friend-actions">
-                <button class="status-btn status-accept" data-request-id="${req.request_id}" data-action="accept">Accept</button>
-                <button class="status-btn status-reject" data-request-id="${req.request_id}" data-action="reject">Reject</button>
-            </div>
-        `;
-        listContainer.appendChild(li);
-        
-        li.querySelector('.status-accept').addEventListener('click', handleRequestAction);
-        li.querySelector('.status-reject').addEventListener('click', handleRequestAction);
+        if (target.dataset.action === 'reject-request') {
+            handleRequestAction(target.dataset.requestId, 'reject', target);
+        }
+    });
+    document.getElementById('confirmed-friends-list')?.addEventListener('click', function(e) {
+        var target = e.target;
+        if (target.dataset.action === 'view-friend-list') {
+            viewFriendWatchedList(target.dataset.friendId, target.dataset.friendUsername);
+        }
     });
 }
 
-async function handleRequestAction(event) {
-    const button = event.target;
-    const requestId = button.dataset.requestId;
-    const action = button.dataset.action;
-    const token = localStorage.getItem('token');
+async function handleFriendSearch(e) {
+    if (!userId) return;
+
+    var search = e.target.value.trim();
+    var resultsEl = document.getElementById('friend-search-results');
+    if (search.length < 3) {
+        resultsEl.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">Start typing a username to search for friends.</li>';
+        return;
+    }
+
+    resultsEl.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">Searching...</li>';
+    try {
+        var res = await fetch('/api/users/search?q=' + encodeURIComponent(search) + '&userId=' + userId);
+        var data = await res.json();
+        if (data.success) {
+            renderFriendSearchResults(data.users);
+        } else {
+            resultsEl.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #f44336;">Error: ' + (data.error ||
+'Could not fetch users.') + '</li>';
+        }
+    } catch (e) {
+        console.error("Network error during friend search:", e);
+        resultsEl.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #f44336;">A network error occurred.</li>';
+    }
+}
+
+function renderFriendSearchResults(users) {
+    var resultsEl = document.getElementById('friend-search-results');
+    resultsEl.innerHTML = '';
+    if (users.length === 0) {
+        resultsEl.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">No users found matching that name.</li>';
+        return;
+    }
+
+    users.forEach(function(user) {
+        var buttonText = 'Add Friend';
+        var buttonClass = 'add-friend-btn';
+        var disabled = '';
+        var buttonAction = 'send-request';
+        var statusMessage = '';
+
+        if (user.relationshipStatus === 'friends') {
+            buttonText = 'Friends';
+           
+            buttonClass = 'status-btn status-friends';
+            disabled = 'disabled';
+            buttonAction = 'none';
+        } else if (user.relationshipStatus === 'request_sent') {
+            buttonText = 'Pending (Sent)';
+            buttonClass = 'status-btn status-pending-sent';
+            disabled = 'disabled';
+          
+            buttonAction = 'none';
+        } else if (user.relationshipStatus === 'request_received') {
+            buttonText = 'Action Needed';
+            buttonClass = 'status-btn status-pending-received';
+            buttonAction = 'view-requests'; 
+            statusMessage = ' (<a href="#" onclick="showSubView(\'page-find-friends\')">Accept/Reject</a>)';
+        }
+
+        var li = document.createElement('li');
+        li.style.cssText = 'display: flex; justify-content: space-between; align-items: center;\nbackground-color: #2c2c2c;';
+        
+        li.innerHTML = `
+            <span>
+                <strong style="font-size: 1.1em; color: var(--color-text-main);">${user.username}</strong>
+                <span style="color: var(--color-text-subtle);">${statusMessage}</span>
+            </span>
+            <button class="${buttonClass}" data-action="${buttonAction}" data-recipient-id="${user.id}" ${disabled}>
+                ${buttonText}
+  
+            </button>
+        `;
+        resultsEl.appendChild(li);
+    });
+}
+
+async function handleSendFriendRequest(recipientId, buttonEl) {
+    if (!userId) return alert("You must be logged in to send a request.");
+    buttonEl.textContent = 'Sending...';
+    buttonEl.disabled = true;
 
     try {
-        const response = await fetch(`/api/friends/response`, {
+        var res = await fetch('/api/friends/request/' + recipientId, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ requestId, action })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: userId })
+        });
+        var data = await res.json();
+
+        if (data.success) {
+            buttonEl.textContent = 'Pending (Sent)';
+            buttonEl.classList.add('status-pending-sent');
+            alert(data.message);
+            
+            // Refresh search results to update status, if search is active
+            var searchInput = document.getElementById('friend-search-input');
+            if(searchInput) handleFriendSearch({target: searchInput});
+
+        } else {
+            buttonEl.textContent = 'Failed (Retry)';
+            buttonEl.disabled = false;
+            alert(data.error || 'Failed to send request.');
+        }
+
+    } catch (e) {
+        console.error("Send request failed:", e);
+        buttonEl.textContent = 'Network Error (Retry)';
+        buttonEl.disabled = false;
+    }
+}
+
+async function fetchPendingRequests() {
+    if (!userId) return;
+    var requestsEl = document.getElementById('pending-requests-list');
+    if (!requestsEl) return;
+    requestsEl.innerHTML = '';
+    try {
+        var res = await fetch('/api/friends/pending/' + userId);
+        var data = await res.json();
+        var notificationCountEl = document.getElementById('friend-notification-count');
+
+        if (data.success && data.requests.length > 0) {
+            friendRequests = data.requests;
+            data.requests.forEach(function(request) {
+                var li = document.createElement('li');
+                li.style.cssText = 'display: flex; justify-content: space-between; align-items: center; background-color: #2c2c2c;';
+                
+                li.innerHTML = `
+                    
+<span style="color: var(--color-accent-highlight);">${request.requester_username}</span>
+                    <span style="color: var(--color-text-subtle);"> wants to be friends.</span>
+                    <div>
+                        <button data-action="accept-request" data-request-id="${request.id}" style="background-color: #4CAF50; margin-right: 5px;">Accept</button>
+                      
+                        <button data-action="reject-request" data-request-id="${request.id}" style="background-color: #f44336;">Reject</button>
+                    </div>
+                `;
+                requestsEl.appendChild(li);
+            });
+            if (notificationCountEl) {
+                notificationCountEl.textContent = data.requests.length;
+                notificationCountEl.style.display = 'inline-block';
+            }
+        } else {
+            friendRequests = [];
+            requestsEl.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">No pending friend requests.</li>';
+            if (notificationCountEl) notificationCountEl.style.display = 'none';
+        }
+
+    } catch (e) {
+        console.error("Error fetching pending requests:", e);
+    }
+}
+
+async function handleRequestAction(requestId, action, buttonEl) {
+    if (!userId) return;
+
+    buttonEl.textContent = 'Loading...';
+    buttonEl.closest('div').querySelectorAll('button').forEach(function(btn) { btn.disabled = true; });
+    try {
+        var res = await fetch('/api/friends/request/' + requestId, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: userId,
+                action: action
+          
+            })
         });
 
-        if (response.ok) {
-            // Refresh both lists
-            fetchFriendRequests();
+        var data = await res.json();
+        if (data.success) {
+            alert('Request ' + action + 'ed successfully!');
+            fetchPendingRequests();
             fetchFriendsList();
         } else {
-            alert('Failed to process request.');
+            alert(data.error || 'Failed to ' + action + ' request.');
+            buttonEl.closest('div').querySelectorAll('button').forEach(function(btn) { btn.disabled = false; });
         }
-    } catch (error) {
-        console.error('Request action error:', error);
-        alert('An error occurred.');
+
+    } catch (e) {
+        console.error('Error handling request action (' + action + '):', e);
+        alert('Network error while processing request.');
     }
 }
+
+
+// =================================================================================
+// 8. CONFIRMED FRIENDS LIST LOGIC
+// =================================================================================
 
 async function fetchFriendsList() {
-    const token = localStorage.getItem('token');
-    const listContainer = document.getElementById('confirmed-friends-list');
-    listContainer.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">Loading...</li>';
-
+    if (!userId) return;
     try {
-        const response = await fetch('/api/friends/list', {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        if (response.ok) {
-            friendsList = await response.json();
-            renderFriendsList(friendsList);
-        } else {
-            friendsList = [];
-            renderFriendsList([]);
+        var res = await fetch('/api/friends/' + userId);
+        var data = await res.json();
+        if (data.success) {
+            friendsList = data.friends;
+            // Only re-render if the user is currently viewing the friends tab
+            if (document.getElementById('page-find-friends')?.style.display === 'block') {
+                renderConfirmedFriendsList();
+            }
         }
     } catch (error) {
-        console.error('Fetch friends list error:', error);
-        renderFriendsList([]);
+        console.error('Error fetching friends list:', error);
     }
 }
 
-function renderFriendsList(list) {
-    const listContainer = document.getElementById('confirmed-friends-list');
+function renderConfirmedFriendsList() {
+    var listContainer = document.getElementById('confirmed-friends-list');
+    if (!listContainer) return;
+    
     listContainer.innerHTML = '';
-
-    if (!list || list.length === 0) {
+    if (friendsList.length === 0) {
         listContainer.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">You have no confirmed friends.</li>';
         return;
     }
 
-    list.forEach(friend => {
-        const li = document.createElement('li');
+    friendsList.forEach(function(friend) {
+        var li = document.createElement('li');
+        li.style.cssText = 'display: flex; justify-content: space-between; align-items: center; background-color: #2c2c2c;';
+        
         li.innerHTML = `
-            <span>${friend.username}</span>
-            <div class="friend-actions">
-                <button class="status-btn status-accept" data-friend-id="${friend.friend_id}" data-friend-username="${friend.username}">View List</button>
-            </div>
+            <span style="color: var(--color-text-main); font-weight: bold;">${friend.friend_username}</span>
+            <button class="status-btn status-friends" data-action="view-friend-list" data-friend-id="${friend.friend_id}" data-friend-username="${friend.friend_username}">
+              
+                View List
+            </button>
         `;
         listContainer.appendChild(li);
-        
-        li.querySelector('.status-accept').addEventListener('click', (e) => {
-            const friendId = e.target.dataset.friendId;
-            const friendUsername = e.target.dataset.friendUsername;
-            viewFriendWatchedList(friendId, friendUsername);
-        });
     });
 }
 
@@ -995,7 +1198,8 @@ function viewFriendWatchedList(friendId, friendUsername) {
     backBtn = newBackButton;
     
     backBtn.addEventListener('click', function() {
-        // Navigating back to the watched page triggers the original functionality
-        document.getElementById('nav-watched-btn').click();
+        // Navigating back to the watched page triggers the showSubView('page-watched') logic
+        // which resets the title, removes the back button, and calls fetchWatchedAnime(userId).
+        showSubView('page-watched');
     });
 }
