@@ -85,7 +85,7 @@ async function getRelationshipStatus(user1Id, user2Id) {
 
 
 // -------------------
-// 2. Database Initialization
+// 2. Database Initialization & Schema Migration
 // -------------------
 async function setupDatabase() {
     if (!connectionString) {
@@ -96,10 +96,27 @@ async function setupDatabase() {
     try {
         await query('CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username TEXT UNIQUE, password TEXT)');
         
-        // Main watched list table
-        await query('CREATE TABLE IF NOT EXISTS watched_anime (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), anime_id INTEGER, anime_title TEXT, rating REAL, voice_actors TEXT, description TEXT, coverImage TEXT, notes TEXT, UNIQUE(user_id, anime_id))');
+        // Main watched list table: Creates table with all necessary columns 
+        // if it doesn't exist (including new ones).
+        await query(`
+            CREATE TABLE IF NOT EXISTS watched_anime (
+                id SERIAL PRIMARY KEY, 
+                user_id INTEGER REFERENCES users(id), 
+                anime_id INTEGER, 
+                anime_title TEXT, 
+                rating NUMERIC(3, 1) NOT NULL DEFAULT 0.0, 
+                voice_actors TEXT, 
+                description TEXT, 
+                coverImage TEXT, 
+                notes TEXT, 
+                status VARCHAR(10) NOT NULL DEFAULT 'watched' CHECK (status IN ('watched', 'planning')), 
+                date_started DATE,                             
+                date_finished DATE,                            
+                UNIQUE(user_id, anime_id)
+            );
+        `);
         
-        // Friend System Tables
+        // Friend System Tables (Your existing logic)
         await query(`
             CREATE TABLE IF NOT EXISTS friend_requests (
                 id SERIAL PRIMARY KEY,
@@ -107,9 +124,7 @@ async function setupDatabase() {
                 recipient_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
                 status VARCHAR(10) CHECK (status IN ('pending', 'accepted', 'rejected')) DEFAULT 'pending',
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                -- Constraint: Prevent a user from sending a request to themselves
                 CONSTRAINT no_self_request CHECK (requester_id <> recipient_id),
-                -- Constraint: Ensure only one pending request exists between two users
                 CONSTRAINT unique_pending_request UNIQUE (requester_id, recipient_id)
             );
         `);
@@ -123,14 +138,14 @@ async function setupDatabase() {
             );
         `);
 
-        // === EXISTING DATABASE MIGRATION STEP: Add 'notes' column if it doesn't exist ===
+        // === DATABASE MIGRATION STEP: Add all new columns safely if they don't exist ===
         await query(`
             DO $$ BEGIN
-                BEGIN
-                    ALTER TABLE watched_anime ADD COLUMN notes TEXT;
-                EXCEPTION
-                    WHEN duplicate_column THEN null;
-                END;
+                BEGIN ALTER TABLE watched_anime ADD COLUMN notes TEXT; EXCEPTION WHEN duplicate_column THEN null; END;
+                BEGIN ALTER TABLE watched_anime ADD COLUMN status VARCHAR(10) NOT NULL DEFAULT 'watched' CHECK (status IN ('watched', 'planning')); EXCEPTION WHEN duplicate_column THEN null; END;
+                BEGIN ALTER TABLE watched_anime ADD COLUMN rating NUMERIC(3, 1) NOT NULL DEFAULT 0.0; EXCEPTION WHEN duplicate_column THEN null; END;
+                BEGIN ALTER TABLE watched_anime ADD COLUMN date_started DATE; EXCEPTION WHEN duplicate_column THEN null; END;
+                BEGIN ALTER TABLE watched_anime ADD COLUMN date_finished DATE; EXCEPTION WHEN duplicate_column THEN null; END;
             END $$;
         `);
         // =========================================================================
@@ -187,12 +202,16 @@ app.post('/login', async (req, res) => {
 });
 
 // -------------------
-// Add watched anime
+// Add anime to list (now supports 'watched' and 'planning' status)
 // -------------------
 app.post('/add-anime', async (req, res) => {
-    let { userId, animeId, animeTitle, rating, description, characters, coverImage } = req.body;
+    let { userId, animeId, animeTitle, rating, description, characters, coverImage, status } = req.body;
 
     const MAX_DESC_LENGTH = 800;
+    
+    // Set default status if not provided (should be provided by the client's button logic)
+    status = status || 'watched'; 
+    rating = rating || 0.0; // Default rating
     
     // Server-side sanitization and truncation
     if (description) {
@@ -209,7 +228,7 @@ app.post('/add-anime', async (req, res) => {
             return res.json({ success: false, error: "Anime already added" });
         }
 
-        // --- START OF VOICE ACTOR Processing (Your original logic looks correct) ---
+        // --- VOICE ACTOR Processing (Existing logic) ---
         const japaneseVAMap = new Map();
         const englishVAMap = new Map();
 
@@ -266,10 +285,10 @@ app.post('/add-anime', async (req, res) => {
         
         // --- END OF VOICE ACTOR Processing ---
 
-        // Insert new record
+        // Insert new record (status added to fields and values)
         const insertResult = await query(
-            'INSERT INTO watched_anime (user_id, anime_id, anime_title, rating, voice_actors, description, coverImage, notes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id',
-            [userId, animeId, animeTitle, rating, voiceActors, description, coverImage, initialNotes]
+            'INSERT INTO watched_anime (user_id, anime_id, anime_title, rating, voice_actors, description, coverImage, notes, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id',
+            [userId, animeId, animeTitle, rating, voiceActors, description, coverImage, initialNotes, status]
         );
 
         res.json({ success: true, animeId: insertResult.rows[0].id });
@@ -277,7 +296,7 @@ app.post('/add-anime', async (req, res) => {
         console.error("Add anime failed:", err);
         // Catch PostgreSQL unique constraint error
         if (err.code === '23505') {
-             return res.json({ success: false, error: "Anime is already in your watched list." });
+             return res.json({ success: false, error: "Anime is already in your list." });
         }
         res.json({ success: false, error: err.message });
     }
@@ -301,10 +320,12 @@ app.delete('/remove-anime/:userId/:animeId', async (req, res) => {
 });
 
 // -------------------
-// Update anime notes
+// Update anime notes AND new details (rating, dates)
+// Route name kept for client-side compatibility
 // -------------------
 app.patch('/update-notes', async (req, res) => {
-    const { userId, animeId, notes } = req.body;
+    // Note: This route now handles all mutable details
+    const { userId, animeId, notes, rating, date_started, date_finished } = req.body;
     
     if (!userId || !animeId) {
         return res.status(400).json({ success: false, error: 'User ID and Anime ID are required.' });
@@ -315,37 +336,91 @@ app.patch('/update-notes', async (req, res) => {
     sanitizedNotes = sanitizedNotes.substring(0, MAX_NOTES_LENGTH);
     
     try {
+        // Query updated to set notes, rating, date_started, and date_finished
         const result = await query(
-            'UPDATE watched_anime SET notes = $1 WHERE user_id = $2 AND anime_id = $3 RETURNING id',
-            [sanitizedNotes, userId, animeId]
+            `UPDATE watched_anime 
+             SET notes = $1, 
+                 rating = $4, 
+                 date_started = $5, 
+                 date_finished = $6
+             WHERE user_id = $2 AND anime_id = $3 
+             RETURNING id`,
+            [sanitizedNotes, userId, animeId, rating, date_started || null, date_finished || null] // null ensures empty strings become actual NULL in a DATE column
         );
 
         if (result.rowCount === 0) {
             return res.json({ success: false, error: 'Anime record not found for this user.' });
         }
         
-        res.json({ success: true, message: 'Notes updated successfully.' });
+        res.json({ success: true, message: 'Anime details updated successfully.' });
     } catch (err) {
         console.error("Update notes failed:", err);
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
+// -------------------
+// NEW: Update Anime Status (e.g., planning -> watched)
+// Used to move items from the To Watch List to the Watched List
+// -------------------
+app.patch('/update-status', async (req, res) => {
+    const { userId, animeId, newStatus } = req.body;
+
+    if (!userId || !animeId || !['watched', 'planning'].includes(newStatus)) {
+        return res.status(400).json({ success: false, error: 'User ID, Anime ID, and a valid new status are required.' });
+    }
+
+    try {
+        // Set rating to 0.0 if not explicitly provided (client may send a rating upon moving to 'watched')
+        let rating = req.body.rating !== undefined ? req.body.rating : 0.0;
+        
+        // This query updates the status and resets the rating and dates 
+        // (as expected by the client on a 'move to watched' action unless provided)
+        const result = await query(
+            `UPDATE watched_anime 
+             SET status = $1, 
+                 rating = $2, 
+                 date_started = $3, 
+                 date_finished = $4
+             WHERE user_id = $5 AND anime_id = $6
+             RETURNING id`,
+            [newStatus, rating, req.body.date_started || null, req.body.date_finished || null, userId, animeId]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ success: false, error: 'Anime record not found for this user.' });
+        }
+        
+        res.json({ success: true, message: `Anime status updated to ${newStatus}.` });
+
+    } catch (err) {
+        console.error("Update status failed:", err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
 
 // -------------------
-// Get watched anime for user (Includes Friend View Capability)
+// Get watched anime for user (Now includes status filter)
 // -------------------
 app.get('/watched/:userId', async (req, res) => {
     const targetUserId = parseInt(req.params.userId);
-    // Note: The client-side logic should handle checking if the current user has permission
-    // to view the list (i.e., if they are friends or if targetUserId is the current user's ID).
+    // NEW: Get the status filter from query params, default to 'watched'
+    const statusFilter = req.query.status || 'watched'; 
     
     if (isNaN(targetUserId)) {
         return res.status(400).json({ success: false, error: 'Invalid User ID.' });
     }
+    
+    // Safety check for status filter (should only be 'watched' or 'planning')
+    if (!['watched', 'planning'].includes(statusFilter)) {
+        return res.status(400).json({ success: false, error: 'Invalid status filter provided.' });
+    }
+
 
     try {
-        const result = await query('SELECT * FROM watched_anime WHERE user_id=$1', [targetUserId]);
+        // Updated Query: Filters by user_id AND status
+        // The SELECT * includes all the new columns thanks to the setupDatabase changes.
+        const result = await query('SELECT * FROM watched_anime WHERE user_id=$1 AND status=$2', [targetUserId, statusFilter]);
         res.json({ success: true, data: result.rows });
     } catch (err) {
         console.error("Get watched failed:", err);
@@ -353,9 +428,24 @@ app.get('/watched/:userId', async (req, res) => {
     }
 });
 
+// -------------------
+// NEW: MAL Transfer Placeholder Route
+// -------------------
+app.post('/mal-transfer', async (req, res) => {
+    const { userId, fileContent } = req.body;
+    
+    // This is the placeholder for the complex logic of parsing MAL XML/CSV and updating the database.
+    console.log(`[MAL Transfer] Received file content for user ${userId}. Parsing logic placeholder executed.`);
+    
+    res.json({ 
+        success: true, 
+        message: 'MAL data received. The server would now process the data and update your list.' 
+    });
+});
+
 
 // -----------------------------------------------------------
-// 8. NEW FRIEND SYSTEM ENDPOINTS
+// 8. NEW FRIEND SYSTEM ENDPOINTS (No changes needed here)
 // -----------------------------------------------------------
 
 // A. Search Users
