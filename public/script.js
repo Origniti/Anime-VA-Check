@@ -457,10 +457,12 @@ function displaySearchResults(results) {
                 event.currentTarget.classList.add('added');
                 
                 // Disable the other button as well
-                const otherBtn = status === 'watched' ? planningBtn : watchedBtn; // <-- This now correctly uses the closure variables
-                otherBtn.disabled = true;
-                otherBtn.textContent = 'Already Added';
-                otherBtn.classList.add('disabled-add');
+                const otherBtn = status === 'watched' ? planningBtn : watchedBtn; 
+                if (otherBtn) { // ADDED NULL CHECK TO PREVENT TYPEERROR
+                    otherBtn.disabled = true;
+                    otherBtn.textContent = 'Already Added';
+                    otherBtn.classList.add('disabled-add');
+                }
                 
                 // Update both watched and toWatch lists after adding
                 fetchUserLists(userId); 
@@ -472,9 +474,11 @@ function displaySearchResults(results) {
                 
                 // Disable the other button too as the anime is now in the list
                 const otherBtn = status === 'watched' ? planningBtn : watchedBtn;
-                otherBtn.disabled = true;
-                otherBtn.textContent = 'Already Exists';
-                otherBtn.classList.add('disabled-add');
+                if (otherBtn) { // ADDED NULL CHECK TO PREVENT TYPEERROR
+                    otherBtn.disabled = true;
+                    otherBtn.textContent = 'Already Exists';
+                    otherBtn.classList.add('disabled-add');
+                }
             }
         };
 
@@ -1204,7 +1208,7 @@ function renderFriendSearchResults(users) {
     var resultsEl = document.getElementById('friend-search-results');
     resultsEl.innerHTML = '';
     if (users.length === 0) {
-        resultsEl.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">No users found matching that name.</li>';
+        listContainer.innerHTML = '<li class="search-message" style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: #a0a0a0;">No anime found. Try a different search term.</li>';
         return;
     }
 
