@@ -270,8 +270,7 @@ async function handleRegister() {
         document.getElementById('register-form').style.display = 'none';
         document.getElementById('login-form').style.display = 'block';
     } else {
-        messageEl.textContent = data.error ||
-'Registration failed.';
+        messageEl.textContent = data.error || 'Registration failed.';
     }
 }
 
@@ -413,7 +412,7 @@ function displaySearchResults(results) {
             return;
         }
 
-        // Combined handler logic for both buttons
+        // FIX: Moved addAnimeHandler inside the loop to resolve the scoping bug (TypeError)
         const addAnimeHandler = async (event) => {
             const status = event.currentTarget.dataset.status;
             event.currentTarget.disabled = true;
@@ -458,7 +457,7 @@ function displaySearchResults(results) {
                 event.currentTarget.classList.add('added');
                 
                 // Disable the other button as well
-                const otherBtn = status === 'watched' ? planningBtn : watchedBtn;
+                const otherBtn = status === 'watched' ? planningBtn : watchedBtn; // <-- This now correctly uses the closure variables
                 otherBtn.disabled = true;
                 otherBtn.textContent = 'Already Added';
                 otherBtn.classList.add('disabled-add');
@@ -537,10 +536,8 @@ function parseVoiceActors(vaString) {
     try {
         var vaData = JSON.parse(vaString);
         return {
-            japanese: vaData.japanese ||
-"",
-            english: vaData.english ||
-""
+            japanese: vaData.japanese || "",
+            english: vaData.english || ""
         };
     } catch (e) {
         return { japanese: "", english: "" };
@@ -617,7 +614,7 @@ async function fetchUserLists(targetUserId, listType = currentListType) {
     currentViewedList = []; 
 
     try {
-        // Fetch ALL lists for the user ID
+        // Fetch ALL lists for the user ID (sends ?status=all)
         var res = await fetch('/watched/' + targetUserId + '?status=all'); 
         var data = await res.json();
         
@@ -670,7 +667,7 @@ async function fetchUserLists(targetUserId, listType = currentListType) {
 
     } catch (e) {
         console.error('Network error fetching watched anime:', e);
-        document.getElementById('watched-list').innerHTML = '<li style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: #f44336;">Network error.</li>';
+        document.getElementById('watched-list').innerHTML = '<li style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: #f44336;">Network error. Please check your server connection.</li>';
     }
 }
 
@@ -750,8 +747,7 @@ function renderWatchedList() {
     listEl.innerHTML = '';
     if (paginatedItems.length === 0) {
         listEl.innerHTML = '<li style="grid-column: 1 / -1; text-align: center; border: none; background: none; color: var(--color-text-subtle);">\n' +
-            (isCurrentUser ?
-(activeVAFilter ? 'No anime found matching your filter.' : 'Your ' + currentListType + ' list is empty.') : "This user's list is empty.") +
+            (isCurrentUser ? (activeVAFilter ? 'No anime found matching your filter.' : 'Your ' + currentListType + ' list is empty.') : "This user's list is empty.") +
         '</li>';
     }
 
@@ -765,8 +761,7 @@ function renderWatchedList() {
 
                 var parts = entry.split(':');
                 var charNames = parts[0].trim();
-                var vaName = parts.length > 1 
-? parts[1].trim() : parts[0].trim();
+                var vaName = parts.length > 1 ? parts[1].trim() : parts[0].trim();
                 
                 var classes = [];
                 
@@ -795,10 +790,9 @@ function renderWatchedList() {
         }
 
 
-        var displayDescription = anime.description || 'No description \navailable.';
+        var displayDescription = anime.description || 'No description available.';
         var isClipped = displayDescription.length > 200;
-        var coverImageUrl = anime.coverimage || anime.coverImage ||
-PLACEHOLDER_IMAGE;
+        var coverImageUrl = anime.coverimage || anime.coverImage || PLACEHOLDER_IMAGE;
         
         // Conditional Display based on status
         var statusLabel = anime.status === 'watched' ? 'Rating' : 'Status';
@@ -829,8 +823,7 @@ PLACEHOLDER_IMAGE;
               
                     <div class="description-wrapper">
                         <span class="anime-description-text">${displayDescription}</span>
-                        ${isClipped ?
-'<button class="read-more-btn" data-action="toggle-desc">Read More</button>' : ''}
+                        ${isClipped ? '<button class="read-more-btn" data-action="toggle-desc">Read More</button>' : ''}
                     </div>
                 </div>
                 ${anime.status === 'watched' ? `
@@ -839,8 +832,7 @@ PLACEHOLDER_IMAGE;
                     </div>
                 ` : ''}
       
-                ${isCurrentUser ?
-`
+                ${isCurrentUser ? `
                     <div class="action-buttons">
                         <button class="notes-btn" data-action="open-notes" 
                             data-title="${anime.anime_title}" 
@@ -865,8 +857,7 @@ PLACEHOLDER_IMAGE;
     });
 
     // Update Pagination Controls
-    document.getElementById('page-info').textContent = 'Page ' + (maxPage > 0 ?
-currentPage : 0) + ' of ' + maxPage;
+    document.getElementById('page-info').textContent = 'Page ' + (maxPage > 0 ? currentPage : 0) + ' of ' + maxPage;
     document.getElementById('prev-page').disabled = currentPage <= 1;
     document.getElementById('next-page').disabled = currentPage >= maxPage;
     
@@ -896,8 +887,7 @@ function setupCardListeners(container) {
     // Read More/Less
     container.querySelectorAll('[data-action="toggle-desc"]').forEach(function(button) {
         button.addEventListener('click', function(e) {
-            var descWrapper = 
-e.target.closest('.description-wrapper');
+            var descWrapper = e.target.closest('.description-wrapper');
             descWrapper.classList.toggle('expanded');
             e.target.textContent = descWrapper.classList.contains('expanded') ? 'Read Less' : 'Read More';
         });
@@ -1002,10 +992,11 @@ function handleOpenNotesModal(e) {
     notesDateStartedInput.value = dateStarted;
     notesDateFinishedInput.value = dateFinished;
     
-    // Show/Hide rating and date fields based on status
+    // FIX: Show rating and date fields for BOTH 'watched' and 'planning' 
+    // to allow promotion from planning to watched by adding a finished date.
     var watchedFields = document.getElementById('watched-fields');
     if (watchedFields) {
-        watchedFields.style.display = status === 'watched' ? 'grid' : 'none';
+        watchedFields.style.display = (status === 'watched' || status === 'planning') ? 'grid' : 'none';
     }
 
     notesModal.style.display = 'block';
@@ -1026,9 +1017,11 @@ function unescapeHtml(text) {
 
 async function handleSaveNotes() {
     var notes = notesTextarea.value;
-    var rating = currentStatus === 'watched' ? parseFloat(notesRatingInput.value) : 0;
-    var dateStarted = currentStatus === 'watched' ? notesDateStartedInput.value : null;
-    var dateFinished = currentStatus === 'watched' ? notesDateFinishedInput.value : null;
+    // Rating/Dates are only relevant if the fields are currently visible (i.e., status is watched/planning)
+    var isListManaged = (currentStatus === 'watched' || currentStatus === 'planning');
+    var rating = isListManaged ? parseFloat(notesRatingInput.value) : 0;
+    var dateStarted = isListManaged ? notesDateStartedInput.value : null;
+    var dateFinished = isListManaged ? notesDateFinishedInput.value : null;
 
     // Basic validation for rating
     if (currentStatus === 'watched' && (isNaN(rating) || rating < 0 || rating > 10)) {
@@ -1104,8 +1097,7 @@ function calculateAndRenderStats() {
     // --- 2. Average Rating ---
     var ratedAnime = watched.filter(function(anime) { return anime.rating > 0; });
     var totalRating = ratedAnime.reduce(function(sum, anime) { return sum + anime.rating; }, 0);
-    var avgRating = ratedAnime.length > 0 ?
-totalRating / ratedAnime.length : 0;
+    var avgRating = ratedAnime.length > 0 ? totalRating / ratedAnime.length : 0;
 
     // --- 3. Top Voice Actor ---
     // Recalculate counts to ensure the language selection is honored
@@ -1121,8 +1113,7 @@ totalRating / ratedAnime.length : 0;
     
     // --- 4. Most Recent Watch ---
     // The list is sorted by recent (descending id) by default during fetch
-    var mostRecent = watched.length > 0 ?
-watched[0].anime_title : 'N/A';
+    var mostRecent = watched.length > 0 ? watched[0].anime_title : 'N/A';
 
     // --- Render the Stats ---
     statsContainer.innerHTML = `
@@ -1201,8 +1192,7 @@ async function handleFriendSearch(e) {
         if (data.success) {
             renderFriendSearchResults(data.users);
         } else {
-            resultsEl.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #f44336;">Error: ' + (data.error ||
-'Could not fetch users.') + '</li>';
+            resultsEl.innerHTML = '<li style="grid-column: 1; text-align: center; border: none; background: none; color: #f44336;">Error: ' + (data.error || 'Could not fetch users.') + '</li>';
         }
     } catch (e) {
         console.error("Network error during friend search:", e);
