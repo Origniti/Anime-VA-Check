@@ -34,95 +34,90 @@
                 <h2>Register</h2>
                 <input type="text" id="register-username" placeholder="Username">
                 <input type="password" id="register-password" placeholder="Password">
-                <input type="password" id="register-password-confirm" placeholder="Confirm Password">
-                <button id="register-btn">Register</button>
-                <button id="show-login-btn" style="background-color: #555; margin-top: 10px;">Already have an account? Log In</button>
+                <button id="register-btn">Register Account</button>
+                <button id="show-login-btn" style="background-color: #555; margin-top: 10px;">Already have an account? Login</button>
             </div>
+            <p id="auth-message" style="text-align: center; color: var(--color-accent-primary); margin-top: 15px;"></p>
         </div>
 
-        <div id="dashboard" class="view">
-            <h1 class="section-title">Dashboard</h1>
-            <p>Welcome, <span id="welcome-username"></span>!</p>
-
-            <div id="dashboard-buttons">
-                <button id="nav-search-btn" class="nav-btn">🔍 Search Anime</button>
-                <button id="nav-watched-btn" class="nav-btn active">👀 My Watched List</button>
-                <button id="nav-friends-btn" class="nav-btn">🤝 Friends</button>
+        <div id="app-main" class="view" style="display:none;">
+            <h1 class="app-main-title">My Anime Tracker</h1>
+            
+            <div class="navbar">
+                <button data-view="watched" class="active">My Watched List</button>
+                <button data-view="search">Search & Add Anime</button>
+                <button data-view="find-friends">
+                    Friends 
+                    <span id="friend-notification-count" class="notification-indicator" style="display: none;">0</span>
+                </button> 
             </div>
 
-            <div id="subviews-container">
+            <div id="page-watched" class="sub-view active">
                 
-                <div id="page-search" class="subview">
-                    <h2 class="subview-title">Search for Anime</h2>
-                    <div id="search-control">
-                        <input type="text" id="anime-search-input" placeholder="Enter anime title...">
-                        <button id="anime-search-btn">Search</button>
-                    </div>
-                    
-                    <ul id="search-results" class="grid-container">
-                        <p class="empty-message">Search for an anime to get started!</p>
-                    </ul>
+                <div id="friend-list-header-row">
+                    <h2 id="watched-list-title" class="profile-list-header" style="text-align: left;">Your Anime</h2>
                 </div>
-
-                <div id="page-watched" class="subview active">
-                    <header id="watched-list-header">
-                        <h2 class="subview-title" id="watched-list-title">My Watched List</h2>
-                        <span id="va-filter-display" class="tag" style="display: none;"></span>
-                    </header>
+                <div id="list-controls">
+                    <label for="list-search" style="display:none;">Search:</label>
+                    <input type="text" id="list-search" placeholder="Search titles or VA names in your list...">
                     
-                    <div id="list-controls" class="control-grid">
-                        <div id="list-search">
-                            <input type="text" id="list-search" placeholder="Search my list..." onkeyup="filterWatchedList()">
-                        </div>
-                        <div id="list-sort">
-                            <label for="sort-select">Sort By:</label>
-                            <select id="sort-select">
-                                <option value="recent">Recently Added</option>
-                                <option value="score">Score (High to Low)</option>
-                                <option value="title">Title (A-Z)</option>
-                                <option value="vas">Voice Actors (Count High to Low)</option>
-                            </select>
-                        </div>
-                        <div id="list-pagination">
-                            <button id="prev-page-btn" disabled>&laquo; Previous</button>
-                            <span>Page <span id="current-page-display">1</span> of <span id="total-pages-display">1</span></span>
-                            <button id="next-page-btn" disabled>Next &raquo;</button>
-                        </div>
-                    </div>
+                    <label for="sort-by" style="display:none;">Sort By:</label>
+                    <select id="sort-by">
+                        <option value="recent">Most Recent</option>
+                        <option value="rating-desc">Rating (High to Low)</option>
+                        <option value="rating-asc">Rating (Low to High)</option>
+                        <option value="title-asc">Title (A-Z)</option>
+                    </select>
 
-                    <ul id="watched-list" class="grid-container">
-                        <p class="empty-message">Your watched list is empty. Add some anime from the Search tab!</p>
-                    </ul>
+                    <label for="va-lang" style="display:none;">VA Lang:</label>
+                    <select id="va-lang">
+                        <option value="japanese">Japanese</option>
+                        <option value="english">English</option>
+                    </select>
                 </div>
+                
+                <ul id="watched-list" class="grid-container">
+                </ul>
 
-                <div id="page-friends" class="subview">
-                    <h2 class="subview-title">Friends Management</h2>
-                    
+                <div id="pagination-controls">
+                    <button id="prev-page" disabled>&lt; Previous</button>
+                    <span id="page-info">Page 1 of 1</span>
+                    <button id="next-page" disabled>Next &gt;</button>
+                </div>
+            </div>
+
+            <div id="page-search" class="sub-view" style="display:none;">
+                <h2 style="text-align: left;">AniList Search</h2>
+                <input type="text" id="anime-search" placeholder="Search for anime title...">
+                
+                <ul id="search-results">
+                </ul>
+            </div>
+            
+            <div id="page-find-friends" class="sub-view" style="display:none;">
+                
+                <section class="friend-section">
+                    <h2>🤝 Find Users</h2>
+                    <input type="text" id="friend-search-input" placeholder="Search by username..." style="width: 100%; margin-bottom: 15px;">
+                    <ul id="friend-search-results" class="friend-list" style="grid-template-columns: 1fr; gap: 10px;">
+                        <li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">Start typing a username to search for friends.</li>
+                    </ul>
+                </section>
+                
+                <div class="friend-section-container">
                     <section class="friend-section">
-                        <h2>➕ Send Friend Request</h2>
-                        <div id="add-friend-form">
-                            <input type="text" id="add-friend-username" placeholder="Enter username">
-                            <button id="add-friend-btn">Send Request</button>
-                        </div>
-                        <p id="add-friend-message" style="margin-top: 10px;"></p>
+                        <h2>📬 Pending Requests</h2>
+                        <ul id="pending-requests-list" class="friend-list" style="grid-template-columns: 1fr; gap: 10px;">
+                            <li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">No pending friend requests.</li>
+                        </ul>
                     </section>
 
-                    <div class="friend-section-container grid-container">
-                        <section class="friend-section">
-                            <h2>📨 Pending Requests</h2>
-                            <ul id="pending-requests-list" class="friend-list" style="grid-template-columns: 1fr; gap: 10px;">
-                                <li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">No pending friend requests.</li>
-                            </ul>
-                        </section>
-
-                        <section class="friend-section">
-                            <h2>⭐ Confirmed Friends</h2>
-                            <ul id="confirmed-friends-list" class="friend-list" style="grid-template-columns: 1fr; gap: 10px;">
-                                <li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">You have no confirmed friends.</li>
-                            </ul>
-                        </section>
-                    </div>
-
+                    <section class="friend-section">
+                        <h2>⭐ Confirmed Friends</h2>
+                        <ul id="confirmed-friends-list" class="friend-list" style="grid-template-columns: 1fr; gap: 10px;">
+                            <li style="grid-column: 1; text-align: center; border: none; background: none; color: #a0a0a0;">You have no confirmed friends.</li>
+                        </ul>
+                    </section>
                 </div>
 
             </div>
@@ -150,6 +145,7 @@
             <button id="save-notes-btn">Save Notes</button>
         </div>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>
